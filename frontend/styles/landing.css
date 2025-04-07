@@ -1,0 +1,65 @@
+.landing-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  
+  .landing-container {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.912);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.363);
+    max-width: 480px;
+    width: 100%;
+  }
+  
+  .landing-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  
+  .landing-subtitle {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 32px;
+  }
+  
+  .landing-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .landing-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+  }
+  
+  .landing-btn.login {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .landing-btn.login:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+  }
+  
+  .landing-btn.register {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .landing-btn.register:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+  }
+  

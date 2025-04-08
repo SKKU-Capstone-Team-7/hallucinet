@@ -3,11 +3,49 @@ import { useState } from "react";
 import Link from "next/link";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import OAuthButtons from "@/components/AuthButtons";
+import {Client, Account} from "appwrite";
+import { useEffect } from "react";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  async function dologin() {
+    const client = new Client()
+    .setEndpoint('https://cloud.appwrite.io/v1')
+    .setProject("67ef5621003d5fdb528d")
+
+    const account = new Account(client)
+    const curSession = account.getSession("current")
+
+    const user = await account.get()
+    .then(user =>  {
+      // Has existing session
+      console.log(`Existing Session: ${JSON.stringify(user)}`)
+      return user
+      }
+    ).catch(err => (async () => {
+        // No existing session. Login
+        const user = await account.createEmailPasswordSession(email, password)
+        console.log(`Session: ${JSON.stringify(user)}`)
+        return user
+      })()
+    )
+
+    const jwt = await account.createJWT()
+    console.log(`JWT: ${JSON.stringify(jwt)}`)
+
+    fetch('/api/v1/', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${jwt}`
+      }
+    }).then(res => res.text())
+      .then(body => {
+        alert(`Server responded: ${body}`)
+      })
+  }
 
   return (
     <div className="login-page">
@@ -31,7 +69,7 @@ export default function Login() {
           </div>
 
           <div className="login-buttons">
-            <button type="button" className={`login-submit ${email && password ? 'active' : ''}`} disabled={!email || !password}>Log In</button>
+            <button type="button" className={`login-submit ${email && password ? 'active' : ''}`} disabled={!email || !password} onClick={dologin}>Log In</button>
             <OAuthButtons />
           </div>
         </form>

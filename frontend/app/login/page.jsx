@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import OAuthButtons from "@/components/AuthButtons";
-import {Client, Account} from "appwrite";
+import { Client, Account } from "appwrite";
 import { useEffect } from "react";
 
 export default function Login() {
@@ -13,33 +13,33 @@ export default function Login() {
 
   async function dologin() {
     const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject("67ef5621003d5fdb528d")
+      .setEndpoint('https://cloud.appwrite.io/v1')
+      .setProject("67ef5621003d5fdb528d")
 
     const account = new Account(client)
     const curSession = account.getSession("current")
 
     const user = await account.get()
-    .then(user =>  {
-      // Has existing session
-      console.log(`Existing Session: ${JSON.stringify(user)}`)
-      return user
+      .then(user => {
+        // Has existing session
+        console.log(`Existing Session: ${JSON.stringify(user)}`)
+        return user
       }
-    ).catch(err => (async () => {
+      ).catch(err => (async () => {
         // No existing session. Login
         const user = await account.createEmailPasswordSession(email, password)
         console.log(`Session: ${JSON.stringify(user)}`)
         return user
       })()
-    )
+      )
 
     const jwt = await account.createJWT()
     console.log(`JWT: ${JSON.stringify(jwt)}`)
 
-    fetch('/api/v1/', {
+    fetch('/api/v1/user', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${jwt}`
+        'Authorization': `Bearer ${jwt.jwt}`
       }
     }).then(res => res.text())
       .then(body => {

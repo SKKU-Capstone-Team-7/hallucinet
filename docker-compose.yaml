@@ -3,9 +3,13 @@ services:
     image: node:23
     container_name: hallucinet-backend
     working_dir: /app
+    environment:
+      - APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+      - APPWRITE_PROJECT=67ef5621003d5fdb528d
+      - APPWRITE_API_KEY=standard_514aa5990ecc11ddadafcc3ed108640b5804c3fd1b8572f5765975eccc219d4424ad0e6524a1a752d3da2ee3eb47d16a57c497c60417ec3d6a49cc38a1ca7c41abf24d8cea2046012b13a4f9ff309ea6f890558d0ed658ab9b04ae108ce51821068ef1619687c36a42e5d8d64a8877fab8aac08ff484d0c3466ace7d6b855b3d
     volumes:
       - ./backend/:/app
-    command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm run start:dev"
+    command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm add node-appwrite && pnpm add @nestjs/cli && pnpm add @nestjs/swagger swagger-ui-express && pnpm run start:dev"
 
   frontend:
     image: node:23

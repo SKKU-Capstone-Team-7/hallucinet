@@ -1,10 +1,23 @@
+/* body */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
 .landing-page {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 2rem;
-  }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background-image: url('../public/images/background.png');
+  background-size: 100% 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
   
   .landing-container {
     text-align: center;
@@ -20,6 +33,7 @@
     font-size: 32px;
     font-weight: 700;
     margin-bottom: 16px;
+    font-family: "Michroma", sans-serif;
   }
   
   .landing-subtitle {

@@ -1,9 +1,11 @@
-import { Controller, Get, Patch } from '@nestjs/common';
+import { Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserInfoDto } from './dto/user-info.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtToken } from 'src/common/decorators/jwt-token.decorator';
+import { AppwriteClient } from 'src/common/decorators/appwrite-client.decorator';
 import { Body } from '@nestjs/common';
+import { AppwriteAuthGuard } from 'src/common/guards/appwrite-auth.guard';
+import { Client } from 'node-appwrite';
 
 
 @Controller('user')
@@ -15,9 +17,10 @@ export class UserController {
    * Expects an Authorization header in the form: "Bearer <JWT_TOKEN>".
    */
     @Get()
-    async getUser(@JwtToken() jwtToken: string): Promise<UserInfoDto> {
+    @UseGuards(AppwriteAuthGuard)
+    async getUser(@AppwriteClient() client: Client): Promise<UserInfoDto> {
         // This returns a DTO directly.
-        return await this.userService.getUserInfo(jwtToken);
+        return await this.userService.getUserInfo(client);
     }
 
     /**
@@ -25,10 +28,11 @@ export class UserController {
    * Accepts an Authorization header with a Bearer JWT and a JSON body with fields to update (name or/and password).
    */
     @Patch()
+    @UseGuards(AppwriteAuthGuard)
     async updateUser(
-        @JwtToken() jwtToken: string,
+        @AppwriteClient() client: Client,
         @Body() updateUserDto: UpdateUserDto,
     ): Promise<UserInfoDto> {
-        return await this.userService.updateUserInfo(jwtToken, updateUserDto);
+        return await this.userService.updateUserInfo(client, updateUserDto);
     }
 }

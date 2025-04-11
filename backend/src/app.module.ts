@@ -1,15 +1,13 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AppwriteService } from './appwrite/appwrite.service';
-import { UserController } from './user/user.controller';
-import { UserService } from './user/user.service';
-import { TeamController } from './team/team.controller';
-import { TeamService } from './team/team.service';
+import { AppwriteService } from './modules/appwrite/appwrite.service';
+import { UserController } from './modules/user/user.controller';
+import { UserService } from './modules/user/user.service';
+import { TeamController } from './modules/team/team.controller';
+import { TeamService } from './modules/team/team.service';
 
 @Module({
   imports: [],
-  controllers: [AppController, UserController, TeamController],
-  providers: [AppService, AppwriteService, UserService, TeamService],
+  controllers: [UserController, TeamController],
+  providers: [AppwriteService, UserService, TeamService],
 })
-export class AppModule {}
+export class AppModule { }

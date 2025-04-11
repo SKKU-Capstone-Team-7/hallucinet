@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AppwriteService } from 'src/appwrite/appwrite.service';
+import { AppwriteService } from 'src/modules/appwrite/appwrite.service';
 import { UserInfoDto } from './dto/user-info.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Account, Teams } from 'node-appwrite';
+import { Account, Client, Teams } from 'node-appwrite';
 
 @Injectable()
 export class UserService {
@@ -14,8 +14,7 @@ export class UserService {
    * @param jwtToken - The JWT token from the client.
    * @returns The user information as a UserInfoDto.
    */
-    async getUserInfo(jwtToken: string): Promise<UserInfoDto> {
-        const client = this.appwriteService.getClient(jwtToken);
+    async getUserInfo(client: Client): Promise<UserInfoDto> {
         const account = new Account(client);
         const teams = new Teams(client);
 
@@ -38,8 +37,7 @@ export class UserService {
    * Updates the user's name and/or password based on the provided fields.
    * To update the password, oldPassword must be provided.
    */
-    async updateUserInfo(jwtToken: string, updateDto: UpdateUserDto): Promise<UserInfoDto> {
-        const client = this.appwriteService.getClient(jwtToken);
+    async updateUserInfo(client: Client, updateDto: UpdateUserDto): Promise<UserInfoDto> {
         const account = new Account(client);
         const teams = new Teams(client);
 

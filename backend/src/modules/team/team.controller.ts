@@ -16,6 +16,12 @@ export class TeamController {
     return this.teamService.createTeam(client, createTeamDto);
   }
 
+  @Get()
+  @UseGuards(AppwriteAuthGuard)
+  async getMyTeam(@AppwriteClient() client: Client): Promise<TeamInfoDto> {
+    return await this.teamService.getMyTeamInfo(client);
+  }
+
   /**
 * GET /team/:teamid endpoint that retrieves team information.
 * @param teamId The team ID extracted from the URL.

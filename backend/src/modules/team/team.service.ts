@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Client, ID, Teams } from 'node-appwrite';
+import { Client, ID, Query, Teams } from 'node-appwrite';
 import { AppwriteService } from 'src/modules/appwrite/appwrite.service';
 import { TeamInfoDto } from './dto/team-info.dto';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -7,7 +7,6 @@ import { CreateTeamDto } from './dto/create-team.dto';
 @Injectable()
 export class TeamService {
     constructor(private readonly appwriteService: AppwriteService) { }
-
 
     async createTeam(
         client: Client,
@@ -21,16 +20,29 @@ export class TeamService {
 
         try {
             const newTeam = await teams.create(ID.unique(), createTeamDto.name, ['owner']);
-            newTeam.prefs
-            const teamInfo: TeamInfoDto = {
-                $id: newTeam.$id,
-                name: newTeam.name,
-                total: newTeam.total
-            };
-
-            return teamInfo;
+            const updatedPrefs = await teams.updatePrefs(newTeam.$id, { ipBlock16: createTeamDto.ipBlock16 });
+            console.log('Updated prefs: ', updatedPrefs);
+            return this.getMyTeamInfo(client);
         } catch (error) {
             throw new Error(`Failed to create team: ${error.message || error}`);
+        }
+    }
+
+    async getMyTeamInfo(client: Client, index: number = 0): Promise<TeamInfoDto> {
+        const teams = new Teams(client);
+        try {
+            const teamId = (await teams.list()).teams.map((team) => team.$id)[index];
+            const team = await teams.get(teamId);
+            console.log('Fetched team: ', team);
+            const teamInfo: TeamInfoDto = new TeamInfoDto({
+                $id: team.$id,
+                name: team.name,
+                total: team.total,
+                ipBlock16: team.prefs.ipBlock16
+            })
+            return teamInfo
+        } catch (error) {
+            throw new NotFoundException(`Team not found.`);
         }
     }
 
@@ -47,10 +59,11 @@ export class TeamService {
         try {
             // Appwrite API call to get team information by teamId
             const team = await teams.get(teamId);
+            console.log('Fetched team: ', team);
             const teamInfo: TeamInfoDto = new TeamInfoDto({
                 $id: team.$id,
                 name: team.name,
-                total: team.total
+                total: team.total,
             })
             return teamInfo
         } catch (error) {

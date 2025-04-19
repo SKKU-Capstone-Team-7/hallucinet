@@ -11,6 +11,9 @@ export default function Login() {
 
   return (
     <div className="login-page">
+      <div className="logo-container">
+      <img src="/logoWhite.svg" alt="Logo" className="logo" />
+      </div>
       <div className="login-container">
         <h2 className="login-title">Welcome back!</h2>
         <p className="login-subtitle">Please enter your details</p>
@@ -31,13 +34,13 @@ export default function Login() {
           </div>
 
           <div className="login-buttons">
-            <button type="button" className={`login-submit ${email && password ? 'active' : ''}`} disabled={!email || !password}>Log In</button>
+            <button type="button" className={`login-submit ${email && password ? 'active' : ''}`} disabled={!email || !password}>Sign In</button>
             <OAuthButtons />
           </div>
         </form>
 
         <p className="login-footer">
-          Don't have an account? <Link href="/register">Sign Up</Link>
+          Have no account? <Link href="/register">Sign Up</Link>
         </p>
       </div>
     </div>

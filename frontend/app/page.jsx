@@ -1,7 +1,7 @@
 'use client'; 
 
 import Link from "next/link";
-import "../styles/landing.css"; 
+import "../styles/Landing.css"; 
 
 export default function Landing() {
   return (

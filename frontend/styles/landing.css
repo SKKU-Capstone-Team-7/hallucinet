@@ -1,23 +1,22 @@
 html {
-    scroll-behavior: smooth; /* 부드러운 스크롤 */
+    scroll-behavior: smooth;
 }
 
 body {
     margin: 0;
     padding: 0;
     height: 100%;
-    overflow-x: hidden; /* 수평 스크롤 방지 */
+    overflow-x: hidden;
 }
 
 
-/* 기본적인 reset 스타일 */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* 전체 컨테이너 */
+
 .landing-container {
     width: 100%;
     height: 100vh;
@@ -29,19 +28,24 @@ body {
     position: relative;
 }
 
-/* 로고 위치와 여백 설정 */
+
 .logo-container {
     position: fixed;
-    top: 1rem; /* 상단 여백 2rem */
-    left: 2rem; /* 좌측 여백 2rem */
-    z-index: 10; /* 네비게이션 요소보다 위에 표시되도록 */
+    top: 1rem;
+    left: 1.8rem;
+    z-index: 10;
   }
+
+.logo-img {
+    width: 200px;
+
+}
   
   .landing-container {
     position: relative;
   }
 
-/* 네비게이션 */
+
 .navigation {
     position: fixed;
     top: 1rem;
@@ -52,30 +56,29 @@ body {
 }
 
 .nav-button {
-    background-color: transparent; /* 배경 색 제거 */
-    color: white; /* 텍스트 색 */
-    padding: 0; /* 패딩 제거 */
-    border: none; /* 경계선 제거 */
-    font-size: 1rem;
-    text-decoration: none; /* 링크 스타일 제거 */
-    cursor: pointer; /* 마우스 커서 */
+    background-color: transparent;
+    color: white;
+    padding: 0;
+    border: none;
+    font-size: 12pt;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .nav-button:hover,
 .nav-button:active {
-    text-decoration: none; /* 마우스 오버시 및 클릭 시 밑줄 제거 */
+    text-decoration: none;
 }
 
-/* Sign Link 스타일 */
 .sign-link {
     display: inline-block;
-    padding: 0.2rem 0.5rem;
-    border-radius: 1rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.8rem;
     background-color: #1c8cf0;
-    color: white;
+    color: black;
     text-decoration: none;
-    font-size: 1rem;
-    font-weight: bold;
+    font-size: 12pt;
+    /*font-weight: bold;*/
     transition: transform 0.2s;
 }
 
@@ -83,7 +86,6 @@ body {
     transform: scale(1.05);
 }
 
-/* 메인 윈도우 */
 .main-window {
     height: 100vh;
     display: flex;
@@ -106,7 +108,6 @@ body {
   }
   
 
-/* Learn 윈도우 */
 .section {
     height: 100vh;
     display: flex;
@@ -120,7 +121,128 @@ body {
     color: white;
 }
 
-/* Contact Us 윈도우 */
 .contact-window {
     background-color: #050a12;
 }
+
+/*Learn Window*/
+
+.learn-window {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 100px 140px;
+    min-height: 100vh;
+    box-sizing: border-box;
+    flex-wrap: nowrap;
+}
+
+.left-pane {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 10px;
+}
+
+.hero-text {
+    font-size: 2.5rem;
+    font-weight: 100;
+    line-height: 1.3;
+    font-family: 'Michroma', sans-serif;
+}
+
+.right-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 70px;
+    padding-top: 30px;
+    margin-left: 120px;
+}
+
+.feature-block {
+    max-width: 500px;
+}
+
+.feature-title {
+    font-size: 1.8rem;
+    font-weight: 200;
+    margin: 0;
+    font-family: 'Michroma', sans-serif;
+}
+
+.feature-desc {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-top: 8px;
+    color: #ccc;
+    font-family: 'Work Sans', sans-serif;
+}
+
+.purple {
+    color: #D17CFF;
+}
+
+.blue {
+    color: #3ABEFF;
+}
+
+.green {
+    color: #00F88A;
+}
+
+/* Contact Us Window */
+
+.contact-container {
+    height: 100vh;
+    padding: 100px 200px;
+    box-sizing: border-box;
+    background-color: #050a12;
+  }  
+  
+  .contact-hero {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 60px;
+    line-height: 1.2;
+    font-family: 'Michroma', sans-serif;
+  }
+  
+  .contact-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    font-family: 'Work Sans', sans-serif;
+  }
+  
+  .contact-form input,
+  .contact-form textarea {
+    background: #1c1c1c;
+    border: none;
+    padding: 14px 20px;  
+    color: white;
+    font-size: 1.05rem;
+    border-radius: 8px;
+    outline: none;
+    resize: none;
+    font-family: 'Work Sans', sans-serif;
+  }
+  
+  .contact-form button {
+    background-color: #1c8cf0;
+    color: black;
+    padding: 12px;
+    font-size: 1.1rem;
+    font-weight: 400;
+    border: none;
+    border-radius: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .contact-form button:hover {
+    background-color: #3ABEFF
+  }
+  

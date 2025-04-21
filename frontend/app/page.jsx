@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import '../styles/landing.css'; // CSS 파일을 import
+import '../styles/landing.css';
 
 export default function Landing() {
   const mainWindowRef = useRef(null);
@@ -12,9 +12,8 @@ export default function Landing() {
 
   return (
     <div className="landing-container">
-      {/* 로고 추가 */}
       <div className="logo-container">
-        <Image src="/logoWhite.svg" alt="logo" width={120} height={40} />
+        <Image className="logo-img" src="/logoWhite.svg" alt="logo" width={120} height={40} />
       </div>
 
       <div className="navigation">
@@ -36,7 +35,7 @@ export default function Landing() {
         >
           Contact Us
         </button>
-        <Link href="/register" className="sign-link">
+        <Link href="/login" className="sign-link">
           Sign In/Sign Up
         </Link>
       </div>
@@ -50,12 +49,50 @@ export default function Landing() {
       </div>
 
       <div ref={learnWindowRef} className="section learn-window">
-        <div className="section-content">Learn Window</div>
+      <div className="left-pane">
+        <h1 className="hero-text">
+          Skip the chaos.<br />
+          Connect containers,
+          effortlessly.
+        </h1>
       </div>
 
-      {/* Contact Us 윈도우 */}
+      <div className="right-pane">
+        <div className="feature-block">
+          <h2 className="feature-title purple">One Network. All Devices.</h2>
+          <p className="feature-desc">
+            Connect all team members' devices and containers in one secure network.
+          </p>
+        </div>
+        <div className="feature-block">
+          <h2 className="feature-title blue">Clear Visibility,<br />Zero Guesswork</h2>
+          <p className="feature-desc">
+            Check where and what containers are circulating at a glance.
+          </p>
+        </div>
+        <div className="feature-block">
+          <h2 className="feature-title green">No More Setup Struggles</h2>
+          <p className="feature-desc">
+            Port forwarding, IP conflicts, network configuration…<br />
+            You can forget everything. Just focus on development.
+          </p>
+        </div>
+      </div>
+      </div>
+
       <div ref={contactUsWindowRef} className="section contact-window">
-        <div className="section-content">Contact Us Window</div>
+      <div className="contact-container">
+  <h1 className="contact-hero">Let’s Talk.</h1>
+  <div className="contact-grid">
+    <form className="contact-form">
+      <input type="text" placeholder="Your name" required />
+      <input type="email" placeholder="Your email" required />
+      <textarea rows="5" placeholder="Your message" required />
+      <button type="submit">Send Message</button>
+    </form>
+  </div>
+</div>
+
       </div>
     </div>
   );

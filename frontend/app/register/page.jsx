@@ -26,6 +26,11 @@ export default function Register() {
   
     return (
       <div className="register-page">
+        <div className="logo-container">
+        <Link href="/">
+          <img className="logo-img" src="/logoWhite.svg" alt="logo" width={120} height={40} />
+        </Link>
+          </div>
         <div className="register-container">
           <h2 className="register-title">Create an Account</h2>
           <p className="register-subtitle">Please enter your details</p>
@@ -91,7 +96,7 @@ export default function Register() {
           <OAuthButtons />
   
           <p className="register-footer">
-            Already have an account? <Link href="/login">Login</Link>
+            Already have an account? <Link href="/login">Sign in</Link>
           </p>
         </div>
       </div>

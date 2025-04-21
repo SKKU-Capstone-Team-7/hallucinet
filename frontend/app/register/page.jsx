@@ -27,7 +27,9 @@ export default function Register() {
     return (
       <div className="register-page">
         <div className="logo-container">
-          <img src="/logoWhite.svg" alt="Logo" className="logo" />
+        <Link href="/">
+          <img className="logo-img" src="/logoWhite.svg" alt="logo" width={120} height={40} />
+        </Link>
           </div>
         <div className="register-container">
           <h2 className="register-title">Create an Account</h2>

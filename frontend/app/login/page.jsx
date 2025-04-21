@@ -12,7 +12,9 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="logo-container">
-      <img src="/logoWhite.svg" alt="Logo" className="logo" />
+      <Link href="/">
+          <img className="logo-img" src="/logoWhite.svg" alt="logo" width={120} height={40} />
+      </Link>
       </div>
       <div className="login-container">
         <h2 className="login-title">Welcome back!</h2>

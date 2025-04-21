@@ -16,14 +16,13 @@ html, body {
 }
 
 .logo-container {
-  position: absolute;
+  position: fixed;
   top: 1rem;
-  left: 1rem;
+  left: 1.8rem;
 }
 
-.logo {
-  width: 120px;
-  height: auto;
+.logo-img {
+  width: 200px;
 }
 
 .login-container {
@@ -36,7 +35,6 @@ html, body {
   text-align: center;
 }
 
-  
   .login-title {
     font-size: 28px;
     margin-bottom: 8px;

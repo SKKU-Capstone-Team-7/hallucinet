@@ -16,9 +16,13 @@ html, body {
   }
 
   .logo-container {
-    position: absolute;
+    position: fixed;
     top: 1rem;
-    left: 1rem;
+    left: 1.8rem;
+  }
+
+  .logo-img {
+    width: 200px;
   }
   
   .register-container {

@@ -1,79 +1,126 @@
-/* body */
-
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
+html {
+    scroll-behavior: smooth; /* 부드러운 스크롤 */
 }
 
-.landing-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  background-image: url('../public/background.png');
-  background-size: 100% 100%;
-  background-position: center center;
-  background-repeat: no-repeat;
-  overflow: hidden;
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden; /* 수평 스크롤 방지 */
 }
+
+
+/* 기본적인 reset 스타일 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 전체 컨테이너 */
+.landing-container {
+    width: 100%;
+    height: 100vh;
+    overflow-y: auto;
+    background-image: url('/background.png');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    position: relative;
+}
+
+/* 로고 위치와 여백 설정 */
+.logo-container {
+    position: fixed;
+    top: 1rem; /* 상단 여백 2rem */
+    left: 2rem; /* 좌측 여백 2rem */
+    z-index: 10; /* 네비게이션 요소보다 위에 표시되도록 */
+  }
   
   .landing-container {
-    text-align: center;
-    background: rgba(255, 255, 255, 0.912);
-    padding: 40px;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.363);
-    max-width: 480px;
-    width: 100%;
+    position: relative;
   }
-  
-  .landing-title {
-    font-size: 32px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    font-family: "Michroma", sans-serif;
-  }
-  
-  .landing-subtitle {
-    font-size: 16px;
-    color: #666;
-    margin-bottom: 32px;
-  }
-  
-  .landing-buttons {
+
+/* 네비게이션 */
+.navigation {
+    position: fixed;
+    top: 1rem;
+    right: 2rem;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.nav-button {
+    background-color: transparent; /* 배경 색 제거 */
+    color: white; /* 텍스트 색 */
+    padding: 0; /* 패딩 제거 */
+    border: none; /* 경계선 제거 */
+    font-size: 1rem;
+    text-decoration: none; /* 링크 스타일 제거 */
+    cursor: pointer; /* 마우스 커서 */
+}
+
+.nav-button:hover,
+.nav-button:active {
+    text-decoration: none; /* 마우스 오버시 및 클릭 시 밑줄 제거 */
+}
+
+/* Sign Link 스타일 */
+.sign-link {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 1rem;
+    background-color: #1c8cf0;
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.sign-link:hover {
+    transform: scale(1.05);
+}
+
+/* 메인 윈도우 */
+.main-window {
+    height: 100vh;
     display: flex;
     justify-content: center;
-    gap: 20px;
+    align-items: center;
+    background-image: url('/background.png');
+    background-size: cover;
+    background-position: center;
+}
+
+.title-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.title-image img {
+    width: 60%;
+    object-fit: contain;
   }
   
-  .landing-btn {
-    padding: 12px 24px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 15px;
-    transition: background-color 0.2s ease, transform 0.2s ease;
-  }
-  
-  .landing-btn.login {
-    background-color: #007bff;
+
+/* Learn 윈도우 */
+.section {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #050a12;
+}
+
+.section-content {
+    font-size: 2rem;
     color: white;
-  }
-  
-  .landing-btn.login:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-  }
-  
-  .landing-btn.register {
-    background-color: #6c757d;
-    color: white;
-  }
-  
-  .landing-btn.register:hover {
-    background-color: #5a6268;
-    transform: translateY(-2px);
-  }
-  
+}
+
+/* Contact Us 윈도우 */
+.contact-window {
+    background-color: #050a12;
+}

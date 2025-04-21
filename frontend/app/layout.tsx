@@ -4,6 +4,7 @@ import "./globals.css";
 import "../styles/Login.css";
 import "../styles/Register.css";
 import "../styles/AuthButtons.css";
+import '@fontsource/michroma';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

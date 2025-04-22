@@ -108,6 +108,13 @@ export default function Login() {
           </div>
 
           <div className="login-buttons">
+            <button
+              type="button"
+              onClick={dologin}
+              className="btn-login"
+            >
+              Login
+            </button>
             <OAuthButtons />
           </div>
         </form>

@@ -21,14 +21,14 @@ export class TeamService {
         try {
             const newTeam = await teams.create(ID.unique(), createTeamDto.name, ['owner']);
             const updatedPrefs = await teams.updatePrefs(newTeam.$id, { ipBlock16: createTeamDto.ipBlock16 });
-            console.log('Updated prefs: ', updatedPrefs);
-            return this.getMyTeamInfo(client);
+            // team database register is needed
+            return this.getMyTeam(client);
         } catch (error) {
             throw new Error(`Failed to create team: ${error.message || error}`);
         }
     }
 
-    async getMyTeamInfo(client: Client, index: number = 0): Promise<TeamInfoDto> {
+    async getMyTeam(client: Client, index: number = 0): Promise<TeamInfoDto> {
         const teams = new Teams(client);
         try {
             const teamId = (await teams.list()).teams.map((team) => team.$id)[index];
@@ -52,7 +52,7 @@ export class TeamService {
        * @param teamId The ID of the team to retrieve.
        * @returns A JSON object containing the team information.
        */
-    async getTeamInfo(teamId: string): Promise<TeamInfoDto> {
+    async getTeamById(teamId: string): Promise<TeamInfoDto> {
         const client = this.appwriteService.getServerClient();
         const teams = new Teams(client);
 

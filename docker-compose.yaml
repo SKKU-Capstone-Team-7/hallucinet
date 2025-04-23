@@ -1,36 +1,36 @@
 services:
-  backend:
-    image: node:23
-    container_name: hallucinet-backend
-    working_dir: /app
-    environment:
-      - APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
-      - APPWRITE_PROJECT=67ef5621003d5fdb528d
-      - APPWRITE_API_KEY=standard_514aa5990ecc11ddadafcc3ed108640b5804c3fd1b8572f5765975eccc219d4424ad0e6524a1a752d3da2ee3eb47d16a57c497c60417ec3d6a49cc38a1ca7c41abf24d8cea2046012b13a4f9ff309ea6f890558d0ed658ab9b04ae108ce51821068ef1619687c36a42e5d8d64a8877fab8aac08ff484d0c3466ace7d6b855b3d
-      - APPWRITE_DATABASE_ID=67f756f80029d2037895
-      - USER_COLLECTION_ID=6807322b000d51733ec0
-      - TEAM_COLLECTION_ID=68073238001e53aa95d1
-      - CONTAINER_COLLECTION_ID=68071e7d0015ebe369b7
-      - DEVICE_COLLECTION_ID=67f757070004ed79dfeb
-    volumes:
-      - ./backend/:/app
-    command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm add node-appwrite && pnpm add @nestjs/cli && pnpm add @nestjs/swagger swagger-ui-express && pnpm add class-validator class-transformer && pnpm run start:dev"
+    backend:
+        image: node:23
+        container_name: hallucinet-backend
+        working_dir: /app
+        environment:
+            - APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+            - APPWRITE_PROJECT=67ef5621003d5fdb528d
+            - APPWRITE_API_KEY=standard_514aa5990ecc11ddadafcc3ed108640b5804c3fd1b8572f5765975eccc219d4424ad0e6524a1a752d3da2ee3eb47d16a57c497c60417ec3d6a49cc38a1ca7c41abf24d8cea2046012b13a4f9ff309ea6f890558d0ed658ab9b04ae108ce51821068ef1619687c36a42e5d8d64a8877fab8aac08ff484d0c3466ace7d6b855b3d
+            - APPWRITE_DATABASE_ID=67f756f80029d2037895
+            - USER_COLLECTION_ID=6807322b000d51733ec0
+            - TEAM_COLLECTION_ID=68073238001e53aa95d1
+            - CONTAINER_COLLECTION_ID=68089d06003e1afa4d22
+            - DEVICE_COLLECTION_ID=68089c7a0038a0ca0882
+        volumes:
+            - ./backend/:/app
+        command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm add node-appwrite && pnpm add @nestjs/cli && pnpm add @nestjs/swagger swagger-ui-express && pnpm add class-validator class-transformer && pnpm run start:dev"
 
-  frontend:
-    image: node:23
-    container_name: hallucinet-frontend
-    working_dir: /app
-    volumes:
-      - ./frontend/:/app
-    command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm run dev"
+    frontend:
+        image: node:23
+        container_name: hallucinet-frontend
+        working_dir: /app
+        volumes:
+            - ./frontend/:/app
+        command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm run dev"
 
-  nginx:
-    image: nginx:latest
-    container_name: hallucinet-nginx
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    ports:
-      - 80:80
-    depends_on:
-      - backend
-      - frontend
+    nginx:
+        image: nginx:latest
+        container_name: hallucinet-nginx
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf:ro
+        ports:
+            - 80:80
+        depends_on:
+            - backend
+            - frontend

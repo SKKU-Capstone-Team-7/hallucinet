@@ -2,19 +2,13 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AppwriteService } from 'src/modules/appwrite/appwrite.service';
 import { UserInfoDto } from './dto/user-info.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Account, Client, Teams } from 'node-appwrite';
+import { Account, Client, Teams, Users } from 'node-appwrite';
 
 @Injectable()
 export class UserService {
     constructor(private readonly appwriteService: AppwriteService) { }
 
-    /**
-   * Retrieves the user information from Appwrite using the provided JWT,
-   * and maps it to a fixed UserInfo DTO.
-   * @param jwtToken - The JWT token from the client.
-   * @returns The user information as a UserInfoDto.
-   */
-    async getUserInfo(client: Client): Promise<UserInfoDto> {
+    async getCurrentUser(client: Client): Promise<UserInfoDto> {
         const account = new Account(client);
         const teams = new Teams(client);
 
@@ -33,11 +27,7 @@ export class UserService {
         }
     }
 
-    /**
-   * Updates the user's name and/or password based on the provided fields.
-   * To update the password, oldPassword must be provided.
-   */
-    async updateUserInfo(client: Client, updateDto: UpdateUserDto): Promise<UserInfoDto> {
+    async updateCurrentUser(client: Client, updateDto: UpdateUserDto): Promise<UserInfoDto> {
         const account = new Account(client);
         const teams = new Teams(client);
 
@@ -62,6 +52,7 @@ export class UserService {
         try {
             const user = await account.get();
             return new UserInfoDto({
+                $id: user.$id,
                 email: user.email,
                 name: user.name,
                 password: user.password,
@@ -69,6 +60,22 @@ export class UserService {
             });
         } catch (error) {
             throw new UnauthorizedException('Failed to retrieve updated user information.');
+        }
+    }
+
+    async getUserById(userId: string): Promise<UserInfoDto> {
+        const users = new Users(this.appwriteService.getServerClient());
+
+        try {
+            const user = await users.get(userId);
+            return new UserInfoDto({
+                $id: user.$id,
+                email: user.email,
+                name: user.name,
+            })
+        } catch (error) {
+            console.error('Failed to fetch user:', error);
+            throw error;
         }
     }
 }

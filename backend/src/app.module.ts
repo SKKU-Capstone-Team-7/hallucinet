@@ -7,10 +7,12 @@ import { TeamService } from './modules/team/team.service';
 import { DeviceController } from './modules/device/device.controller';
 import { DeviceService } from './modules/device/device.service';
 import { DatabaseService } from './modules/database/database.service';
+import { ContainerController } from './modules/container/container.controller';
+import { ContainerService } from './modules/container/container.service';
 
 @Module({
   imports: [],
-  controllers: [UserController, DeviceController, TeamController],
-  providers: [AppwriteService, DatabaseService, UserService, DeviceService, TeamService],
+  controllers: [UserController, DeviceController, TeamController, ContainerController],
+  providers: [AppwriteService, DatabaseService, UserService, DeviceService, TeamService, ContainerService],
 })
 export class AppModule { }

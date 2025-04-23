@@ -12,9 +12,9 @@ export class UserInfoDto {
     readonly email: string;
 
     @IsString()
-    readonly password: string;
+    readonly password?: string;
 
-    readonly teamIds: string[];
+    readonly teamIds?: string[];
 
     constructor(partial: Partial<UserInfoDto>) {
         Object.assign(this, partial);

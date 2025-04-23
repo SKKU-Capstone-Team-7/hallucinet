@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsBoolean, IsNotEmpty, IsString, Matches } from "class-validator";
+import { IsBoolean, IsDate, IsNotEmpty, IsString, Matches } from "class-validator";
 import { TeamInfoDto } from "src/modules/team/dto/team-info.dto";
 import { UserInfoDto } from "src/modules/user/dto/user-info.dto";
 
@@ -22,10 +22,18 @@ export class DeviceInfoDto {
     @Type(() => UserInfoDto)
     readonly user: UserInfoDto;
 
-    @Type(() => TeamInfoDto)
-    readonly team: TeamInfoDto;
+    //@Type(() => TeamInfoDto)
+    //readonly team: TeamInfoDto;
+
+    @Type(() => Date)
+    @IsDate()
+    readonly lastActivatedAt: Date;
+
+    readonly teamId: string;
 
     constructor(partial: Partial<DeviceInfoDto>) {
         Object.assign(this, partial);
+        // it is temporary.
+        //this.lastActivatedAt = new Date();
     }
 }

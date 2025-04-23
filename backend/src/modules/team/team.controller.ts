@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { TeamService } from './team.service';
 import { TeamInfoDto } from './dto/team-info.dto';
 import { AppwriteAuthGuard } from 'src/common/guards/appwrite-auth.guard';
@@ -6,7 +6,7 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { AppwriteClient } from 'src/common/decorators/appwrite-client.decorator';
 import { Client } from 'node-appwrite';
 
-@Controller('team')
+@Controller('teams')
 export class TeamController {
   constructor(private readonly teamService: TeamService) { }
 
@@ -16,20 +16,27 @@ export class TeamController {
     return this.teamService.createTeam(client, createTeamDto);
   }
 
-  @Get()
+  @Get('me')
   @UseGuards(AppwriteAuthGuard)
   async getMyTeam(@AppwriteClient() client: Client): Promise<TeamInfoDto> {
-    return await this.teamService.getMyTeamInfo(client);
+    return await this.teamService.getMyTeam(client);
   }
 
-  /**
-* GET /team/:teamid endpoint that retrieves team information.
-* @param teamId The team ID extracted from the URL.
-* @returns The team information JSON.
-*/
-  @Get(':teamid')
+  @Patch('me')
   @UseGuards(AppwriteAuthGuard)
-  async getTeam(@Param('teamid') teamId: string): Promise<TeamInfoDto> {
-    return await this.teamService.getTeamInfo(teamId);
+  async updateMyTeam() {
+    return;
+  }
+
+  @Delete('me')
+  @UseGuards(AppwriteAuthGuard)
+  async deleteMyTeam() {
+    return;
+  }
+
+  @Get(':teamId')
+  @UseGuards(AppwriteAuthGuard)
+  async getTeamById(@Param('teamId') teamId: string): Promise<TeamInfoDto> {
+    return await this.teamService.getTeamById(teamId);
   }
 }

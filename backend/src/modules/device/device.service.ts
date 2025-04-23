@@ -16,11 +16,9 @@ export class DeviceService {
         private readonly userService: UserService
     ) { }
 
-    async getTeamDevices(client: Client,): Promise<DeviceInfoDto[]> {
-        const user = await this.userService.getUserInfo(client);
-        const team = await this.teamService.getMyTeamInfo(client);
-
-        console.log(team);
+    async listDevices(client: Client,): Promise<DeviceInfoDto[]> {
+        const user = await this.userService.getCurrentUser(client);
+        const team = await this.teamService.getMyTeam(client);
 
         const { documents } = await this.databaseService.listDevicesByTeamId(team.$id);
 
@@ -32,8 +30,13 @@ export class DeviceService {
             status: doc.status,
             ipBlock24: doc.ipBlock24,
             user: user,
-            team: team,
+            lastActivatedAt: doc.lastActivatedAt,
+            teamId: team.$id
         }));
     }
+
+    //async getDeviceById():Promise<DeviceInfoDto> {
+    //
+    //}
 
 }

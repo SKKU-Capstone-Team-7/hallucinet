@@ -23,4 +23,16 @@ export class DatabaseService {
             [Query.equal('team', teamId)],
         );
     }
+
+    async listContainersByTeamId(teamId: string, sort: string, order: string, limit: number, offset: number): Promise<Models.DocumentList<Models.Document>> {
+        return this.databases.listDocuments(
+            this.dbId,
+            this.containerColId,
+            [
+                Query.equal('team', teamId),
+                Query.orderDesc('lastAccessed'),
+                Query.limit(limit)
+            ]
+        )
+    }
 }

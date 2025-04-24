@@ -14,10 +14,10 @@ export class ContainerService {
         //private readonly userService: UserService
     ) { }
 
-    async getTeamContainers(client: Client, sort: string, order: string, limit: number, offset: number): Promise<ContainerInfoDto[]> {
+    async getTeamContainers(client: Client, sort: string, order: string, limit: number): Promise<ContainerInfoDto[]> {
         const team = await this.teamService.getMyTeam(client);
 
-        const { documents } = await this.databaseService.listContainersByTeamId(team.$id, sort, order, limit, offset);
+        const { documents } = await this.databaseService.listContainersByTeamId(team.$id, sort, order, limit);
 
         console.log(documents);
 

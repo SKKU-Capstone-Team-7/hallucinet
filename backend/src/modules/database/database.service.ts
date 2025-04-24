@@ -24,15 +24,37 @@ export class DatabaseService {
         );
     }
 
-    async listContainersByTeamId(teamId: string, sort: string, order: string, limit: number, offset: number): Promise<Models.DocumentList<Models.Document>> {
+    async listContainersByTeamId(teamId: string, sort: string, order: string, limit: number): Promise<Models.DocumentList<Models.Document>> {
+        const orderQuery = order === 'asc'
+            ? Query.orderAsc(sort)
+            : Query.orderDesc(sort);
         return this.databases.listDocuments(
             this.dbId,
             this.containerColId,
             [
                 Query.equal('team', teamId),
-                Query.orderDesc('lastAccessed'),
+                orderQuery,
                 Query.limit(limit)
             ]
         )
     }
+
+    async registerTeamId(teamId: string): Promise<Models.Document> {
+        return this.databases.createDocument(
+            this.dbId,
+            this.teamColId,
+            teamId,
+            {},
+        )
+    }
+
+    async registerUserId(userId: string): Promise<Models.Document> {
+        return this.databases.createDocument(
+            this.dbId,
+            this.userColId,
+            userId,
+            {}
+        )
+    }
 }
+

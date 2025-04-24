@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Client, ID, Query, Teams } from 'node-appwrite';
 import { AppwriteService } from 'src/modules/appwrite/appwrite.service';
-import { TeamInfoDto } from './dto/team-info.dto';
+import { PublicTeamInfoDto, TeamInfoDto } from './dto/team-info.dto';
 import { CreateTeamDto } from './dto/create-team.dto';
+import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class TeamService {
-    constructor(private readonly appwriteService: AppwriteService) { }
+    constructor(private readonly appwriteService: AppwriteService, private readonly databaseService: DatabaseService) { }
 
     async createTeam(
         client: Client,
@@ -21,6 +22,8 @@ export class TeamService {
         try {
             const newTeam = await teams.create(ID.unique(), createTeamDto.name, ['owner']);
             const updatedPrefs = await teams.updatePrefs(newTeam.$id, { ipBlock16: createTeamDto.ipBlock16 });
+            const teamInDb = await this.databaseService.registerTeamId(newTeam.$id);
+            console.log(teamInDb);
             // team database register is needed
             return this.getMyTeam(client);
         } catch (error) {
@@ -52,7 +55,7 @@ export class TeamService {
        * @param teamId The ID of the team to retrieve.
        * @returns A JSON object containing the team information.
        */
-    async getTeamById(teamId: string): Promise<TeamInfoDto> {
+    async getTeamById(teamId: string): Promise<PublicTeamInfoDto> {
         const client = this.appwriteService.getServerClient();
         const teams = new Teams(client);
 
@@ -60,7 +63,7 @@ export class TeamService {
             // Appwrite API call to get team information by teamId
             const team = await teams.get(teamId);
             console.log('Fetched team: ', team);
-            const teamInfo: TeamInfoDto = new TeamInfoDto({
+            const teamInfo: PublicTeamInfoDto = new PublicTeamInfoDto({
                 $id: team.$id,
                 name: team.name,
                 total: team.total,

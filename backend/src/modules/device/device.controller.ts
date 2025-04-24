@@ -4,11 +4,22 @@ import { AppwriteAuthGuard } from 'src/common/guards/appwrite-auth.guard';
 import { AppwriteClient } from 'src/common/decorators/appwrite-client.decorator';
 import { Client } from 'node-appwrite';
 import { DeviceInfoDto } from './dto/device-info.dto';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Devices')
+@ApiBearerAuth('JWT')
 @Controller()
 export class DeviceController {
     constructor(private readonly deviceService: DeviceService) { }
 
+    @ApiOperation({
+        summary: 'get all devices list of current user\'s team endpoint'
+    })
+    @ApiOkResponse({
+        description: 'all devices list of current user\s team',
+        type: DeviceInfoDto,
+        isArray: true
+    })
     @Get('teams/me/devices')
     @UseGuards(AppwriteAuthGuard)
     async listDevices(@AppwriteClient() client: Client): Promise<DeviceInfoDto[]> {

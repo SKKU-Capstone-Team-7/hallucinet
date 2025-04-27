@@ -36,7 +36,7 @@ export default function Landing() {
           Contact Us
         </button>
         <Link href="/login" className="sign-link">
-          Sign In/Sign Up
+          Get started
         </Link>
       </div>
 

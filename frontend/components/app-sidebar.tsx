@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
 import React from "react";
+import type { Models } from "appwrite";
 import { Home, Inbox, Calendar, Search, Settings } from "lucide-react";
 import styles from "@/styles/app-sidebar.module.css";
-import UserFooter from "@/components/UserFooter";             
+import UserFooter from "@/components/UserFooter";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,                                        
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 
 const items = [
@@ -24,7 +24,12 @@ const items = [
   { title: "Settings", url: "#", icon: Settings },
 ];
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  user: Models.User<Models.Preferences>;
+  onLogout: () => void;
+}
+
+export function AppSidebar({ user, onLogout }: AppSidebarProps) {
   return (
     <Sidebar className="flex flex-col h-full bg-white">
       <SidebarContent>
@@ -52,7 +57,9 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="mt-auto">
-        <UserFooter />
+        <div className="sidebar-footer">
+          <UserFooter user={user} onLogout={onLogout} />
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

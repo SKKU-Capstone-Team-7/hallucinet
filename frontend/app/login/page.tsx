@@ -15,58 +15,65 @@ export default function Login() {
   const [password,     setPassword]     = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error,        setError]        = useState('');
+  const canSubmit = email.trim() !== '' && password.trim() !== '';
 
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
   const project  = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
 
-  function getAccount() {
+  async function dologin() {
     const client = new Client()
-      .setEndpoint(endpoint)
-      .setProject(project);
-    return new Account(client);
-  }
+    .setEndpoint(endpoint)
+    .setProject(project)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const account = new Account(client)
+    const curSession = account.getSession("current")
+
+    const user = await account.get()
+    .then(user =>  {
+      // Has existing session
+      console.log(`Existing Session: ${JSON.stringify(user)}`)
+      return user
+      }
+    ).catch(err => (async () => {
+        // No existing session. Login
+        const user = await account.createEmailPasswordSession(email, password)
+        console.log(`Session: ${JSON.stringify(user)}`)
+        return user
+      })()
+    )
+
+    const jwt = await account.createJWT()
+    console.log(`JWT: ${JSON.stringify(jwt)}`)
+
+    fetch('/api/v1/users/me', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${jwt}`
+      }
+    }).then(res => res.text())
+      .then(body => {
+        alert(`Server responded: ${body}`)
+      })
+  }
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
 
-    const account = getAccount();
-
-    try {
-      await account.get();  
-      router.push('/dashboard');
+    if (!email || !password) {
+      setError('Please fill in all fields');
       return;
-    } catch (getErr) {
     }
 
     try {
-      await account.createEmailPasswordSession(email, password);
-      toast('Successfully logged in', {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-        transition: Bounce,
-        });
-      router.push('/dashboard');
-    } catch (err: any) {
-      if (
-        err instanceof Error &&
-        err.message.includes('prohibited when a session is active')
-      ) {
-        router.push('/dashboard');
-      } else {
-        console.error(err);
-        setError(err.message || 'Login failed.');
-      }
+      await dologin();
+      toast.success('Login successful!', { transition: Bounce });
+      router.push('/');
+    } catch (err) {
+      console.error(err);
+      setError('Invalid email or password');
     }
-  };
+  }
 
-  const canSubmit = Boolean(email && password);
 
   return (
     <div className="login-page">

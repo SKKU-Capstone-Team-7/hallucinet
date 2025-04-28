@@ -7,7 +7,7 @@ import { ContainerInfoDto } from './dto/container-info.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Containers')
-@ApiBearerAuth('JWT')
+@ApiBearerAuth('bearer')
 @Controller('')
 export class ContainerController {
     constructor(private readonly ContainerService: ContainerService) { }

@@ -8,7 +8,7 @@ import { Client } from 'node-appwrite';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Teams')
-@ApiBearerAuth('JWT')
+@ApiBearerAuth('bearer')
 @Controller('teams')
 export class TeamController {
   constructor(private readonly teamService: TeamService) { }

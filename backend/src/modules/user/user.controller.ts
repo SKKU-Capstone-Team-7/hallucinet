@@ -10,7 +10,7 @@ import { UserInfo } from 'os';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Users')
-@ApiBearerAuth('JWT')
+@ApiBearerAuth('bearer')
 @Controller('users')
 export class UserController {
     constructor(private readonly userService: UserService) { }

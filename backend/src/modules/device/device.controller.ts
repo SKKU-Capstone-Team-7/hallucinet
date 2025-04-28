@@ -7,7 +7,7 @@ import { DeviceInfoDto } from './dto/device-info.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Devices')
-@ApiBearerAuth('JWT')
+@ApiBearerAuth('bearer')
 @Controller()
 export class DeviceController {
     constructor(private readonly deviceService: DeviceService) { }

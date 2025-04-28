@@ -76,7 +76,7 @@ body {
     color: black;
     text-decoration: none;
     font-size: 10pt;
-    /*font-weight: bold;*/
+    font-family: 'Roboto', sans-serif;
     transition: transform 0.2s;
 }
 
@@ -175,7 +175,7 @@ body {
     line-height: 1.6;
     margin-top: 8px;
     color: #ccc;
-    font-family: 'Work Sans', sans-serif;
+    font-family: 'Roboto', sans-serif;
 }
 
 .purple {
@@ -225,6 +225,7 @@ body {
     font-size: 1.05rem;
     border-radius: 8px;
     outline: none;
+    font-family: 'Roboto', sans-serif;
     resize: none;
     font-family: 'Work Sans', sans-serif;
   }
@@ -235,14 +236,15 @@ body {
     padding: 12px;
     font-size: 1.1rem;
     font-weight: 400;
+    font-family: 'Roboto', sans-serif;
     border: none;
     border-radius: 0.8rem;
     cursor: pointer;
     transition: background-color 0.3s ease;
     margin-top: 10px;
+    transition: transform 0.2s;
   }
   
   .contact-form button:hover {
-    background-color: #3ABEFF
-  }
-  
+    transform: scale(1.05);
+  }  

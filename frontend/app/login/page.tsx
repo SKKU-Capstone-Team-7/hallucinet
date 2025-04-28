@@ -7,6 +7,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa6';
 import OAuthButtons from '@/components/AuthButtons';
 import { Client, Account } from 'appwrite';
 import '@/styles/Login.css';
+import { toast, Bounce } from 'react-toastify';
 
 export default function Login() {
   const router = useRouter();
@@ -40,6 +41,17 @@ export default function Login() {
 
     try {
       await account.createEmailPasswordSession(email, password);
+      toast('Successfully logged in', {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+        transition: Bounce,
+        });
       router.push('/dashboard');
     } catch (err: any) {
       if (

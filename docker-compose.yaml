@@ -1,28 +1,64 @@
 services:
+  # Copy file from host then install pnpm packages for frontend and backend together
+  initializer:
+    image: node:23
+    container_name: hallucinet-initializer
+    restart: on-failure
+    volumes:
+      - ./:/src/
+      - hallucinet:/app/
+    command: /bin/bash -c "
+      cp /src/* /app/ -r &&
+
+      npm install -g pnpm@latest &&
+      echo '===== app/backend =====' &&
+      cd /app/backend/ && pnpm install &&
+      echo '===== app/frontend =====' &&
+      cd /app/frontend/ && pnpm install
+      "
+
+  # Sync files from host to docker volume every 5 seconds so hot reloads work
+  syncer:
+    image: servercontainers/rsync
+    container_name: hallucinet-syncer
+    volumes:
+      - ./:/src/
+      - hallucinet:/app/
+    command: /bin/bash -c "
+      while true; do
+      rsync -avch --exclude=node_modules/ --exclude=.next/ --exclude=.pnpm-store/ --cvs-exclude /src/ /app/ &&
+      sleep 5;
+      done;
+      "
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+
   backend:
     image: node:23
     container_name: hallucinet-backend
-    working_dir: /app
-    environment:
-      - APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
-      - APPWRITE_PROJECT=67ef5621003d5fdb528d
-      - APPWRITE_API_KEY=standard_514aa5990ecc11ddadafcc3ed108640b5804c3fd1b8572f5765975eccc219d4424ad0e6524a1a752d3da2ee3eb47d16a57c497c60417ec3d6a49cc38a1ca7c41abf24d8cea2046012b13a4f9ff309ea6f890558d0ed658ab9b04ae108ce51821068ef1619687c36a42e5d8d64a8877fab8aac08ff484d0c3466ace7d6b855b3d
-      - APPWRITE_DATABASE_ID=67f756f80029d2037895
-      - USER_COLLECTION_ID=6807322b000d51733ec0
-      - TEAM_COLLECTION_ID=68073238001e53aa95d1
-      - CONTAINER_COLLECTION_ID=68071e7d0015ebe369b7
-      - DEVICE_COLLECTION_ID=67f757070004ed79dfeb
+    restart: on-failure
+    env_file:
+      - ./backend/.env
+    working_dir: /app/backend/
     volumes:
-      - ./backend/:/app
-    command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm add node-appwrite && pnpm add @nestjs/cli && pnpm add @nestjs/swagger swagger-ui-express && pnpm add class-validator class-transformer && pnpm run start:dev"
+      - hallucinet:/app/
+    command: /bin/bash -c "npm install -g pnpm@latest && pnpm run start:dev"
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
 
   frontend:
     image: node:23
     container_name: hallucinet-frontend
-    working_dir: /app
+    restart: on-failure
+    working_dir: /app/frontend/
     volumes:
-      - ./frontend/:/app
-    command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm run dev"
+      - hallucinet:/app/
+    command: /bin/bash -c "npm install -g pnpm@latest && pnpm run dev"
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
 
   nginx:
     image: nginx:latest
@@ -32,5 +68,8 @@ services:
     ports:
       - 80:80
     depends_on:
-      - backend
-      - frontend
+      initializer:
+        condition: service_completed_successfully
+
+volumes:
+  hallucinet:

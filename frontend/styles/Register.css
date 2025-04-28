@@ -87,12 +87,12 @@ html, body {
   }
   
   .register-button.active {
-    background-color: #1C8CF0;
+    background-color: #1f8CF0;
     cursor: pointer;
   }
   
   .register-button.active:hover {
-    background-color: #1C8CF0;
+    background-color: #1f8CF0;
     transform: translateY(-2px);
   }
   
@@ -108,7 +108,7 @@ html, body {
   }
   
   .register-footer a {
-    color: #1C8CF0;
+    color: #1f8CF0;
     text-decoration: none;
     font-weight: 500;
   }

@@ -1,4 +1,36 @@
 services:
+  clientA:
+    image: nicolaka/netshoot
+    container_name: hallucinet-clientA
+    hostname: hallucinet-clientA
+    networks:
+      hallucinet-vpn:
+        ipv4_address: 192.168.100.2
+      internet:
+    volumes:
+      - ./cli/:/app/
+      - /cli/.test/clientA.hallucinet.token:/root/.hallucinet/token
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_ADMIN
+
+  clientB:
+    image: nicolaka/netshoot
+    container_name: hallucinet-clientB
+    hostname: hallucinet-clientB
+    networks:
+      hallucinet-vpn:
+        ipv4_address: 192.168.100.3
+      internet:
+    volumes:
+      - ./cli/:/app/
+      - /cli/.test/clientB.hallucinet.token:/root/.hallucinet/token
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_ADMIN
+
   # Copy file from host then install pnpm packages for frontend and backend together
   initializer:
     image: node:23
@@ -12,11 +44,11 @@ services:
 
       npm install -g pnpm@latest &&
       echo '===== app/backend =====' &&
-      cd /app/backend/ && pnpm install --optimistic-repeat-install &&
+      cd /app/backend/ && pnpm install --force &&
       echo '===== app/frontend =====' &&
-      cd /app/frontend/ && pnpm install --optimistic-repeat-install &&
+      cd /app/frontend/ && pnpm install --force &&
       echo '===== app/coordination_server =====' &&
-      cd /app/coordination_server/ && pnpm install --optimistic-repeat-install
+      cd /app/coordination_server/ && pnpm install --force
       "
 
   # Sync files from host to docker volume every 5 seconds so hot reloads work
@@ -49,6 +81,8 @@ services:
     depends_on:
       initializer:
         condition: service_completed_successfully
+    networks:
+      server:
 
   frontend:
     image: node:23
@@ -61,6 +95,8 @@ services:
     depends_on:
       initializer:
         condition: service_completed_successfully
+    networks:
+      server:
 
   coordination_server:
     image: node:23
@@ -75,6 +111,8 @@ services:
     depends_on:
       initializer:
         condition: service_completed_successfully
+    networks:
+      server:
 
   nginx:
     image: nginx:latest
@@ -86,6 +124,17 @@ services:
     depends_on:
       initializer:
         condition: service_completed_successfully
+    networks:
+      internet:
+      server:
 
 volumes:
   hallucinet:
+
+networks:
+  hallucinet-vpn:
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+  internet:
+  server:

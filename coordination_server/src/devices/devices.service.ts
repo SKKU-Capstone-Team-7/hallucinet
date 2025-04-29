@@ -1,9 +1,28 @@
 import { Injectable } from '@nestjs/common';
+import { Client } from 'node-appwrite';
 import { AppwriteService } from 'src/appwrite/appwrite.service';
+import { DeviceInfoDto } from './device-info.dto';
 
 @Injectable()
 export class DevicesService {
   constructor(private readonly appwriteService: AppwriteService) {}
+
+  async getDevices(): Promise<DeviceInfoDto[]> {
+    const client = this.appwriteService.getServerClient();
+
+    return [
+      new DeviceInfoDto({
+        name: 'clientA',
+        subnet: '10.2.1.0/24',
+        address: '192.168.100.2',
+      }),
+      new DeviceInfoDto({
+        name: 'clientB',
+        subnet: '10.2.2.0/24',
+        address: '192.168.100.3',
+      }),
+    ];
+  }
 }
 
 // async listDevices(client: Client,): Promise<DeviceInfoDto[]> {

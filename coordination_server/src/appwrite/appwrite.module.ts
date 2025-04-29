@@ -4,6 +4,7 @@ import { AppwriteController } from './appwrite.controller';
 
 @Module({
   providers: [AppwriteService],
-  controllers: [AppwriteController]
+  controllers: [AppwriteController],
+  exports: [AppwriteService],
 })
 export class AppwriteModule {}

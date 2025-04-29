@@ -1,3 +1,3 @@
 {
-  "coordination_endpoint": "http://localhost/api/coordination/"
+  "coordination_endpoint": "http://hallucinet-nginx/api/coordination/"
 }

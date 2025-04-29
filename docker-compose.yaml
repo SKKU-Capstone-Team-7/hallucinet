@@ -9,7 +9,7 @@ services:
       internet:
     volumes:
       - ./cli/:/app/
-      - /cli/.test/clientA:/root/.hallucinet
+      - ./cli/.test/clientA/:/root/.hallucinet/
     stdin_open: true
     tty: true
     cap_add:
@@ -25,7 +25,7 @@ services:
       internet:
     volumes:
       - ./cli/:/app/
-      - /cli/.test/clientB:/root/.hallucinet
+      - ./cli/.test/clientB/:/root/.hallucinet/
     stdin_open: true
     tty: true
     cap_add:

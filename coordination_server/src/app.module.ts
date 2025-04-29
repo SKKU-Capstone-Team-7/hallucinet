@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { CoordinationModule } from './coordination/coordination.module';
-import { ConfigModule } from '@nestjs/config';
+import { DevicesModule } from './devices/devices.module';
+import { AppwriteModule } from './appwrite/appwrite.module';
 
 @Module({
-  imports: [CoordinationModule, ConfigModule.forRoot()],
+  imports: [DevicesModule, AppwriteModule],
   controllers: [AppController],
   providers: [AppService],
 })

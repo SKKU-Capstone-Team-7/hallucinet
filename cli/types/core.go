@@ -1,9 +1,16 @@
 package types
 
-import "net"
+import (
+	"net"
+	"net/netip"
+)
 
 type DeviceInfo struct {
-	name    string    `json:"name"`
-	subnet  net.IPNet `json:"subnet"`
-	address net.Addr  `json:"address"`
+	Name    string     `json:"name"`
+	Subnet  net.IPNet  `json:"subnet"`
+	Address netip.Addr `json:"address"`
+}
+
+type Config struct {
+	Endpoint string `json:"coordination_endpoint"`
 }

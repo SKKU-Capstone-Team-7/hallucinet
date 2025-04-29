@@ -4,8 +4,17 @@ Copyright © 2025 Hallucinet Team
 package cmd
 
 import (
+	"fmt"
+	"log"
+	"os"
+
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/coordination"
 	"github.com/spf13/cobra"
+)
+
+var (
+	configPath string
+	tokenPath  string
 )
 
 // upCmd represents the up command
@@ -18,21 +27,31 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		coordination.GetDevices()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		coord, err := coordination.New(configPath, tokenPath)
+		if err != nil {
+			return err
+		}
+
+		coord.GetDevices()
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(upCmd)
 
-	// Here you will define your flags and configuration settings.
+	// Configuration file path
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Panicf("Cannot read user home directory. %v\n", homeDir)
+	}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// upCmd.PersistentFlags().String("foo", "", "A help for foo")
+	defaultConfigPath := fmt.Sprintf("%s/.hallucinet/config.json", homeDir)
+	upCmd.Flags().StringVar(&configPath, "config", defaultConfigPath, "")
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// upCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	defaultTokenPath := fmt.Sprintf("%s/.hallucinet/token", homeDir)
+	upCmd.Flags().StringVar(&tokenPath, "token", defaultTokenPath, "")
+
+	// Token file path
 }

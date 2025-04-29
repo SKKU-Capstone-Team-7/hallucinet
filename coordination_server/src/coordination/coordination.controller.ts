@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { CoordinationService } from './coordination.service';
 
-@Controller('coordination')
+@Controller('')
 export class CoordinationController {
   constructor(private readonly coordService: CoordinationService) {}
   @Get('devices')

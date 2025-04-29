@@ -12,9 +12,11 @@ services:
 
       npm install -g pnpm@latest &&
       echo '===== app/backend =====' &&
-      cd /app/backend/ && pnpm install &&
+      cd /app/backend/ && pnpm install --optimistic-repeat-install &&
       echo '===== app/frontend =====' &&
-      cd /app/frontend/ && pnpm install
+      cd /app/frontend/ && pnpm install --optimistic-repeat-install &&
+      echo '===== app/coordination_server =====' &&
+      cd /app/coordination_server/ && pnpm install --optimistic-repeat-install
       "
 
   # Sync files from host to docker volume every 5 seconds so hot reloads work
@@ -56,6 +58,20 @@ services:
     volumes:
       - hallucinet:/app/
     command: /bin/bash -c "npm install -g pnpm@latest && pnpm run dev"
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+
+  coordination_server:
+    image: node:23
+    container_name: hallucinet-coordination-server
+    restart: on-failure
+    env_file:
+      - ./coordination_server/.env
+    working_dir: /app/coordination_server/
+    volumes:
+      - hallucinet:/app/
+    command: /bin/bash -c "npm install -g pnpm@latest && pnpm run start:dev"
     depends_on:
       initializer:
         condition: service_completed_successfully

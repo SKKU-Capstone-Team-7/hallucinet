@@ -31,10 +31,10 @@ func (hnet Hallucinet) sendMessage(msg comms.Msg) error {
 	}
 	defer conn.Close()
 
-	// Send header
-	headerBuf := make([]byte, binary.Size(comms.MsgHeader{}))
-	binary.Encode(headerBuf, binary.NativeEndian, msg.Header)
-	_, err = conn.Write(headerBuf)
+	err = binary.Write(conn, binary.NativeEndian, msg.Header)
+	if err != nil {
+		return err
+	}
 
 	// TODO send body
 	return err

@@ -60,13 +60,18 @@ func (daemon HallucinetDaemon) socketListenLoop() error {
 		}
 		defer conn.Close()
 
-		headerBuf := make([]byte, binary.Size(comms.MsgHeader{}))
-		_, err = conn.Read(headerBuf)
+		var msg comms.Msg
+		err = binary.Read(conn, binary.NativeEndian, &msg.Header)
 		if err != nil {
 			return err
 		}
 
-		log.Printf("Received header %v\n", headerBuf)
+		switch msg.Header.Kind {
+		case comms.MsgStartDaemon:
+			log.Printf("Daemon started")
+		case comms.MsgStopDaemon:
+			log.Printf("Daemon stopped")
+		}
 	}
 
 	return nil

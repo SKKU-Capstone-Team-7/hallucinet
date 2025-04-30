@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/netip"
@@ -67,20 +66,17 @@ func (coord Coord) GetDevices() ([]types.DeviceInfo, error) {
 	deviceURL := fmt.Sprintf("%s/devices", coord.config.Endpoint)
 	res, err := http.Get(deviceURL)
 	if err != nil {
-		log.Printf("Cannot GET %v\n. %v\n", deviceURL, err)
 		return []types.DeviceInfo{}, err
 	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Printf("Cannot read GET /devices response body %v. %v\n", deviceURL, err)
 		return []types.DeviceInfo{}, err
 	}
 
 	var deviceDtos []DeviceInfoDto
 	err = json.Unmarshal(body, &deviceDtos)
 	if err != nil {
-		log.Printf("Cannot unmarshal GET /devices. %v\n", err)
 		return []types.DeviceInfo{}, err
 	}
 
@@ -88,7 +84,6 @@ func (coord Coord) GetDevices() ([]types.DeviceInfo, error) {
 	for _, dto := range deviceDtos {
 		dev, err := parseDeviceInfoDto(dto)
 		if err != nil {
-			println("Cannot convert DTO to DeviceInfo. %v\n", err)
 			return []types.DeviceInfo{}, err
 		}
 		devices = append(devices, dev)

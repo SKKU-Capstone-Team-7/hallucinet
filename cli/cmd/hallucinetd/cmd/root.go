@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinetd/internal/socket"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinetd/internal/hallucinetd"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -50,9 +50,16 @@ func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 		log.Printf("Cannot read config file %v. %v\n", config, err)
 	}
 
-	_, err = socket.New(config.HallucinetSocket)
+	daemon, err := hallucinetd.New(config)
 	if err != nil {
-		log.Printf("Cannot create socket object. %v\n", err)
+		log.Printf("Cannot start daemon. %v\n", err)
 	}
+
+	err = daemon.Start()
+	if err != nil {
+		log.Printf("Cannot start daemon. %v\n", err)
+		return err
+	}
+
 	return nil
 }

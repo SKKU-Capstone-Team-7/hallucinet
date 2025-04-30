@@ -3,7 +3,6 @@ package routing
 import (
 	"container/list"
 	"errors"
-	"log"
 	"net"
 	"reflect"
 
@@ -15,7 +14,6 @@ type RouteManager struct {
 	routes list.List // []netlink.Route
 }
 
-// Errors
 var (
 	ErrRouteAlreadyExists = errors.New("route already exists")
 	ErrRouteDoesNotExist  = errors.New("route does not exist")
@@ -56,51 +54,23 @@ func (roma RouteManager) getRouteBySubnet(subnet net.IPNet) *netlink.Route {
 }
 
 func (roma RouteManager) AddRoute(subnet net.IPNet, routerDevice types.DeviceInfo) error {
-	if roma.routeExists(subnet) {
-		err := ErrRouteAlreadyExists
-		log.Printf("Cannot add route for subnet %v. %v\n", subnet, err)
-		return err
-	}
-
 	routerIP := net.ParseIP(routerDevice.Address.String())
 	if routerIP == nil {
-		err := ErrInvalidAddress
-		log.Printf("Cannot parse router device IP %v. %v\n", routerIP, ErrInvalidAddress)
-		return err
+		return ErrInvalidAddress
 	}
 
 	route := netlink.Route{
 		Dst: &subnet,
 		Gw:  routerIP,
 	}
-	err := netlink.RouteAdd(&route)
-	if err != nil {
-		log.Printf("Cannot add route %v. %v\n", route, err)
-		return err
-	}
-
-	return nil
+	return netlink.RouteAdd(&route)
 }
 
 func (roma RouteManager) RemoveRoute(subnet net.IPNet) error {
-	if !roma.routeExists(subnet) {
-		err := ErrRouteDoesNotExist
-		log.Printf("Cannot remove route to %v. %v\n", subnet, err)
-		return err
-	}
-
 	route := roma.getRouteBySubnet(subnet)
 	if route == nil {
-		err := ErrRouteDoesNotExist
-		log.Printf("Cannot get route for subnet %v. %v\n", subnet, err)
-		return err
+		return ErrRouteDoesNotExist
 	}
 
-	err := netlink.RouteDel(route)
-	if err != nil {
-		log.Printf("Cannot add route %v\n", err)
-		return err
-	}
-
-	return nil
+	return netlink.RouteDel(route)
 }

@@ -8,38 +8,45 @@ import (
 	"log"
 	"os"
 
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinet/internal/hallucinet"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/coordination"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
 
-var (
-	configPath string
+var upOpts = struct {
 	tokenPath  string
-)
+	configPath string
+}{}
 
-// upCmd represents the up command
 var upCmd = &cobra.Command{
 	Use:   "up",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Start hallucinet",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		coord, err := coordination.New(configPath, tokenPath)
+		config, err := utils.ReadConfigFile(upOpts.configPath)
+		if err != nil {
+			log.Printf("Cannot read config file %v. %v\n", upOpts.configPath, err)
+		}
+
+		coord, err := coordination.New(upOpts.configPath, upOpts.tokenPath)
 		if err != nil {
 			return err
 		}
-
 		devices, err := coord.GetDevices()
 		if err != nil {
 			return err
 		}
-
 		log.Printf("Devices: %v\n", devices)
-		return nil
+
+		hallucinet := hallucinet.New(config)
+		err = hallucinet.Start()
+		if err != nil {
+			log.Printf("Cannot start hallucinet. %v\n", err)
+		}
+
+		log.Printf("Hallucinet started.")
+
+		return err
 	},
 }
 
@@ -52,8 +59,8 @@ func init() {
 	}
 
 	defaultConfigPath := fmt.Sprintf("%s/.hallucinet/config.json", homeDir)
-	upCmd.Flags().StringVar(&configPath, "config", defaultConfigPath, "")
+	upCmd.Flags().StringVar(&upOpts.configPath, "config", defaultConfigPath, "")
 
 	defaultTokenPath := fmt.Sprintf("%s/.hallucinet/token", homeDir)
-	upCmd.Flags().StringVar(&tokenPath, "token", defaultTokenPath, "")
+	upCmd.Flags().StringVar(&upOpts.tokenPath, "token", defaultTokenPath, "")
 }

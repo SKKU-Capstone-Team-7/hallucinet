@@ -1,40 +1,55 @@
 /*
 Copyright © 2025 Hallucinet Team
-
 */
 package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
 
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinet/internal/hallucinet"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
 
-// downCmd represents the down command
+var downOpts = struct {
+	tokenPath  string
+	configPath string
+}{}
+
 var downCmd = &cobra.Command{
 	Use:   "down",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Stop hallucinet",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		config, err := utils.ReadConfigFile(upOpts.configPath)
+		if err != nil {
+			log.Printf("Cannot read config file %v. %v\n", upOpts.configPath, err)
+		}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("down called")
+		hallucinet := hallucinet.New(config)
+		err = hallucinet.Stop()
+		if err != nil {
+			log.Printf("Cannot stop hallucinet. %v\n", err)
+		}
+
+		log.Printf("Hallucinet stopped.")
+
+		return err
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(downCmd)
 
-	// Here you will define your flags and configuration settings.
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Panicf("Cannot read user home directory. %v\n", homeDir)
+	}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// downCmd.PersistentFlags().String("foo", "", "A help for foo")
+	defaultConfigPath := fmt.Sprintf("%s/.hallucinet/config.json", homeDir)
+	downCmd.Flags().StringVar(&downOpts.configPath, "config", defaultConfigPath, "")
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// downCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	defaultTokenPath := fmt.Sprintf("%s/.hallucinet/token", homeDir)
+	downCmd.Flags().StringVar(&downOpts.tokenPath, "token", defaultTokenPath, "")
 }

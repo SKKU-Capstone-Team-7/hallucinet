@@ -1,3 +1,5 @@
 {
-  "coordination_endpoint": "http://hallucinet-nginx/api/coordination/"
+  "coordination_endpoint": "http://hallucinet-nginx/api/coordination/",
+  "hallucinet_socket": "/var/run/hallucinet.sock",
+  "hallucinet_link": "hallucinet0"
 }

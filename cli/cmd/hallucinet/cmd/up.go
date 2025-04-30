@@ -33,7 +33,12 @@ to quickly create a Cobra application.`,
 			return err
 		}
 
-		coord.GetDevices()
+		devices, err := coord.GetDevices()
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Devices: %v\n", devices)
 		return nil
 	},
 }
@@ -41,7 +46,6 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(upCmd)
 
-	// Configuration file path
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panicf("Cannot read user home directory. %v\n", homeDir)
@@ -52,6 +56,4 @@ func init() {
 
 	defaultTokenPath := fmt.Sprintf("%s/.hallucinet/token", homeDir)
 	upCmd.Flags().StringVar(&tokenPath, "token", defaultTokenPath, "")
-
-	// Token file path
 }

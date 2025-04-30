@@ -12,5 +12,6 @@ type DeviceInfo struct {
 }
 
 type Config struct {
-	Endpoint string `json:"coordination_endpoint"`
+	Endpoint         string `json:"coordination_endpoint"`
+	HallucinetSocket string `json:"hallucinet_socket"`
 }

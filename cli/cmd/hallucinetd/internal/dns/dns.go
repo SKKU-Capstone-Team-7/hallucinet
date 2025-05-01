@@ -3,7 +3,6 @@ package dns
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/netip"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
@@ -70,6 +69,10 @@ func (dns *Dns) RemoveEntry(container types.ContainerInfo) error {
 	return nil
 }
 
+func (dns *Dns) ClearEntries() {
+	clear(dns.entries)
+}
+
 func (dns *Dns) handleDNSRequest(rw dnslib.ResponseWriter, req *dnslib.Msg) {
 	res := new(dnslib.Msg)
 	res.SetReply(req)
@@ -80,21 +83,20 @@ func (dns *Dns) handleDNSRequest(rw dnslib.ResponseWriter, req *dnslib.Msg) {
 		return
 	}
 
-	log.Println("")
-	log.Printf("Current entries: \n")
-	for key, value := range dns.entries {
-		log.Printf("%v -> %v\n", key, value)
-	}
-	log.Println("")
-
 	q := req.Question[0]
 	switch q.Qtype {
 	case dnslib.TypeA:
 		entry, exists := dns.entries[q.Name]
 		if !exists {
-			log.Printf("entry %v does not exist\n", q.Name)
-			res.Rcode = dnslib.RcodeNameError
-			rw.WriteMsg(res)
+			// Fallback to 1.1.1.1
+			c := dnslib.Client{}
+			fallbackRes, _, err := c.Exchange(req, "1.1.1.1:53")
+			if err != nil {
+				res.Rcode = dnslib.RcodeNameError
+				rw.WriteMsg(res)
+				return
+			}
+			rw.WriteMsg(fallbackRes)
 			return
 		}
 
@@ -115,5 +117,6 @@ func (dns *Dns) Start() error {
 }
 
 func (dns *Dns) Stop() error {
+	dns.ClearEntries()
 	return dns.server.Shutdown()
 }

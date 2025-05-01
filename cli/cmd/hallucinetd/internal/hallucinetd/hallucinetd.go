@@ -84,11 +84,6 @@ func (daemon *HallucinetDaemon) socketListenLoop() error {
 	log.Printf("Listening on %v\n", daemon.config.HallucinetSocket)
 	running := false
 
-	devices, err := daemon.coord.GetDevices()
-	if err != nil {
-		return err
-	}
-
 	for {
 		conn, err := daemon.listener.AcceptUnix()
 		if err != nil {
@@ -98,6 +93,15 @@ func (daemon *HallucinetDaemon) socketListenLoop() error {
 
 		var msg comms.Msg
 		err = binary.Read(conn, binary.NativeEndian, &msg.Header)
+		if err != nil {
+			return err
+		}
+
+		devices, err := daemon.coord.GetDevices()
+		if err != nil {
+			return err
+		}
+		containers, err := daemon.coord.GetContainers()
 		if err != nil {
 			return err
 		}
@@ -112,6 +116,7 @@ func (daemon *HallucinetDaemon) socketListenLoop() error {
 				}
 
 				daemon.addRoutesToDevices(devices)
+				daemon.addDnsEntriesForContainers(containers)
 
 				go daemon.startDns()
 				running = true
@@ -121,6 +126,8 @@ func (daemon *HallucinetDaemon) socketListenLoop() error {
 			log.Printf("Received stop message.")
 			if running {
 				daemon.stopDns()
+				// TODO use runtime container, devices instead of initialize-time
+				daemon.removeDnsentriesForContainers(containers)
 				daemon.removeRoutesToDevices(devices)
 				running = false
 			}
@@ -171,6 +178,36 @@ func (daemon *HallucinetDaemon) removeRoutesToDevices(devices []types.DeviceInfo
 			log.Printf("Skipped removing route to %v via %v. %v\n", device.Subnet, device, err)
 		} else {
 			log.Printf("Removed route to %v via %v\n", device.Subnet, device)
+		}
+	}
+
+	return nil
+}
+
+func (daemon *HallucinetDaemon) addDnsEntriesForContainers(containers []types.ContainerInfo) error {
+	// TODO Handle errors
+	for _, container := range containers {
+		err := daemon.dns.AddEntry(container)
+		fqdn := daemon.dns.GetContainerFQDN(container)
+		if err != nil {
+			log.Printf("Skipped adding DNS entry for %v %v. %v\n", fqdn, container.Address, err)
+		} else {
+			log.Printf("Added DNS entry for %v %v\n", fqdn, container.Address)
+		}
+	}
+
+	return nil
+}
+
+func (daemon *HallucinetDaemon) removeDnsentriesForContainers(containers []types.ContainerInfo) error {
+	// TODO Handle errors
+	for _, container := range containers {
+		err := daemon.dns.RemoveEntry(container)
+		fqdn := daemon.dns.GetContainerFQDN(container)
+		if err != nil {
+			log.Printf("Skipped removing DNS entry for %v %v. %v\n", fqdn, container.Address, err)
+		} else {
+			log.Printf("Removed DNS entry for %v %v\n", fqdn, container.Address)
 		}
 	}
 

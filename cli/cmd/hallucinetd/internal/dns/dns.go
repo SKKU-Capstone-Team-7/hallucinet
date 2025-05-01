@@ -34,14 +34,14 @@ func New(config types.Config) (*Dns, error) {
 	return &dns, nil
 }
 
-func (dns *Dns) getContainerFQDN(container types.ContainerInfo) string {
+func (dns *Dns) GetContainerFQDN(container types.ContainerInfo) string {
 	deviceName := container.Device.Name
 	containerName := container.Name
 	return fmt.Sprintf("%v.%v.test.", deviceName, containerName)
 }
 
 func (dns *Dns) entryExists(container types.ContainerInfo) bool {
-	fqdn := dns.getContainerFQDN(container)
+	fqdn := dns.GetContainerFQDN(container)
 	_, ok := dns.entries[fqdn]
 	return ok
 }
@@ -51,7 +51,7 @@ func (dns *Dns) AddEntry(container types.ContainerInfo) error {
 		return ErrEntryAlreadyExists
 	}
 
-	fqdn := dns.getContainerFQDN(container)
+	fqdn := dns.GetContainerFQDN(container)
 
 	dns.entries[fqdn] = container.Address
 
@@ -63,7 +63,7 @@ func (dns *Dns) RemoveEntry(container types.ContainerInfo) error {
 		return ErrEntryDoesNotExist
 	}
 
-	fqdn := dns.getContainerFQDN(container)
+	fqdn := dns.GetContainerFQDN(container)
 	delete(dns.entries, fqdn)
 
 	return nil
@@ -117,6 +117,5 @@ func (dns *Dns) Start() error {
 }
 
 func (dns *Dns) Stop() error {
-	dns.ClearEntries()
 	return dns.server.Shutdown()
 }

@@ -6,18 +6,20 @@ import (
 )
 
 type DeviceInfo struct {
-	Name    string     `json:"name"`
-	Subnet  net.IPNet  `json:"subnet"`
-	Address netip.Addr `json:"address"`
+	Name    string
+	Subnet  net.IPNet
+	Address netip.Addr
 }
 
 type ContainerInfo struct {
-	Name    string     `json:"name"`
-	Device  DeviceInfo `json:"device"`
-	Address netip.Addr `json:"address"`
+	Name    string
+	Device  DeviceInfo
+	Address netip.Addr
 }
 
 type Config struct {
-	Endpoint         string `json:"coordination_endpoint"`
-	HallucinetSocket string `json:"hallucinet_socket"`
+	Endpoint         string
+	HallucinetSocket string
+	Token            string
+	DnsAddress       netip.AddrPort
 }

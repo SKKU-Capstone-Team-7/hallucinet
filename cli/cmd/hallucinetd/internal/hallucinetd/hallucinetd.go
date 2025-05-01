@@ -6,16 +6,25 @@ import (
 	"net"
 	"os"
 
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinetd/internal/dns"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/comms"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/coordination"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
 )
 
 type HallucinetDaemon struct {
 	listener *net.UnixListener
 	config   types.Config
+	dns      *dns.Dns
+	coord    *coordination.Coord
 }
 
 func New(config types.Config) (*HallucinetDaemon, error) {
+	daemon := HallucinetDaemon{
+		config: config,
+	}
+
 	// Remove existing socket
 	socketPath := config.HallucinetSocket
 	fileInfo, _ := os.Stat(socketPath)
@@ -26,6 +35,7 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 		}
 	}
 
+	// Create socket listener
 	listener, err := net.ListenUnix("unix", &net.UnixAddr{
 		Name: socketPath,
 		Net:  "unix",
@@ -33,16 +43,26 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 	if err != nil {
 		return nil, err
 	}
+	daemon.listener = listener
 
-	daemon := HallucinetDaemon{
-		listener: listener,
-		config:   config,
+	// Create dns server
+	dns, err := dns.New(config)
+	if err != nil {
+		return nil, err
 	}
+	daemon.dns = dns
+
+	// Create coordination object
+	coord, err := coordination.New(config)
+	if err != nil {
+		return nil, err
+	}
+	daemon.coord = coord
 
 	return &daemon, nil
 }
 
-func (daemon HallucinetDaemon) Close() error {
+func (daemon *HallucinetDaemon) Close() error {
 	err := daemon.listener.Close()
 	if err != nil {
 		return err
@@ -51,8 +71,9 @@ func (daemon HallucinetDaemon) Close() error {
 	return nil
 }
 
-func (daemon HallucinetDaemon) socketListenLoop() error {
+func (daemon *HallucinetDaemon) socketListenLoop() error {
 	log.Printf("Listening on %v\n", daemon.config.HallucinetSocket)
+	running := false
 	for {
 		conn, err := daemon.listener.AcceptUnix()
 		if err != nil {
@@ -68,16 +89,62 @@ func (daemon HallucinetDaemon) socketListenLoop() error {
 
 		switch msg.Header.Kind {
 		case comms.MsgStartDaemon:
-			log.Printf("Daemon started")
+			log.Printf("Received start message.")
+			if !running {
+				go daemon.startDns()
+				daemon.addContainersFromServer()
+				running = true
+			}
 		case comms.MsgStopDaemon:
-			log.Printf("Daemon stopped")
+			log.Printf("Received stop message.")
+			if running {
+				daemon.stopDns()
+				running = false
+			}
 		}
 	}
 
 	return nil
 }
 
-func (daemon HallucinetDaemon) Start() error {
+func (daemon *HallucinetDaemon) startDns() {
+	log.Printf("Starting dns server at %v\n", daemon.config.DnsAddress.String())
+	err := daemon.dns.Start()
+	if err != nil {
+		log.Printf("DNS server error: %v\n", err)
+		return
+	}
+}
+
+func (daemon *HallucinetDaemon) stopDns() {
+	err := daemon.dns.Stop()
+	if err != nil {
+		log.Printf("Cannot stop DNS server", err)
+		return
+	}
+	log.Printf("DNS server stopped.\n")
+}
+
+func (daemon *HallucinetDaemon) addContainersFromServer() {
+	devices, err := daemon.coord.GetDevices()
+	if err != nil {
+		log.Printf("Cannot get container from server. %v\n", err)
+	}
+
+	deviceOne := devices[0]
+	containerOne, err := utils.CreateContainerInfo("containerOne", "10.2.1.2", deviceOne)
+	if err != nil {
+		log.Printf("Error creating container info. %v\n", containerOne)
+	}
+
+	err = daemon.dns.AddEntry(containerOne)
+	if err != nil {
+		log.Printf("Error adding entry. %v\n", err)
+	}
+	log.Printf("Adding entry %v %v %v\n", deviceOne.Name, containerOne.Name, containerOne.Address)
+}
+
+func (daemon *HallucinetDaemon) Start() error {
 	daemon.socketListenLoop()
 	return nil
 }

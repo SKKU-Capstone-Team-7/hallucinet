@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinet/internal/hallucinet"
-	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/coordination"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -26,17 +25,15 @@ var upCmd = &cobra.Command{
 		config, err := utils.ReadConfigFile(upOpts.configPath)
 		if err != nil {
 			log.Printf("Cannot read config file %v. %v\n", upOpts.configPath, err)
+			return err
 		}
 
-		coord, err := coordination.New(upOpts.configPath, upOpts.tokenPath)
+		token, err := os.ReadFile(upOpts.tokenPath)
 		if err != nil {
+			log.Printf("Cannot read token file %v. %v\n", upOpts.tokenPath, err)
 			return err
 		}
-		devices, err := coord.GetDevices()
-		if err != nil {
-			return err
-		}
-		log.Printf("Devices: %v\n", devices)
+		config.Token = string(token)
 
 		hallucinet := hallucinet.New(config)
 		err = hallucinet.Start()

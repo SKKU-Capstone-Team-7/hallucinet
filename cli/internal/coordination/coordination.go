@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/netip"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
@@ -19,51 +17,23 @@ type DeviceInfoDto struct {
 }
 
 type Coord struct {
-	config        types.Config
-	coordEndpoint string
-	token         string
+	endpoint string
+	token    string
 }
 
-func New(configPath string, tokenPath string) (*Coord, error) {
-	coordConfig, err := utils.ReadConfigFile(configPath)
-	if err != nil {
-		return nil, err
-	}
-
-	token, err := utils.ReadTokenFile(tokenPath)
-	if err != nil {
-		return nil, err
-	}
-
+func New(config types.Config) (*Coord, error) {
 	return &Coord{
-		config:        coordConfig,
-		coordEndpoint: coordConfig.Endpoint,
-		token:         token,
+		endpoint: config.Endpoint,
+		token:    config.Token,
 	}, nil
 }
 
 func parseDeviceInfoDto(dev DeviceInfoDto) (types.DeviceInfo, error) {
-	_, subnet, err := net.ParseCIDR(dev.Subnet)
-	if err != nil {
-		println("Cannot subnet CIDR %v. %v\n", dev.Subnet, err)
-		return types.DeviceInfo{}, err
-	}
-
-	address, err := netip.ParseAddr(dev.Address)
-	if err != nil {
-		println("Cannot parse address %v. %v\n", dev.Address, err)
-		return types.DeviceInfo{}, err
-	}
-
-	return types.DeviceInfo{
-		Name:    dev.Name,
-		Subnet:  *subnet,
-		Address: address,
-	}, nil
+	return utils.CreateDeviceInfo(dev.Name, dev.Subnet, dev.Address)
 }
 
-func (coord Coord) GetDevices() ([]types.DeviceInfo, error) {
-	deviceURL := fmt.Sprintf("%s/devices", coord.config.Endpoint)
+func (coord *Coord) GetDevices() ([]types.DeviceInfo, error) {
+	deviceURL := fmt.Sprintf("%s/devices", coord.endpoint)
 	res, err := http.Get(deviceURL)
 	if err != nil {
 		return []types.DeviceInfo{}, err

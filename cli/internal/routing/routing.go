@@ -20,7 +20,7 @@ var (
 	ErrInvalidAddress     = errors.New("invalid address")
 )
 
-func (roma RouteManager) subnetEquals(subnetA net.IPNet, subnetB net.IPNet) bool {
+func (roma *RouteManager) subnetEquals(subnetA net.IPNet, subnetB net.IPNet) bool {
 	ipA := subnetA.IP
 	maskA := subnetA.Mask
 	ipB := subnetB.IP
@@ -29,7 +29,7 @@ func (roma RouteManager) subnetEquals(subnetA net.IPNet, subnetB net.IPNet) bool
 	return ipA.Equal(ipB) && reflect.DeepEqual(maskA, maskB)
 }
 
-func (roma RouteManager) routeExists(subnet net.IPNet) bool {
+func (roma *RouteManager) routeExists(subnet net.IPNet) bool {
 	for routeItem := roma.routes.Front(); routeItem != nil; routeItem = routeItem.Next() {
 		route := routeItem.Value.(netlink.Route)
 
@@ -41,7 +41,7 @@ func (roma RouteManager) routeExists(subnet net.IPNet) bool {
 	return false
 }
 
-func (roma RouteManager) getRouteBySubnet(subnet net.IPNet) *netlink.Route {
+func (roma *RouteManager) getRouteBySubnet(subnet net.IPNet) *netlink.Route {
 	for routeItem := roma.routes.Front(); routeItem != nil; routeItem = routeItem.Next() {
 		route := routeItem.Value.(netlink.Route)
 
@@ -53,7 +53,7 @@ func (roma RouteManager) getRouteBySubnet(subnet net.IPNet) *netlink.Route {
 	return nil
 }
 
-func (roma RouteManager) AddRoute(subnet net.IPNet, routerDevice types.DeviceInfo) error {
+func (roma *RouteManager) AddRoute(subnet net.IPNet, routerDevice types.DeviceInfo) error {
 	routerIP := net.ParseIP(routerDevice.Address.String())
 	if routerIP == nil {
 		return ErrInvalidAddress
@@ -66,7 +66,7 @@ func (roma RouteManager) AddRoute(subnet net.IPNet, routerDevice types.DeviceInf
 	return netlink.RouteAdd(&route)
 }
 
-func (roma RouteManager) RemoveRoute(subnet net.IPNet) error {
+func (roma *RouteManager) RemoveRoute(subnet net.IPNet) error {
 	route := roma.getRouteBySubnet(subnet)
 	if route == nil {
 		return ErrRouteDoesNotExist

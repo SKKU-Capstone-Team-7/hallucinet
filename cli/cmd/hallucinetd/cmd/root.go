@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	configPath string
 	tokenPath  string
+	configPath string
 )
 
 var rootCmd = &cobra.Command{
@@ -47,12 +47,21 @@ func init() {
 func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 	config, err := utils.ReadConfigFile(configPath)
 	if err != nil {
-		log.Printf("Cannot read config file %v. %v\n", config, err)
+		log.Printf("Cannot read config file %v. %v\n", configPath, err)
+		return err
 	}
+
+	token, err := os.ReadFile(tokenPath)
+	if err != nil {
+		log.Printf("Cannot read token file %v. %v\n", tokenPath, err)
+		return err
+	}
+	config.Token = string(token)
 
 	daemon, err := hallucinetd.New(config)
 	if err != nil {
 		log.Printf("Cannot start daemon. %v\n", err)
+		return err
 	}
 
 	err = daemon.Start()

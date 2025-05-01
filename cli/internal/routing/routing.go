@@ -1,73 +1,71 @@
 package routing
 
 import (
-	"container/list"
 	"errors"
 	"net"
-	"reflect"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
 	"github.com/vishvananda/netlink"
 )
 
-type RouteManager struct {
-	routes list.List // []netlink.Route
-}
+type RouteManager struct{}
 
 var (
 	ErrRouteAlreadyExists = errors.New("route already exists")
 	ErrRouteDoesNotExist  = errors.New("route does not exist")
+	ErrInvalidDeviceIP    = errors.New("invalid subnet")
 	ErrInvalidAddress     = errors.New("invalid address")
 )
 
-func (roma *RouteManager) subnetEquals(subnetA net.IPNet, subnetB net.IPNet) bool {
-	ipA := subnetA.IP
-	maskA := subnetA.Mask
-	ipB := subnetB.IP
-	maskB := subnetB.Mask
-
-	return ipA.Equal(ipB) && reflect.DeepEqual(maskA, maskB)
+func New(config types.Config) (*RouteManager, error) {
+	roma := RouteManager{}
+	return &roma, nil
 }
 
-func (roma *RouteManager) routeExists(subnet net.IPNet) bool {
-	for routeItem := roma.routes.Front(); routeItem != nil; routeItem = routeItem.Next() {
-		route := routeItem.Value.(netlink.Route)
+func (roma *RouteManager) getRouteToDeviceSubnet(device types.DeviceInfo) (*netlink.Route, error) {
+	routes, err := netlink.RouteList(nil, netlink.FAMILY_ALL)
+	if err != nil {
+		return nil, err
+	}
 
-		if roma.subnetEquals(subnet, *route.Dst) {
-			return true
+	for _, route := range routes {
+		if route.Dst.String() == device.Subnet.String() {
+			return &route, nil
 		}
 	}
 
-	return false
+	return nil, nil
 }
 
-func (roma *RouteManager) getRouteBySubnet(subnet net.IPNet) *netlink.Route {
-	for routeItem := roma.routes.Front(); routeItem != nil; routeItem = routeItem.Next() {
-		route := routeItem.Value.(netlink.Route)
-
-		if roma.subnetEquals(subnet, *route.Dst) {
-			return &route
-		}
+func (roma *RouteManager) AddRouteToDeviceSubnet(device types.DeviceInfo) error {
+	existingRoute, err := roma.getRouteToDeviceSubnet(device)
+	if err != nil {
+		return err
 	}
 
-	return nil
-}
+	if existingRoute != nil {
+		return ErrRouteAlreadyExists
+	}
 
-func (roma *RouteManager) AddRoute(subnet net.IPNet, routerDevice types.DeviceInfo) error {
-	routerIP := net.ParseIP(routerDevice.Address.String())
-	if routerIP == nil {
-		return ErrInvalidAddress
+	dst := net.ParseIP(device.Address.String())
+	if dst == nil {
+		return ErrInvalidDeviceIP
 	}
 
 	route := netlink.Route{
-		Dst: &subnet,
-		Gw:  routerIP,
+		Dst: &device.Subnet,
+		Gw:  dst,
 	}
+
 	return netlink.RouteAdd(&route)
 }
 
-func (roma *RouteManager) RemoveRoute(subnet net.IPNet) error {
-	route := roma.getRouteBySubnet(subnet)
+func (roma *RouteManager) RemoveRouteToDeviceSubnet(device types.DeviceInfo) error {
+	route, err := roma.getRouteToDeviceSubnet(device)
+	if err != nil {
+		return err
+	}
+
 	if route == nil {
 		return ErrRouteDoesNotExist
 	}

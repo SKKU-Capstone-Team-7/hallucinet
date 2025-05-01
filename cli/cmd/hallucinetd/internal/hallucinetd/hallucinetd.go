@@ -9,15 +9,17 @@ import (
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinetd/internal/dns"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/comms"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/coordination"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/routing"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
 )
 
 type HallucinetDaemon struct {
-	listener *net.UnixListener
-	config   types.Config
-	dns      *dns.Dns
-	coord    *coordination.Coord
+	listener     *net.UnixListener
+	config       types.Config
+	dns          *dns.Dns
+	coord        *coordination.Coord
+	routeManager *routing.RouteManager
 }
 
 func New(config types.Config) (*HallucinetDaemon, error) {
@@ -59,6 +61,13 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 	}
 	daemon.coord = coord
 
+	// Create route manager
+	roma, err := routing.New(config)
+	if err != nil {
+		return nil, err
+	}
+	daemon.routeManager = roma
+
 	return &daemon, nil
 }
 
@@ -74,6 +83,12 @@ func (daemon *HallucinetDaemon) Close() error {
 func (daemon *HallucinetDaemon) socketListenLoop() error {
 	log.Printf("Listening on %v\n", daemon.config.HallucinetSocket)
 	running := false
+
+	devices, err := daemon.coord.GetDevices()
+	if err != nil {
+		return err
+	}
+
 	for {
 		conn, err := daemon.listener.AcceptUnix()
 		if err != nil {
@@ -91,14 +106,22 @@ func (daemon *HallucinetDaemon) socketListenLoop() error {
 		case comms.MsgStartDaemon:
 			log.Printf("Received start message.")
 			if !running {
+
+				if err != nil {
+					return err
+				}
+
+				daemon.addRoutesToDevices(devices)
+
 				go daemon.startDns()
-				daemon.addContainersFromServer()
 				running = true
 			}
+
 		case comms.MsgStopDaemon:
 			log.Printf("Received stop message.")
 			if running {
 				daemon.stopDns()
+				daemon.removeRoutesToDevices(devices)
 				running = false
 			}
 		}
@@ -123,6 +146,35 @@ func (daemon *HallucinetDaemon) stopDns() {
 		return
 	}
 	log.Printf("DNS server stopped.\n")
+}
+
+func (daemon *HallucinetDaemon) addRoutesToDevices(devices []types.DeviceInfo) error {
+	// TODO Handle errors
+	// TODO Skip own subnet
+	for _, device := range devices {
+		err := daemon.routeManager.AddRouteToDeviceSubnet(device)
+		if err != nil {
+			log.Printf("Skipped adding route to %v via %v. %v\n", device.Subnet, device, err)
+		} else {
+			log.Printf("Added route to %v via %v\n", device.Subnet, device)
+		}
+	}
+
+	return nil
+}
+
+func (daemon *HallucinetDaemon) removeRoutesToDevices(devices []types.DeviceInfo) error {
+	// TODO Handle errors
+	for _, device := range devices {
+		err := daemon.routeManager.RemoveRouteToDeviceSubnet(device)
+		if err != nil {
+			log.Printf("Skipped removing route to %v via %v. %v\n", device.Subnet, device, err)
+		} else {
+			log.Printf("Removed route to %v via %v\n", device.Subnet, device)
+		}
+	}
+
+	return nil
 }
 
 func (daemon *HallucinetDaemon) addContainersFromServer() {

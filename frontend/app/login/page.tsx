@@ -30,12 +30,10 @@ export default function Login() {
 
     const user = await account.get()
     .then(user =>  {
-      // Has existing session
       console.log(`Existing Session: ${JSON.stringify(user)}`)
       return user
       }
     ).catch(err => (async () => {
-        // No existing session. Login
         const user = await account.createEmailPasswordSession(email, password)
         console.log(`Session: ${JSON.stringify(user)}`)
         return user
@@ -67,7 +65,7 @@ export default function Login() {
     try {
       await dologin();
       toast.success('Login successful!', { transition: Bounce });
-      router.push('/');
+      router.push('/dashboard');
     } catch (err) {
       console.error(err);
       setError('Invalid email or password');

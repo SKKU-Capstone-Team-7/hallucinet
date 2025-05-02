@@ -17,7 +17,7 @@ const InvitationRow = ({ sender, datetime }: Props) => {
       <td className="py-3 px-4 text-center">
         <button
           onClick={handleClick}
-          className="text-[#1a8cff] hover:underline focus:outline-none"
+          className="text-[#1f8cf0] hover:underline focus:outline-none"
         >
           ✔
         </button>

@@ -13,7 +13,7 @@ const InvitationList = () => (
       others are automatically rejected.
     </p>
 
-    <div className="bg-[#1c2a3a] rounded p-4">
+    <div className="bg-[#1a2841] rounded p-4">
       <table className="w-full text-left text-white">
         <thead>
           <tr className="border-b border-gray-700">

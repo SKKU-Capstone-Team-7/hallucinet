@@ -6,10 +6,12 @@ const CreateTeamForm = () => {
   const [teamName, setTeamName] = useState('');
 
   const handleCreate = () => {
-    if (teamName) {
-      alert(`Creating team: ${teamName}`);
-      // 서버 호출 API 등 여기에 추가
+    if (!teamName.trim()) {
+      alert('Empty name!');
+      return;
     }
+
+    alert(`Creating team: ${teamName}`);
   };
 
   return (
@@ -22,11 +24,11 @@ const CreateTeamForm = () => {
           placeholder="Team Name Here"
           value={teamName}
           onChange={(e) => setTeamName(e.target.value)}
-          className="flex-1 p-2 rounded bg-[#1c2a3a] text-white border border-gray-600"
+          className="flex-1 p-2 rounded bg-[#1a2841] text-white border border-gray-600"
         />
         <button
           onClick={handleCreate}
-          className="bg-[#1a8cff] text-white px-4 py-2 rounded"
+          className="bg-[#1f8cf0] text-black px-4 py-2 rounded"
         >
           Confirm
         </button>

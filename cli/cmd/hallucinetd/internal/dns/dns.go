@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/netip"
+	"strings"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
 	dnslib "github.com/miekg/dns"
@@ -35,8 +36,8 @@ func New(config types.Config) (*Dns, error) {
 }
 
 func (dns *Dns) GetContainerFQDN(container types.ContainerInfo) string {
-	deviceName := container.Device.Name
-	containerName := container.Name
+	deviceName := strings.ToLower(container.Device.Name)
+	containerName := strings.ToLower(container.Name)
 	return fmt.Sprintf("%v.%v.test.", deviceName, containerName)
 }
 
@@ -86,6 +87,7 @@ func (dns *Dns) handleDNSRequest(rw dnslib.ResponseWriter, req *dnslib.Msg) {
 	q := req.Question[0]
 	switch q.Qtype {
 	case dnslib.TypeA:
+		q.Name = strings.ToLower(q.Name)
 		entry, exists := dns.entries[q.Name]
 		if !exists {
 			// Fallback to 1.1.1.1

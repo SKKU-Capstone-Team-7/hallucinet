@@ -1,0 +1,6 @@
+{
+  "coordination_endpoint": "http://hallucinet-nginx/api/coordination/",
+  "hallucinet_socket": "/var/run/hallucinet.sock",
+  "hallucinet_link": "hallucinet0",
+  "dns_address": "127.0.0.1:5353"
+}

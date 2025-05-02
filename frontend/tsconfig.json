@@ -35,7 +35,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-, "components/UserFooter.jsx"  ],
+, "components/UserFooter.tsx"  ],
   "exclude": [
     "node_modules"
   ]

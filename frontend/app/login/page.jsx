@@ -41,7 +41,7 @@ export default function Login() {
     const jwt = await account.createJWT();
     console.log(`JWT: ${JSON.stringify(jwt)}`);
 
-    fetch("/api/v1/user", {
+    fetch("/api/v1/users/me", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${jwt.jwt}`,

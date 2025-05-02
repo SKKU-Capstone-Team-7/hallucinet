@@ -8,7 +8,18 @@ export class BaseAPIDocument {
             .setTitle('Hallucinet')
             .setDescription('Hallucinet API description')
             .setVersion('1.0.0')
+            .addBearerAuth(
+                {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                    in: 'header',
+                    name: 'Authorization',
+                    description: 'Enter JWT token in format **Bearer &lt;token&gt;**',
+                }
+            )
             .addTag('swagger')
+            .addServer('/api/v1')
             .build();
     }
 }

@@ -4,13 +4,18 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 // import bgPic from "@/bg.png";
 
-export default function UserFooter() {
+interface UserFooterProps {
+  user: { name?: string; email: string };
+  onLogout: () => void;
+}
+
+export default function UserFooter({ user, onLogout }: UserFooterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }
@@ -21,7 +26,7 @@ export default function UserFooter() {
   return (
     <div className="relative inline-block text-left" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen((o) => !o)}
+        onClick={() => setIsOpen(o => !o)}
         className="
           flex w-full items-center gap-2 rounded-lg border-0
           bg-transparent px-2 py-2 text-sm text-gray-900
@@ -39,26 +44,26 @@ export default function UserFooter() {
           /> */}
         </div>
         <div className="flex-1 text-sm text-left">
-          <div className="font-medium">hallucinet</div>
-          <div className="text-gray-500">hallucinet@hct.com</div>
+          <div className="font-medium">{user.name || user.email}</div>
+          <div className="text-gray-500">{user.email}</div>
         </div>
         <svg
-  xmlns="http://www.w3.org/2000/svg"
-  className="
-    h-5 w-5 text-gray-600            /* size & base color */
-    transition-transform duration-200 /* smooth animation */
-    hover:rotate-180                  /* flip on hover */
-  "
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  strokeWidth="1.7"
-  strokeLinecap="round"
-  strokeLinejoin="round"
->
-  <path d="m7 15 5 5 5-5" />
-  <path d="m7 9 5-5 5 5" />
-</svg>
+          xmlns="http://www.w3.org/2000/svg"
+          className="
+            h-5 w-5 text-gray-600            /* size & base color */
+            transition-transform duration-200 /* smooth animation */
+            hover:rotate-180                  /* flip on hover */
+          "
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m7 15 5 5 5-5" />
+          <path d="m7 9 5-5 5 5" />
+        </svg>
       </button>
 
       {isOpen && (
@@ -159,30 +164,29 @@ export default function UserFooter() {
 ))}
 
             <div className="border-t border-gray-100" />
-                            <button
-                  onClick={() => {}}
-                  className="
-                    flex items-center w-full px-4 py-2 text-sm text-red-600 
-                    hover:bg-red-50 text-left
-                  "
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 mr-2 text-red-600"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                  Log out
-                </button>
-
+            <button
+              onClick={onLogout}
+              className="
+                flex items-center w-full px-4 py-2 text-sm text-red-600 
+                hover:bg-red-50 text-left
+              "
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-2 text-red-600"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Log out
+            </button>
           </div>
         </div>
       )}

@@ -22,9 +22,9 @@ var downCmd = &cobra.Command{
 	Use:   "down",
 	Short: "Stop hallucinet",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		config, err := utils.ReadConfigFile(upOpts.configPath)
+		config, err := utils.ReadConfigFile(downOpts.configPath)
 		if err != nil {
-			log.Printf("Cannot read config file %v. %v\n", upOpts.configPath, err)
+			log.Printf("Cannot read config file %v. %v\n", downOpts.configPath, err)
 		}
 
 		hallucinet := hallucinet.New(config)

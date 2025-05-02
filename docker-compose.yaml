@@ -18,7 +18,7 @@ services:
       - NET_ADMIN
 
   clientA-container:
-    image: busybox
+    image: nginx
     container_name: hallucinet-clientA-container
     hostname: hallucinet-clientA-container
     networks:
@@ -48,7 +48,7 @@ services:
       - NET_ADMIN
 
   clientB-container:
-    image: busybox
+    image: nginx
     container_name: hallucinet-clientB-container
     hostname: hallucinet-clientB-container
     networks:

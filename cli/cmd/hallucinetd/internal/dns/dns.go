@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/netip"
+	"strings"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
 	dnslib "github.com/miekg/dns"
@@ -34,14 +35,14 @@ func New(config types.Config) (*Dns, error) {
 	return &dns, nil
 }
 
-func (dns *Dns) getContainerFQDN(container types.ContainerInfo) string {
-	deviceName := container.Device.Name
-	containerName := container.Name
+func (dns *Dns) GetContainerFQDN(container types.ContainerInfo) string {
+	deviceName := strings.ToLower(container.Device.Name)
+	containerName := strings.ToLower(container.Name)
 	return fmt.Sprintf("%v.%v.test.", deviceName, containerName)
 }
 
 func (dns *Dns) entryExists(container types.ContainerInfo) bool {
-	fqdn := dns.getContainerFQDN(container)
+	fqdn := dns.GetContainerFQDN(container)
 	_, ok := dns.entries[fqdn]
 	return ok
 }
@@ -51,7 +52,7 @@ func (dns *Dns) AddEntry(container types.ContainerInfo) error {
 		return ErrEntryAlreadyExists
 	}
 
-	fqdn := dns.getContainerFQDN(container)
+	fqdn := dns.GetContainerFQDN(container)
 
 	dns.entries[fqdn] = container.Address
 
@@ -63,7 +64,7 @@ func (dns *Dns) RemoveEntry(container types.ContainerInfo) error {
 		return ErrEntryDoesNotExist
 	}
 
-	fqdn := dns.getContainerFQDN(container)
+	fqdn := dns.GetContainerFQDN(container)
 	delete(dns.entries, fqdn)
 
 	return nil
@@ -86,6 +87,7 @@ func (dns *Dns) handleDNSRequest(rw dnslib.ResponseWriter, req *dnslib.Msg) {
 	q := req.Question[0]
 	switch q.Qtype {
 	case dnslib.TypeA:
+		q.Name = strings.ToLower(q.Name)
 		entry, exists := dns.entries[q.Name]
 		if !exists {
 			// Fallback to 1.1.1.1
@@ -117,6 +119,5 @@ func (dns *Dns) Start() error {
 }
 
 func (dns *Dns) Stop() error {
-	dns.ClearEntries()
 	return dns.server.Shutdown()
 }

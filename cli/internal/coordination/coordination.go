@@ -16,6 +16,12 @@ type DeviceInfoDto struct {
 	Address string `json:"address"`
 }
 
+type ContainerInfoDto struct {
+	Name    string        `json:"name"`
+	Address string        `json:"address"`
+	Device  DeviceInfoDto `json:"device"`
+}
+
 type Coord struct {
 	endpoint string
 	token    string
@@ -30,6 +36,14 @@ func New(config types.Config) (*Coord, error) {
 
 func parseDeviceInfoDto(dev DeviceInfoDto) (types.DeviceInfo, error) {
 	return utils.CreateDeviceInfo(dev.Name, dev.Subnet, dev.Address)
+}
+
+func parseContainerInfoDto(container ContainerInfoDto) (types.ContainerInfo, error) {
+	device, err := parseDeviceInfoDto(container.Device)
+	if err != nil {
+		return types.ContainerInfo{}, err
+	}
+	return utils.CreateContainerInfo(container.Name, container.Address, device)
 }
 
 func (coord *Coord) GetDevices() ([]types.DeviceInfo, error) {
@@ -60,4 +74,35 @@ func (coord *Coord) GetDevices() ([]types.DeviceInfo, error) {
 	}
 
 	return devices, nil
+}
+
+func (coord *Coord) GetContainers() ([]types.ContainerInfo, error) {
+	containerUrl := fmt.Sprintf("%s/containers", coord.endpoint)
+	res, err := http.Get(containerUrl)
+	if err != nil {
+		return []types.ContainerInfo{}, err
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return []types.ContainerInfo{}, err
+	}
+
+	var containerDtos []ContainerInfoDto
+	err = json.Unmarshal(body, &containerDtos)
+	if err != nil {
+		return []types.ContainerInfo{}, err
+	}
+
+	var containers []types.ContainerInfo
+	for _, dto := range containerDtos {
+		cont, err := parseContainerInfoDto(dto)
+		if err != nil {
+			return []types.ContainerInfo{}, err
+		}
+		containers = append(containers, cont)
+
+	}
+
+	return containers, nil
 }

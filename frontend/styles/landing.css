@@ -72,7 +72,7 @@ body {
     display: inline-block;
     padding: 0.5rem 0.7rem;
     border-radius: 1rem;
-    background-color: #1c8cf0;
+    background-color: #1f8cf0;
     color: black;
     text-decoration: none;
     font-size: 10pt;
@@ -218,7 +218,7 @@ body {
   
   .contact-form input,
   .contact-form textarea {
-    background: #1c1c1c;
+    background: #050a12;
     border: none;
     padding: 14px 20px;  
     color: white;
@@ -231,7 +231,7 @@ body {
   }
   
   .contact-form button {
-    background-color: #1c8cf0;
+    background-color: #1f8cf0;
     color: black;
     padding: 12px;
     font-size: 1.1rem;

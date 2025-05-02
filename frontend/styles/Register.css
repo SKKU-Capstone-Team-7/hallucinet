@@ -47,7 +47,7 @@ html, body {
   
   .register-form input {
     width: 100%;
-    padding: 10px 40px 10px 12px; /* shorter padding, space for eye icon */
+    padding: 10px 40px 10px 12px; 
     margin-bottom: 14px;
     border-radius: 8px;
     border: 1px solid #ccc;
@@ -60,7 +60,7 @@ html, body {
   }
   
   .pass-input-div input {
-    padding-right: 40px; /* space for the icon */
+    padding-right: 40px; 
   }
   
   .pass-input-div svg {

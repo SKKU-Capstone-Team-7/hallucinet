@@ -5,6 +5,8 @@ import { DevicesModule } from './devices/devices.module';
 import { AppwriteModule } from './appwrite/appwrite.module';
 import { ContainersModule } from './containers/containers.module';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
+import { TokenModule } from './token/token.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { ConfigModule } from '@nestjs/config';
     DevicesModule,
     AppwriteModule,
     ContainersModule,
+    AuthModule,
+    TokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],

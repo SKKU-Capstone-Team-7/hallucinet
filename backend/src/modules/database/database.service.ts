@@ -24,6 +24,14 @@ export class DatabaseService {
         );
     }
 
+    async getDeviceById(deviceId: string): Promise<Models.Document> {
+        return this.databases.getDocument(
+            this.dbId,
+            this.deviceColId,
+            deviceId,
+        )
+    }
+
     async listContainersByTeamId(teamId: string, sort: string, order: string, limit: number): Promise<Models.DocumentList<Models.Document>> {
         const orderQuery = order === 'asc'
             ? Query.orderAsc(sort)

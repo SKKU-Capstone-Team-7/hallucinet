@@ -32,11 +32,17 @@ export class DeviceController {
         return;
     }
 
-    @Get('devices/:devicdId')
+    @ApiOperation({
+        summary: 'get device info by device ID'
+    })
+    @ApiOkResponse({
+        description: 'device info for the corresponding ID',
+        type: DeviceInfoDto,
+    })
+    @Get('devices/:deviceId')
     @UseGuards(AppwriteAuthGuard)
     async getDeviceById(@Param('deviceId') deviceId: string) {
-        //return this.deviceService.getDeviceById(deviceId);
-        return;
+        return this.deviceService.getDeviceById(deviceId);
     }
 
     @Patch('devices/:devicdId')

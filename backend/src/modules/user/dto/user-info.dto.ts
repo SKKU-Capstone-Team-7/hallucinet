@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsEmail, IsString } from "class-validator";
 
-export class UserInfoDto {
+export class PublicUserInfoDto {
     @ApiProperty({
         example: '67ef5673002b2bf5d909',
         description: 'ID in appwrite'
@@ -25,23 +25,26 @@ export class UserInfoDto {
     readonly email: string;
 
     @ApiProperty({
+        example: '[\'67f9f12c0015b7f72fd2\']',
+        description: 'team ID array of user(there is only one team but it is array)'
+    })
+    readonly teamIds?: string[];
+
+    constructor(partial: Partial<PublicUserInfoDto>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class UserInfoDto extends PublicUserInfoDto {
+    @ApiProperty({
         example: '12345678',
         description: 'password of user'
     })
     @IsString()
     readonly password?: string;
 
-    @ApiProperty({
-        example: '[\'67f9f12c0015b7f72fd2\']',
-        description: 'team ID array of user(there is only one team but it is array)'
-    })
-    readonly teamIds?: string[];
-
     constructor(partial: Partial<UserInfoDto>) {
+        super(partial);
         Object.assign(this, partial);
     }
 }
-
-import { OmitType } from '@nestjs/swagger';
-
-export class PublicUserInfoDto extends OmitType(UserInfoDto, ['password'] as const) { }

@@ -26,6 +26,7 @@ export class ContainerService {
             name: doc.name,
             image: doc.image,
             ip: doc.ip,
+            deviceId: doc.device.$id,
             lastAccessed: doc.lastAccessed,
             teamId: doc.team.$id,
             userId: doc.user.$id

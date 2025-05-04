@@ -29,14 +29,24 @@ export class DeviceService {
             name: doc.name,
             status: doc.status,
             ipBlock24: doc.ipBlock24,
-            user: user,
+            userId: doc.user.$id,
             lastActivatedAt: doc.lastActivatedAt,
             teamId: team.$id
         }));
     }
 
-    //async getDeviceById():Promise<DeviceInfoDto> {
-    //
-    //}
+    async getDeviceById(devicdId: string):Promise<DeviceInfoDto> {
+        const doc = await this.databaseService.getDeviceById(devicdId);
+
+        return new DeviceInfoDto({
+            $id: doc.$id,
+            name: doc.name,
+            status: doc.status,
+            ipBlock24: doc.ipBlock24,
+            userId: doc.user.$id,
+            lastActivatedAt: doc.lastActivatedAt,
+            teamId: doc.team.$id
+        })
+    }
 
 }

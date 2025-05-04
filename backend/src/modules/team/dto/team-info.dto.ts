@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEmpty, IsNotEmpty, IsNumber, IsString, Matches } from "class-validator";
 
-export class TeamInfoDto {
+export class PublicTeamInfoDto {
     @ApiProperty({
         example: '67f9f12c0015b7f72fd2',
         description: 'team ID in appwrite'
@@ -23,6 +23,12 @@ export class TeamInfoDto {
     @IsNumber()
     readonly total: number;
 
+    constructor(partial: Partial<PublicTeamInfoDto>) {
+        Object.assign(this, partial);
+    }
+}
+
+export class TeamInfoDto extends PublicTeamInfoDto {
     @ApiProperty({
         example: '10.2.0.0',
         description: '/16 IP block assigned to each team, decided by team owner.'
@@ -34,10 +40,7 @@ export class TeamInfoDto {
     readonly ipBlock16?: string;
 
     constructor(partial: Partial<TeamInfoDto>) {
+        super(partial);
         Object.assign(this, partial);
     }
 }
-
-import { OmitType } from '@nestjs/swagger';
-
-export class PublicTeamInfoDto extends OmitType(TeamInfoDto, ['ipBlock16'] as const) { }

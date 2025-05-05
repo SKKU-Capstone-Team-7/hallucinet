@@ -35,4 +35,20 @@ export class ContainerService {
 
     // async getContainers(client: Client, deviceId: string): Promise<ContainerInfoDto> {
     //}
+
+    async getContainerById(client: Client, containerId: string): Promise<ContainerInfoDto> {
+        const doc = await this.databaseService.getContainerById(client,containerId);
+        console.log(doc);
+
+        return new ContainerInfoDto({
+            $id: doc.$id,
+            name: doc.name,
+            image: doc.image,
+            ip: doc.ip,
+            deviceId: doc.device.$id,
+            lastAccessed: doc.lastAccessed,
+            teamId: doc.team.$id,
+            userId: doc.user.$id,
+        });
+    }
 }

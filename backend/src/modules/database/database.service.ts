@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Databases, Models, Query } from 'node-appwrite';
+import { Databases, Models, Query, Client } from 'node-appwrite';
 import { AppwriteService } from '../appwrite/appwrite.service';
 
 @Injectable()
 export class DatabaseService {
-    private readonly databases: Databases;
     private readonly dbId: string = process.env.APPWRITE_DATABASE_ID!;
     private readonly teamColId: string = process.env.TEAM_COLLECTION_ID!;
     private readonly userColId: string = process.env.USER_COLLECTION_ID!;
@@ -13,19 +12,22 @@ export class DatabaseService {
 
 
     constructor(private readonly appwrite: AppwriteService) {
-        this.databases = new Databases(this.appwrite.getServerClient());
+    }
+
+    private databases(client: Client): Databases {
+        return new Databases(client);
     }
 
     async listDevicesByTeamId(teamId: string): Promise<Models.DocumentList<Models.Document>> {
-        return this.databases.listDocuments(
+        return this.databases(this.appwrite.getServerClient()).listDocuments(
             this.dbId,
             this.deviceColId,
             [Query.equal('team', teamId)],
         );
     }
 
-    async getDeviceById(deviceId: string): Promise<Models.Document> {
-        return this.databases.getDocument(
+    async getDeviceById(client: Client, deviceId: string): Promise<Models.Document> {
+        return this.databases(client).getDocument(
             this.dbId,
             this.deviceColId,
             deviceId,
@@ -36,7 +38,7 @@ export class DatabaseService {
         const orderQuery = order === 'asc'
             ? Query.orderAsc(sort)
             : Query.orderDesc(sort);
-        return this.databases.listDocuments(
+        return this.databases(this.appwrite.getServerClient()).listDocuments(
             this.dbId,
             this.containerColId,
             [
@@ -47,8 +49,16 @@ export class DatabaseService {
         )
     }
 
+    async getContainerById(client: Client, containerId: string): Promise<Models.Document> {
+        return this.databases(client).getDocument(
+            this.dbId,
+            this.containerColId,
+            containerId,
+        )
+    }
+
     async registerTeamId(teamId: string): Promise<Models.Document> {
-        return this.databases.createDocument(
+        return this.databases(this.appwrite.getServerClient()).createDocument(
             this.dbId,
             this.teamColId,
             teamId,
@@ -57,7 +67,7 @@ export class DatabaseService {
     }
 
     async registerUserId(userId: string): Promise<Models.Document> {
-        return this.databases.createDocument(
+        return this.databases(this.appwrite.getServerClient()).createDocument(
             this.dbId,
             this.userColId,
             userId,

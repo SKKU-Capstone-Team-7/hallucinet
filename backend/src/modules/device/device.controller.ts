@@ -33,7 +33,7 @@ export class DeviceController {
     }
 
     @ApiOperation({
-        summary: 'get device info by device ID'
+        summary: 'get device info by device ID(it only works by team member)'
     })
     @ApiOkResponse({
         description: 'device info for the corresponding ID',
@@ -41,8 +41,8 @@ export class DeviceController {
     })
     @Get('devices/:deviceId')
     @UseGuards(AppwriteAuthGuard)
-    async getDeviceById(@Param('deviceId') deviceId: string) {
-        return this.deviceService.getDeviceById(deviceId);
+    async getDeviceById(@AppwriteClient() client: Client, @Param('deviceId') deviceId: string) {
+        return this.deviceService.getDeviceById(client, deviceId);
     }
 
     @Patch('devices/:devicdId')

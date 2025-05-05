@@ -6,6 +6,7 @@ import { TeamService } from '../team/team.service';
 import { TeamInfoDto } from '../team/dto/team-info.dto';
 import { DatabaseService } from '../database/database.service';
 import { UserService } from '../user/user.service';
+import { AppwriteClient } from 'src/common/decorators/appwrite-client.decorator';
 
 @Injectable()
 export class DeviceService {
@@ -17,7 +18,6 @@ export class DeviceService {
     ) { }
 
     async listDevices(client: Client,): Promise<DeviceInfoDto[]> {
-        const user = await this.userService.getCurrentUser(client);
         const team = await this.teamService.getMyTeam(client);
 
         const { documents } = await this.databaseService.listDevicesByTeamId(team.$id);
@@ -35,8 +35,8 @@ export class DeviceService {
         }));
     }
 
-    async getDeviceById(devicdId: string):Promise<DeviceInfoDto> {
-        const doc = await this.databaseService.getDeviceById(devicdId);
+    async getDeviceById(client: Client, deviceId: string):Promise<DeviceInfoDto> {
+        const doc = await this.databaseService.getDeviceById(client, deviceId);
 
         return new DeviceInfoDto({
             $id: doc.$id,

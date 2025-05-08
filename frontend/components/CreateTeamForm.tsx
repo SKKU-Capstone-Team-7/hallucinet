@@ -4,14 +4,30 @@ import { useState } from 'react';
 
 const CreateTeamForm = () => {
   const [teamName, setTeamName] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!teamName.trim()) {
       alert('Empty name!');
       return;
     }
 
-    alert(`Creating team: ${teamName}`);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: teamName }),
+      });
+
+      if (!res.ok) throw new Error('Team creation failed');
+      alert(`Created team: ${teamName}`);
+      setTeamName('');
+    } catch (err) {
+      alert('Error creating team');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,9 +44,10 @@ const CreateTeamForm = () => {
         />
         <button
           onClick={handleCreate}
-          className="bg-[#1f8cf0] text-black px-4 py-2 rounded"
+          disabled={loading}
+          className="bg-[#1f8cf0] text-black px-4 py-2 rounded disabled:opacity-50"
         >
-          Confirm
+          {loading ? 'Creating...' : 'Confirm'}
         </button>
       </div>
     </section>

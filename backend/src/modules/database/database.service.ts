@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Databases, Models, Query, Client } from 'node-appwrite';
+import { Databases, Models, Query, Client, Permission, Role } from 'node-appwrite';
 import { AppwriteService } from '../appwrite/appwrite.service';
 
 @Injectable()
@@ -16,6 +16,68 @@ export class DatabaseService {
 
     private databases(client: Client): Databases {
         return new Databases(client);
+    }
+
+    async fetchUsedOctets(teamId: string): Promise<Set<number>> {
+        const docs = await this.listDevicesByTeamId(teamId);
+
+        const set = new Set<number>();
+        for (const doc of docs.documents) {
+            const octet = Number(doc.ipBlock24.split('.')[2]);
+            if (!isNaN(octet)) set.add(octet);
+        }
+
+        return set;
+    }
+
+    async getRegistrationExpiresAt(client: Client, deviceId: string): Promise<Date> {
+        const doc = await this.getDeviceById(client, deviceId);
+        return new Date(doc.registrationExpiresAt);
+    }
+
+    async confirmDevice(client: Client, deviceId: string, userId: string, teamId: string, ipBlock24: string, date: Date): Promise<Models.Document> {
+        const doc = await this.databases(client).updateDocument(
+            this.dbId,
+            this.deviceColId,
+            deviceId,
+            {
+                "status": false,
+                "ipBlock24": ipBlock24,
+                "lastActivatedAt": date,
+                "user": userId,
+                "team": teamId,
+                "address": "0.0.0.0",
+                "confirmed": true
+            },
+            [
+                Permission.read(Role.team(teamId)),
+                Permission.delete(Role.team(teamId)),
+                Permission.read(Role.user(userId)), 
+                Permission.update(Role.user(userId)),  
+                Permission.delete(Role.user(userId))
+            ]
+        )
+        // console.log(doc);
+        return doc;
+    }
+
+    async createDevice(expiresAt: Date, deviceId: string, deviceName: string): Promise<Models.Document> {
+        //console.log(expiresAt);
+        //console.log(deviceId);
+        //console.log(deviceName);
+        return this.databases(this.appwrite.getServerClient()).createDocument(
+            this.dbId,
+            this.deviceColId,
+            deviceId,
+            {   "name" : deviceName,
+                "confirmed" : false,
+                "registrationExpiresAt": expiresAt
+            },
+            [
+                Permission.read(Role.any()),
+                Permission.write(Role.any()),
+            ]
+        )
     }
 
     async listDevicesByTeamId(teamId: string): Promise<Models.DocumentList<Models.Document>> {

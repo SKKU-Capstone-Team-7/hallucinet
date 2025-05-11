@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsBoolean, IsDate, IsNotEmpty, IsString, Matches } from "class-validator";
 import { TeamInfoDto } from "src/modules/team/dto/team-info.dto";
-import { UserInfoDto } from "src/modules/user/dto/user-info.dto";
+import { PublicUserInfoDto, UserInfoDto } from "src/modules/user/dto/user-info.dto";
 
 export class DeviceInfoDto {
     @ApiProperty({
@@ -37,10 +37,10 @@ export class DeviceInfoDto {
     readonly ipBlock24: string;
 
     @ApiProperty({
-        description: 'device owner UserInfoDto'
+        example: '67ef5673002b2bf5d909',
+        description: 'device owner User ID'
     })
-    @Type(() => UserInfoDto)
-    readonly user: UserInfoDto;
+    readonly userId: string;
 
     //@Type(() => TeamInfoDto)
     //readonly team: TeamInfoDto;

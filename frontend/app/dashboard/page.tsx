@@ -31,42 +31,40 @@ export default function DashboardPage() {
   const [devices, setDevices] = useState<Device[]>([]);
 
   useEffect(() => {
-    const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT;
-    const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT;
-
-    if (!endpoint || !project) {
-      console.error('Appwrite env vars missing');
-      router.replace('/login');
-      return;
-    }
-
-    const client = new Client().setEndpoint(endpoint).setProject(project);
-    const account = new Account(client);
-
-    account
-      .get()
-      .then((u: Models.User<Models.Preferences>) => {
-        setUser(u);
+    const endpoint   = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
+    const project    = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+    const client     = new Client().setEndpoint(endpoint).setProject(project);
+    const account    = new Account(client);
+  
+    (async () => {
+      try {
+        await account.get();               // ensure user is signed in
         setLoading(false);
-
-        fetch('http://localhost/api/v1/teams/me/devices')
-          .then((res) => res.json())
-          .then((data) => {
-            console.log('Fetched Devices:', data);
-            setDevices(Array.isArray(data) ? data : []);
-          })
-          .catch((err) => console.error('Failed to fetch devices', err));
-      })
-      .catch(() => {
+  
+        const { jwt } = await account.createJWT();  
+        const res = await fetch(`${apiBaseUrl}/devices`, {
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwt}` 
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const devices = await res.json();
+        setDevices(Array.isArray(devices) ? devices : []);
+      } catch (err) {
+        console.error(err);
         router.replace('/login');
-      });
+      }
+    })();
   }, [router]);
+  
 
   const handleLogout = async () => {
     const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
-    const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
+    const project  = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
 
-    const client = new Client().setEndpoint(endpoint).setProject(project);
+    const client  = new Client().setEndpoint(endpoint).setProject(project);
     const account = new Account(client);
 
     await account.deleteSession('current');
@@ -76,7 +74,6 @@ export default function DashboardPage() {
   if (loading) {
     return <p className="dashboard-loading">Loading…</p>;
   }
-
   if (!user) {
     return null;
   }
@@ -113,7 +110,23 @@ export default function DashboardPage() {
                 <button className="btn invite-btn">
                   <CirclePlus /> Invite
                 </button>
-                <button className="btn refresh-btn">
+                <button
+                  className="btn refresh-btn"
+                  onClick={() => {
+                    // re-fetch on refresh click
+                    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+                    fetch(`${apiBaseUrl}/teams/me/devices`, {
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                    })
+                      .then((res) => {
+                        if (!res.ok) throw new Error(res.statusText);
+                        return res.json();
+                      })
+                      .then((data) => setDevices(Array.isArray(data) ? data : []))
+                      .catch((err) => console.error('Failed to fetch devices', err));
+                  }}
+                >
                   <RotateCcw /> Refresh
                 </button>
               </div>
@@ -129,7 +142,9 @@ export default function DashboardPage() {
                   {devices.map((d, i) => (
                     <tr key={i}>
                       <td>
-                        <span className={`status-dot ${d.status ? 'online' : 'offline'}`}></span>
+                        <span
+                          className={`status-dot ${d.status ? 'online' : 'offline'}`}
+                        ></span>
                         <div className="device-name">{d.name}</div>
                         <div className="device-email">{d.user.email}</div>
                       </td>

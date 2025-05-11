@@ -23,6 +23,7 @@
         "./*"
       ]
     },
+    "types": ["node", "estree", "json-schema"],
     "plugins": [
       {
         "name": "next"
@@ -34,8 +35,9 @@
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx"
-, "components/UserFooter.tsx"  ],
+    "**/*.tsx",
+    "components/UserFooter.tsx"
+  ],
   "exclude": [
     "node_modules"
   ]

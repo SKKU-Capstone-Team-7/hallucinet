@@ -1,5 +1,7 @@
 'use client';
 
+import { databases } from '@/lib/appwrite'; // appwrite.js에서 export한 databases 객체 사용
+
 type Props = {
   id: string;
   sender: string;
@@ -9,13 +11,14 @@ type Props = {
 const InvitationRow = ({ id, sender, datetime }: Props) => {
   const handleClick = async () => {
     try {
-      const res = await fetch(`/api/invitations/${id}/accept`, {
-        method: 'PATCH',
-      });
+      const response = await databases.updateDocument(
+        '[YOUR_DATABASE_ID]', // 데이터베이스 ID
+        '[YOUR_INVITATIONS_COLLECTION_ID]', // 초대 컬렉션 ID
+        id, // 초대 문서 ID
+        { status: 'accepted' } // 상태를 'accepted'로 변경
+      );
 
-      if (!res.ok) throw new Error();
       alert('Invitation accepted');
-      // 선택 후 상태 갱신은 필요에 따라 부모에서 처리 가능
     } catch (err) {
       alert('Failed to accept invitation');
     }

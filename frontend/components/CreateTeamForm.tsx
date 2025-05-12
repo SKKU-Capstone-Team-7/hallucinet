@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { databases } from '@/lib/appwrite';
 
 const CreateTeamForm = () => {
   const [teamName, setTeamName] = useState('');
@@ -14,13 +15,13 @@ const CreateTeamForm = () => {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/teams', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: teamName }),
-      });
+      const response = await databases.createDocument(
+        '[YOUR_DATABASE_ID]',
+        '[YOUR_TEAMS_COLLECTION_ID]',
+        'unique()',
+        { name: teamName }
+      );
 
-      if (!res.ok) throw new Error('Team creation failed');
       alert(`Created team: ${teamName}`);
       setTeamName('');
     } catch (err) {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { databases } from '@/lib/appwriteClient';
 import InvitationRow from './InvitationRow';
 
 type Invitation = {
@@ -15,9 +16,11 @@ const InvitationList = () => {
   useEffect(() => {
     const fetchInvites = async () => {
       try {
-        const res = await fetch('/api/invitations');
-        const data = await res.json();
-        setInvitations(data);
+        const response = await databases.listDocuments(
+          '[YOUR_DATABASE_ID]',
+          '[YOUR_INVITATIONS_COLLECTION_ID]'
+        );
+        setInvitations(response.documents);
       } catch (err) {
         console.error('Failed to load invitations');
       }

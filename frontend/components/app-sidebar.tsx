@@ -17,11 +17,10 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Home",     url: "#", icon: Home },
-  { title: "Inbox",    url: "#", icon: Inbox },
-  { title: "Calendar", url: "#", icon: Calendar },
-  { title: "Search",   url: "#", icon: Search },
-  { title: "Settings", url: "#", icon: Settings },
+  { title: "Devices",     url: "#", icon: Home },
+  { title: "Team",    url: "#", icon: Inbox },
+  { title: "Containers", url: "#", icon: Calendar },
+  { title: "Settings",   url: "#", icon: Search },
 ];
 
 interface AppSidebarProps {

@@ -16,14 +16,13 @@ html, body {
 }
 
 .logo-container {
-  position: absolute;
+  position: fixed;
   top: 1rem;
-  left: 1rem;
+  left: 1.8rem;
 }
 
-.logo {
-  width: 120px;
-  height: auto;
+.logo-img {
+  width: 200px;
 }
 
 .login-container {
@@ -36,7 +35,6 @@ html, body {
   text-align: center;
 }
 
-  
   .login-title {
     font-size: 28px;
     margin-bottom: 8px;
@@ -90,7 +88,7 @@ html, body {
     width: 16px;
     height: 16px;
     margin: 0;
-    accent-color: #1C8CF0;
+    accent-color: #1f8CF0;
     position: relative;
     top: 1px;
   }
@@ -120,12 +118,12 @@ html, body {
   }
   
   .login-submit.active {
-    background-color: #1C8CF0;
+    background-color: #1f8CF0;
     cursor: pointer;
   }
   
   .login-submit.active:hover {
-    background-color: #1C8CF0;
+    background-color: #1f8CF0;
     transform: translateY(-2px);
   }
   

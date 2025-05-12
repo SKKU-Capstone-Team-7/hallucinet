@@ -16,9 +16,13 @@ html, body {
   }
 
   .logo-container {
-    position: absolute;
+    position: fixed;
     top: 1rem;
-    left: 1rem;
+    left: 1.8rem;
+  }
+
+  .logo-img {
+    width: 200px;
   }
   
   .register-container {
@@ -43,7 +47,7 @@ html, body {
   
   .register-form input {
     width: 100%;
-    padding: 10px 40px 10px 12px; /* shorter padding, space for eye icon */
+    padding: 10px 40px 10px 12px; 
     margin-bottom: 14px;
     border-radius: 8px;
     border: 1px solid #ccc;
@@ -56,7 +60,7 @@ html, body {
   }
   
   .pass-input-div input {
-    padding-right: 40px; /* space for the icon */
+    padding-right: 40px; 
   }
   
   .pass-input-div svg {
@@ -83,12 +87,12 @@ html, body {
   }
   
   .register-button.active {
-    background-color: #1C8CF0;
+    background-color: #1f8CF0;
     cursor: pointer;
   }
   
   .register-button.active:hover {
-    background-color: #1C8CF0;
+    background-color: #1f8CF0;
     transform: translateY(-2px);
   }
   
@@ -104,7 +108,7 @@ html, body {
   }
   
   .register-footer a {
-    color: #1C8CF0;
+    color: #1f8CF0;
     text-decoration: none;
     font-weight: 500;
   }

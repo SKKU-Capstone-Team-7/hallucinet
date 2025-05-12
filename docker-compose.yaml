@@ -1,19 +1,146 @@
 services:
+  clientA:
+    image: nicolaka/netshoot
+    container_name: hallucinet-clientA
+    hostname: hallucinet-clientA
+    networks:
+      hallucinet-vpn:
+        ipv4_address: 192.168.100.2
+      internet:
+      clientA-docker:
+        ipv4_address: 10.2.1.2
+    volumes:
+      - ./cli/:/app/
+      - ./cli/.test/clientA/:/root/.hallucinet/
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_ADMIN
+
+  clientA-container:
+    image: busybox
+    container_name: hallucinet-clientA-container
+    hostname: hallucinet-clientA-container
+    networks:
+      clientA-docker:
+        ipv4_address: 10.2.1.3
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_ADMIN
+
+  clientB:
+    image: nicolaka/netshoot
+    container_name: hallucinet-clientB
+    hostname: hallucinet-clientB
+    networks:
+      hallucinet-vpn:
+        ipv4_address: 192.168.100.3
+      internet:
+      clientB-docker:
+        ipv4_address: 10.2.2.2
+    volumes:
+      - ./cli/:/app/
+      - ./cli/.test/clientB/:/root/.hallucinet/
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_ADMIN
+
+  clientB-container:
+    image: busybox
+    container_name: hallucinet-clientB-container
+    hostname: hallucinet-clientB-container
+    networks:
+      clientB-docker:
+        ipv4_address: 10.2.2.3
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_ADMIN
+
+  # Copy file from host then install pnpm packages for frontend and backend together
+  initializer:
+    image: node:23
+    container_name: hallucinet-initializer
+    restart: on-failure
+    volumes:
+      - ./:/src/
+      - hallucinet:/app/
+    command: /bin/bash -c "
+      cp /src/* /app/ -r &&
+
+      npm install -g pnpm@latest &&
+      echo '===== app/backend =====' &&
+      cd /app/backend/ && pnpm install --force &&
+      echo '===== app/frontend =====' &&
+      cd /app/frontend/ && pnpm install --force &&
+      echo '===== app/coordination_server =====' &&
+      cd /app/coordination_server/ && pnpm install --force
+      "
+
+  # Sync files from host to docker volume every 5 seconds so hot reloads work
+  syncer:
+    image: servercontainers/rsync
+    container_name: hallucinet-syncer
+    volumes:
+      - ./:/src/
+      - hallucinet:/app/
+    command: /bin/bash -c "
+      while true; do
+      rsync -avch --exclude=node_modules/ --exclude=.next/ --exclude=.pnpm-store/ --cvs-exclude /src/ /app/ &&
+      sleep 5;
+      done;
+      "
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+
   backend:
     image: node:23
     container_name: hallucinet-backend
-    working_dir: /app
+    restart: on-failure
+    env_file:
+      - ./backend/.env
+    working_dir: /app/backend/
     volumes:
-      - ./backend/:/app
-    command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm run start:dev"
+      - hallucinet:/app/
+    command: /bin/bash -c "npm install -g pnpm@latest && pnpm run start:dev"
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+    networks:
+      server:
 
   frontend:
     image: node:23
     container_name: hallucinet-frontend
-    working_dir: /app
+    restart: on-failure
+    working_dir: /app/frontend/
     volumes:
-      - ./frontend/:/app
-    command: /bin/bash -c "npm install -g pnpm@latest && pnpm install && pnpm run dev"
+      - hallucinet:/app/
+    command: /bin/bash -c "npm install -g pnpm@latest && pnpm run dev"
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+    networks:
+      server:
+
+  coordination_server:
+    image: node:23
+    container_name: hallucinet-coordination-server
+    restart: on-failure
+    env_file:
+      - ./coordination_server/.env
+    working_dir: /app/coordination_server/
+    volumes:
+      - hallucinet:/app/
+    command: /bin/bash -c "npm install -g pnpm@latest && pnpm run start:dev"
+    depends_on:
+      initializer:
+        condition: service_completed_successfully
+    networks:
+      server:
 
   nginx:
     image: nginx:latest
@@ -23,5 +150,27 @@ services:
     ports:
       - 80:80
     depends_on:
-      - backend
-      - frontend
+      initializer:
+        condition: service_completed_successfully
+    networks:
+      internet:
+      server:
+
+volumes:
+  hallucinet:
+
+networks:
+  hallucinet-vpn:
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+  internet:
+  server:
+  clientA-docker:
+    ipam:
+      config:
+        - subnet: 10.2.1.0/24
+  clientB-docker:
+    ipam:
+      config:
+        - subnet: 10.2.2.0/24

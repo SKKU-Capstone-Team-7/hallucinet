@@ -10,9 +10,6 @@
   },
   "dependencies": {
     "@fontsource/michroma": "^5.2.5",
-<<<<<<< HEAD
-    "next": "^15.3.1",
-=======
     "@radix-ui/react-dialog": "^1.1.10",
     "@radix-ui/react-separator": "^1.1.4",
     "@radix-ui/react-slot": "^1.2.0",
@@ -25,7 +22,6 @@
     "lucide-react": "^0.503.0",
     "next": "^15.3.1",
     "postcss-loader": "^8.1.1",
->>>>>>> 4d518c82d8a5dabd14f17a9f02b5a4e1a87c462b
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
@@ -36,14 +32,9 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-<<<<<<< HEAD
-    "@tailwindcss/postcss": "^4.1.4",
-    "@types/node": "^20",
-=======
     "@types/estree": "^1.0.7",
     "@types/json-schema": "^7.0.15",
     "@types/node": "^20.17.46",
->>>>>>> 4d518c82d8a5dabd14f17a9f02b5a4e1a87c462b
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",

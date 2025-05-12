@@ -1,64 +1,64 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { databases } from '@/lib/appwriteClient';
-import InvitationRow from './InvitationRow';
+import React, { useState, useEffect } from 'react';
+import { Client, Databases } from 'appwrite';
+import { InvitationRow } from './InvitationRow';
 
-type Invitation = {
-  id: string;
-  sender: string;
-  datetime: string;
-};
-
-const InvitationList = () => {
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
+export const InvitationList = () => {
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchInvites = async () => {
+    const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
+    const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
+
+    const client = new Client().setEndpoint(endpoint).setProject(project);
+    const databases = new Databases(client);
+
+    const fetchInvitations = async () => {
       try {
-        const response = await databases.listDocuments(
-          '[YOUR_DATABASE_ID]',
-          '[YOUR_INVITATIONS_COLLECTION_ID]'
-        );
+        const response = await databases.listDocuments('invitations-db', 'invitations-collection');
         setInvitations(response.documents);
-      } catch (err) {
-        console.error('Failed to load invitations');
+      } catch (error) {
+        console.error('Error fetching invitations:', error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchInvites();
+
+    fetchInvitations();
   }, []);
 
-  return (
-    <section>
-      <h2 className="text-xl font-semibold mb-2">Join in a Team</h2>
-      <p className="mb-4">
-        Check the invitations you got and join in a team. After you choose one team,
-        others are automatically rejected.
-      </p>
+  if (loading) {
+    return <p>Loading invitations...</p>;
+  }
 
-      <div className="bg-[#1a2841] rounded p-4">
-        <table className="w-full text-left text-white">
-          <thead>
-            <tr className="border-b border-gray-700">
-              <th className="py-2 px-4">SENDER</th>
-              <th className="py-2 px-4">INVITATION DATE/TIME</th>
-              <th className="py-2 px-4 text-center">SELECT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invitations.map((inv) => (
-              <InvitationRow
-                key={inv.id}
-                id={inv.id}
-                sender={inv.sender}
-                datetime={inv.datetime}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+  return (
+    <div>
+      {invitations.length === 0 ? (
+        <p>No invitations</p>
+      ) : (
+        <ul>
+          {invitations.map((invitation, index) => (
+            <InvitationRow
+              key={index}
+              email={invitation.email}
+              status={invitation.status}
+              onAccept={() => handleAccept(invitation.id)}
+              onReject={() => handleReject(invitation.id)}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
   );
 };
 
-export default InvitationList;
+// 초대를 수락하거나 거부하는 함수
+const handleAccept = (id: string) => {
+  // 초대 수락 로직을 추가
+};
+
+const handleReject = (id: string) => {
+  // 초대 거부 로직을 추가
+};

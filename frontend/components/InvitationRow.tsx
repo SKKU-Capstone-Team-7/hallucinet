@@ -1,43 +1,20 @@
 'use client';
 
-import { databases } from '@/lib/appwrite'; // appwrite.js에서 export한 databases 객체 사용
+import React from 'react';
 
-type Props = {
-  id: string;
-  sender: string;
-  datetime: string;
-};
+interface InvitationRowProps {
+  email: string;
+  status: string;
+  onAccept: () => void;
+  onReject: () => void;
+}
 
-const InvitationRow = ({ id, sender, datetime }: Props) => {
-  const handleClick = async () => {
-    try {
-      const response = await databases.updateDocument(
-        '[YOUR_DATABASE_ID]', // 데이터베이스 ID
-        '[YOUR_INVITATIONS_COLLECTION_ID]', // 초대 컬렉션 ID
-        id, // 초대 문서 ID
-        { status: 'accepted' } // 상태를 'accepted'로 변경
-      );
-
-      alert('Invitation accepted');
-    } catch (err) {
-      alert('Failed to accept invitation');
-    }
-  };
-
+export const InvitationRow: React.FC<InvitationRowProps> = ({ email, status, onAccept, onReject }) => {
   return (
-    <tr className="border-t border-gray-700">
-      <td className="py-3 px-4">{sender}</td>
-      <td className="py-3 px-4">{datetime}</td>
-      <td className="py-3 px-4 text-center">
-        <button
-          onClick={handleClick}
-          className="text-[#1f8cf0] hover:underline focus:outline-none"
-        >
-          ✔
-        </button>
-      </td>
-    </tr>
+    <div className="invitation-row">
+      <span>{email}</span> - <span>{status}</span>
+      <button onClick={onAccept}>Accept</button>
+      <button onClick={onReject}>Reject</button>
+    </div>
   );
 };
-
-export default InvitationRow;

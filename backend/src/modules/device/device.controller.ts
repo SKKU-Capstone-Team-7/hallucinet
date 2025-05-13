@@ -7,6 +7,7 @@ import { DeviceInfoDto } from './dto/device-info.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { DeviceAuthResponseDto } from './dto/device-auth-response.dto';
 import { CreateDeviceDto } from './dto/create-device.dto';
+import { UpdateDeviceInfoDto } from './dto/update-device-info.dto';
 
 @ApiTags('Devices')
 @ApiBearerAuth('bearer')
@@ -53,6 +54,20 @@ export class DeviceController {
         return this.deviceService.confirmDevice(client, deviceId);
     }
 
+    
+    //@ApiOperation({
+    //    summary: 'get device info by device ID(it only works by team member)'
+    //})
+    //@ApiOkResponse({
+    //    description: 'device info for the corresponding ID',
+    //    type: DeviceInfoDto,
+    //})
+    //@Get('devices/:deviceId')
+    //@UseGuards(AppwriteAuthGuard)
+    //async getDeviceById(@AppwriteClient() client: Client, @Param('deviceId') deviceId: string) {
+    //    return this.deviceService.getDeviceById(client, deviceId);
+    //}
+
     @ApiOperation({
         summary: 'get device info by device ID(it only works by team member)'
     })
@@ -61,15 +76,23 @@ export class DeviceController {
         type: DeviceInfoDto,
     })
     @Get('devices/:deviceId')
-    @UseGuards(AppwriteAuthGuard)
-    async getDeviceById(@AppwriteClient() client: Client, @Param('deviceId') deviceId: string) {
-        return this.deviceService.getDeviceById(client, deviceId);
+    async getDeviceById(@Param('deviceId') deviceId: string) {
+        return this.deviceService.getDeviceById(deviceId);
     }
 
-    @Patch('devices/:devicdId')
-    @UseGuards(AppwriteAuthGuard)
-    async updateDevice(@Param('deviceId') deviceId: string) {
-        return;
+    @ApiOperation({ summary: 'update device info by logined user endpoint' })
+    @ApiBody({
+            description: 'only device info to update',
+            type: UpdateDeviceInfoDto,
+        })
+    @ApiOkResponse({
+        description: 'updated device info',
+        type: DeviceInfoDto,
+      })
+    @Patch('devices/:deviceId')
+    async updateDevice(@Param('deviceId') deviceId: string, @Body() updateDeviceInfoDto: UpdateDeviceInfoDto): Promise<DeviceInfoDto> {
+        console.log(deviceId);
+        return this.deviceService.updateDevice(deviceId, updateDeviceInfoDto);
     }
 
     @Delete('devices/:deviceId')

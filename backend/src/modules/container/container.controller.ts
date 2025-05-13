@@ -1,16 +1,17 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Patch, Body } from '@nestjs/common';
 import { ContainerService } from './container.service';
 import { AppwriteAuthGuard } from 'src/common/guards/appwrite-auth.guard';
 import { Client } from 'node-appwrite';
 import { AppwriteClient } from 'src/common/decorators/appwrite-client.decorator';
 import { ContainerInfoDto } from './dto/container-info.dto';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiTags, ApiBody } from '@nestjs/swagger';
+import { UpdateContainerInfoDto } from './dto/update-container-info.dto';
 
 @ApiTags('Containers')
 @ApiBearerAuth('bearer')
 @Controller('')
 export class ContainerController {
-    constructor(private readonly ContainerService: ContainerService) { }
+    constructor(private readonly containerService: ContainerService) { }
 
     @ApiOperation({ summary: 'get containers list of current user team endpoint' })
     @ApiQuery({
@@ -36,7 +37,7 @@ export class ContainerController {
         @Query('sort') sort: 'lastAccessed' | 'createdAt' = 'lastAccessed',
         @Query('order') order: 'asc' | 'desc' = 'desc',
         @Query('limit') limit: number = 20,): Promise<ContainerInfoDto[]> {
-        return this.ContainerService.getTeamContainers(client, sort, order, limit);
+        return this.containerService.getTeamContainers(client, sort, order, limit);
     }
 
     @Get('devices/:deviceId/containers')
@@ -45,14 +46,38 @@ export class ContainerController {
         //    return this.ContainerService.getContainers(deviceId);
     }
 
+    //@ApiOperation({ summary: 'get container info using container ID(it only works by team member)' })
+    //@ApiOkResponse({
+    //    description: 'container info for the corresponding ID',
+    //    type: ContainerInfoDto,
+    //})
+    //@Get('containers/:containerId')
+    //@UseGuards(AppwriteAuthGuard)
+    //async getContainerById(@AppwriteClient() client: Client, @Param('containerId') containerId: string): Promise<ContainerInfoDto> {
+    //    return this.ContainerService.getContainerById(client, containerId);
+    //} 
+
     @ApiOperation({ summary: 'get container info using container ID(it only works by team member)' })
     @ApiOkResponse({
         description: 'container info for the corresponding ID',
         type: ContainerInfoDto,
     })
     @Get('containers/:containerId')
-    @UseGuards(AppwriteAuthGuard)
-    async getContainerById(@AppwriteClient() client: Client, @Param('containerId') containerId: string): Promise<ContainerInfoDto> {
-        return this.ContainerService.getContainerById(client, containerId);
+    async getContainerById(@Param('containerId') containerId: string): Promise<ContainerInfoDto> {
+        return this.containerService.getContainerById(containerId);
     } 
+
+    @ApiOperation({ summary: 'update device info by logined user endpoint' })
+    @ApiBody({
+        description: 'only device info to update',
+        type: UpdateContainerInfoDto,
+    })
+    @ApiOkResponse({
+        description: 'updated device info',
+        type: ContainerInfoDto,
+    })
+    @Patch('containers/:containerId')
+    async updateContainer(@Param('containerId') containerId: string, @Body() updateContainerInfoDto: UpdateContainerInfoDto): Promise<ContainerInfoDto> {
+        return this.containerService.updateContainer(containerId, updateContainerInfoDto);
+    }
 }

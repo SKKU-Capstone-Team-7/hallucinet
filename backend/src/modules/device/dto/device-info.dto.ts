@@ -36,11 +36,9 @@ export class DeviceInfoDto {
     )
     readonly ipBlock24: string;
 
-    @ApiProperty({
-        example: '67ef5673002b2bf5d909',
-        description: 'device owner User ID'
-    })
-    readonly userId: string;
+    @ApiProperty({ type: PublicUserInfoDto })
+    @Type(() => PublicUserInfoDto)
+    readonly user: PublicUserInfoDto;
 
     //@Type(() => TeamInfoDto)
     //readonly team: TeamInfoDto;
@@ -52,12 +50,6 @@ export class DeviceInfoDto {
     @Type(() => Date)
     @IsDate()
     readonly lastActivatedAt: Date;
-
-    @ApiProperty({
-        example: '67f9f12c0015b7f72fd2',
-        description: 'team ID the device is registered to'
-    })
-    readonly teamId: string;
 
     constructor(partial: Partial<DeviceInfoDto>) {
         Object.assign(this, partial);

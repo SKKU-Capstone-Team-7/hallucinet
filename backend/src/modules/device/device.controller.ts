@@ -1,10 +1,12 @@
-import { Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Patch, Post, UseGuards, Body } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import { AppwriteAuthGuard } from 'src/common/guards/appwrite-auth.guard';
 import { AppwriteClient } from 'src/common/decorators/appwrite-client.decorator';
-import { Client } from 'node-appwrite';
+import { Client, ID } from 'node-appwrite';
 import { DeviceInfoDto } from './dto/device-info.dto';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
+import { DeviceAuthResponseDto } from './dto/device-auth-response.dto';
+import { CreateDeviceDto } from './dto/create-device.dto';
 
 @ApiTags('Devices')
 @ApiBearerAuth('bearer')
@@ -26,17 +28,42 @@ export class DeviceController {
         return this.deviceService.listDevices(client);
     }
 
-    @Post('teams/me/devices')
-    @UseGuards(AppwriteAuthGuard)
-    async addDeviceToTeam(@AppwriteClient() client: Client) {
-        return;
+    @ApiOperation({ summary: 'create new device which is not confirmed endpoint' })
+    @ApiBody({
+        description: 'device info',
+        type: CreateDeviceDto,
+      })
+    @ApiOkResponse({
+        description: 'created device id and url for confirm',
+        type: DeviceAuthResponseDto,
+      })
+    @Post('/devices/auth')
+    async addDevice(@Body() deviceName: CreateDeviceDto): Promise<DeviceAuthResponseDto> {
+        return this.deviceService.addDevice(deviceName);
     }
 
-    @Get('devices/:devicdId')
+    @ApiOperation({ summary: 'confirm device by logined user endpoint' })
+    @ApiOkResponse({
+        description: 'created device info',
+        type: DeviceInfoDto,
+      })
+    @Post('/devices/:deviceId/confirm')
     @UseGuards(AppwriteAuthGuard)
-    async getDeviceById(@Param('deviceId') deviceId: string) {
-        //return this.deviceService.getDeviceById(deviceId);
-        return;
+    async confirmDevice(@AppwriteClient() client: Client, @Param('deviceId') deviceId: string): Promise<DeviceInfoDto> {
+        return this.deviceService.confirmDevice(client, deviceId);
+    }
+
+    @ApiOperation({
+        summary: 'get device info by device ID(it only works by team member)'
+    })
+    @ApiOkResponse({
+        description: 'device info for the corresponding ID',
+        type: DeviceInfoDto,
+    })
+    @Get('devices/:deviceId')
+    @UseGuards(AppwriteAuthGuard)
+    async getDeviceById(@AppwriteClient() client: Client, @Param('deviceId') deviceId: string) {
+        return this.deviceService.getDeviceById(client, deviceId);
     }
 
     @Patch('devices/:devicdId')

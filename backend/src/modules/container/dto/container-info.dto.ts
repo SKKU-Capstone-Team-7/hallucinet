@@ -38,10 +38,11 @@ export class ContainerInfoDto {
     readonly ip: string;
 
     @ApiProperty({
+        example: '68089e5300280c88c3ed',
         description: 'device hosting this container'
     })
-    @Type(() => DeviceInfoDto)
-    readonly device?: DeviceInfoDto;
+    @IsString()
+    readonly deviceId?: string;
 
     @ApiProperty({
         example: '2025-04-23T06:14:31.387Z',

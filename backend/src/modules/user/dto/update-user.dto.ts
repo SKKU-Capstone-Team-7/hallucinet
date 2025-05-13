@@ -1,11 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString } from "class-validator";
+import { IsString, IsOptional } from "class-validator";
 
 export class UpdateUserDto {
     @ApiProperty({
         example: 'user',
         description: 'name of user'
     })
+    @IsOptional()
     @IsString()
     readonly name?: string;
 

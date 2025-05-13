@@ -44,4 +44,15 @@ export class ContainerController {
     async getContainers(@AppwriteClient() client: Client, @Param('deviceId') deviceId: string) {
         //    return this.ContainerService.getContainers(deviceId);
     }
+
+    @ApiOperation({ summary: 'get container info using container ID(it only works by team member)' })
+    @ApiOkResponse({
+        description: 'container info for the corresponding ID',
+        type: ContainerInfoDto,
+    })
+    @Get('containers/:containerId')
+    @UseGuards(AppwriteAuthGuard)
+    async getContainerById(@AppwriteClient() client: Client, @Param('containerId') containerId: string): Promise<ContainerInfoDto> {
+        return this.ContainerService.getContainerById(client, containerId);
+    } 
 }

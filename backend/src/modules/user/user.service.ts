@@ -66,13 +66,17 @@ export class UserService {
 
     async getUserById(userId: string): Promise<PublicUserInfoDto> {
         const users = new Users(this.appwriteService.getServerClient());
+        const { memberships } = await users.listMemberships(userId);
+        console.log(memberships);
 
         try {
             const user = await users.get(userId);
+            console.log(user);
             return new PublicUserInfoDto({
                 $id: user.$id,
                 email: user.email,
                 name: user.name,
+                teamIds: memberships.map((m) => m.teamId)
             })
         } catch (error) {
             console.error('Failed to fetch user:', error);

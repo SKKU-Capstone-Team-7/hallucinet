@@ -39,11 +39,11 @@ export default function DashboardPage() {
   
     (async () => {
       try {
-        await account.get();               // ensure user is signed in
+        let user = await account.get();              
         setLoading(false);
   
         const { jwt } = await account.createJWT();  
-        const res = await fetch(`${apiBaseUrl}/devices`, {
+        const res = await fetch(`${apiBaseUrl}/teams/me/devices`, {
           headers: { 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${jwt}` 
@@ -52,6 +52,7 @@ export default function DashboardPage() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const devices = await res.json();
         setDevices(Array.isArray(devices) ? devices : []);
+        setUser(user)
       } catch (err) {
         console.error(err);
         router.replace('/login');
@@ -97,7 +98,7 @@ export default function DashboardPage() {
                   <div key={i} className="container-card">
                     <h3>{device.name}</h3>
                     <p>{device.ipBlock24}</p>
-                    <p>{device.user.email}</p>
+                    <p>{user.email}</p>
                   </div>
                 ))}
               </div>
@@ -146,7 +147,7 @@ export default function DashboardPage() {
                           className={`status-dot ${d.status ? 'online' : 'offline'}`}
                         ></span>
                         <div className="device-name">{d.name}</div>
-                        <div className="device-email">{d.user.email}</div>
+                        <div className="device-email">{d.user.$id}</div>
                       </td>
                       <td>{d.ipBlock24}</td>
                       <td>{new Date(d.lastActivatedAt).toLocaleString()}</td>

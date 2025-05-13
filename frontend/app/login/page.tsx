@@ -46,7 +46,7 @@ export default function Login() {
     fetch('/api/v1/users/me', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${jwt}`
+        'Authorization': `Bearer ${jwt.jwt}`
       }
     }).then(res => res.text())
       .then(body => {

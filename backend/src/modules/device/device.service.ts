@@ -12,6 +12,7 @@ import { randomBytes, createHash } from 'crypto';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UserInfoDto } from '../user/dto/user-info.dto';
 import { randomInt } from 'crypto';
+import { UpdateDeviceInfoDto } from './dto/update-device-info.dto';
 
 @Injectable()
 export class DeviceService {
@@ -29,30 +30,46 @@ export class DeviceService {
 
         const { documents } = await this.databaseService.listDevicesByTeamId(team.$id);
 
-        console.log(documents);
+        const dtos: DeviceInfoDto[] = [];
+        for (const doc of documents) {
+            const user = await this.userService.getUserById(doc.user.$id);
+            dtos.push(new DeviceInfoDto({
+                $id: doc.$id,
+                name: doc.name,
+                status: doc.status,
+                ipBlock24: doc.ipBlock24,
+                user: user,
+                lastActivatedAt: doc.lastActivatedAt,
+            }))
+        }
 
-        return documents.map(doc => new DeviceInfoDto({
-            $id: doc.$id,
-            name: doc.name,
-            status: doc.status,
-            ipBlock24: doc.ipBlock24,
-            userId: doc.user.$id,
-            lastActivatedAt: doc.lastActivatedAt,
-            teamId: team.$id
-        }));
+        return dtos;
     }
 
-    async getDeviceById(client: Client, deviceId: string):Promise<DeviceInfoDto> {
-        const doc = await this.databaseService.getDeviceById(client, deviceId);
+    //async getDeviceById(client: Client, deviceId: string):Promise<DeviceInfoDto> {
+    //    const doc = await this.databaseService.getDeviceById(client, deviceId);
+    //
+    //    return new DeviceInfoDto({
+    //        $id: doc.$id,
+    //        name: doc.name,
+    //        status: doc.status,
+    //        ipBlock24: doc.ipBlock24,
+    //        userId: doc.user.$id,
+    //        lastActivatedAt: doc.lastActivatedAt,
+    //        teamId: doc.team.$id
+    //    })
+    //}
 
+    async getDeviceById(deviceId: string):Promise<DeviceInfoDto> {
+        const doc = await this.databaseService.getDeviceById(deviceId);
+        const user = await this.userService.getUserById(doc.user.$id);
         return new DeviceInfoDto({
             $id: doc.$id,
             name: doc.name,
             status: doc.status,
             ipBlock24: doc.ipBlock24,
-            userId: doc.user.$id,
+            user: user,
             lastActivatedAt: doc.lastActivatedAt,
-            teamId: doc.team.$id
         })
     }
 
@@ -103,9 +120,23 @@ export class DeviceService {
             name: doc.name,
             status: doc.status,
             ipBlock24: doc.ipBlock24,
-            userId: doc.user.$id,
+            user: userInfo,
             lastActivatedAt: doc.lastActivatedAt,
-            teamId: doc.team.$id
+        });
+    }
+
+    async updateDevice(deviceId: string, updateDeviceInfoDto: UpdateDeviceInfoDto): Promise<DeviceInfoDto> {
+        console.log(deviceId);
+        const doc = await this.databaseService.updateDevice(deviceId, updateDeviceInfoDto);
+        const userInfo = await this.userService.getUserById(doc.user.$id);
+        
+        return new DeviceInfoDto({
+            $id: doc.$id,
+            name: doc.name,
+            status: doc.status,
+            ipBlock24: doc.ipBlock24,
+            user: userInfo,
+            lastActivatedAt: doc.lastActivatedAt,
         });
     }
 }

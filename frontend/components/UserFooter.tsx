@@ -29,8 +29,8 @@ export default function UserFooter({ user, onLogout }: UserFooterProps) {
         onClick={() => setIsOpen(o => !o)}
         className="
           flex w-full items-center gap-2 rounded-lg border-0
-          bg-transparent px-2 py-2 text-sm text-gray-900
-          hover:bg-gray-200 hover:border-transparent
+          bg-transparent px-2 py-2 text-sm text-white
+          hover:bg-gray-300 hover:text-black hover:border-transparent
           focus:outline-none focus:ring-0
         "
       >
@@ -43,10 +43,16 @@ export default function UserFooter({ user, onLogout }: UserFooterProps) {
             className="object-cover"
           /> */}
         </div>
-        <div className="flex-1 text-sm text-left">
-          <div className="font-medium">{user.name || user.email}</div>
-          <div className="text-gray-500">{user.email}</div>
-        </div>
+        <div className="flex-1 text-left">
+    <div className="font-medium">
+      {user.name || user.email}
+    </div>
+    <div className="">
+      {user.email}
+    </div>
+  </div>
+
+
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="

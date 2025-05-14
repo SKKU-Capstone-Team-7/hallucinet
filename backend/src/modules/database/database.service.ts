@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Databases, Models, Query, Client, Permission, Role } from 'node-appwrite';
 import { AppwriteService } from '../appwrite/appwrite.service';
+import { UpdateDeviceInfoDto } from '../device/dto/update-device-info.dto';
+import { UpdateContainerInfoDto } from '../container/dto/update-container-info.dto';
 
 @Injectable()
 export class DatabaseService {
@@ -30,9 +32,25 @@ export class DatabaseService {
         return set;
     }
 
+
+    //async getRegistrationExpiresAt(client: Client, deviceId: string): Promise<Date> {
+    //    const doc = await this.getDeviceById(client, deviceId);
+    //    return new Date(doc.registrationExpiresAt);
+    //}
+
     async getRegistrationExpiresAt(client: Client, deviceId: string): Promise<Date> {
-        const doc = await this.getDeviceById(client, deviceId);
+        const doc = await this.getDeviceById(deviceId);
         return new Date(doc.registrationExpiresAt);
+    }
+
+    async updateDevice(deviceId: string, updateDeviceInfoDto:UpdateDeviceInfoDto): Promise<Models.Document> {
+        const doc = await this.databases(this.appwrite.getServerClient()).updateDocument(
+            this.dbId,
+            this.deviceColId,
+            deviceId,
+            updateDeviceInfoDto
+        );
+        return doc;
     }
 
     async confirmDevice(client: Client, deviceId: string, userId: string, teamId: string, ipBlock24: string, date: Date): Promise<Models.Document> {
@@ -88,8 +106,16 @@ export class DatabaseService {
         );
     }
 
-    async getDeviceById(client: Client, deviceId: string): Promise<Models.Document> {
-        return this.databases(client).getDocument(
+    //async getDeviceById(client: Client, deviceId: string): Promise<Models.Document> {
+    //    return this.databases(client).getDocument(
+    //        this.dbId,
+    //       this.deviceColId,
+    //        deviceId,
+    //    )
+    //}
+
+    async getDeviceById(deviceId: string): Promise<Models.Document> {
+        return this.databases(this.appwrite.getServerClient()).getDocument(
             this.dbId,
             this.deviceColId,
             deviceId,
@@ -111,13 +137,31 @@ export class DatabaseService {
         )
     }
 
-    async getContainerById(client: Client, containerId: string): Promise<Models.Document> {
-        return this.databases(client).getDocument(
+    //async getContainerById(client: Client, containerId: string): Promise<Models.Document> {
+    //    return this.databases(client).getDocument(
+    //        this.dbId,
+    //        this.containerColId,
+    //        containerId,
+    //    )
+    //}
+
+    async getContainerById(containerId: string): Promise<Models.Document> {
+        return this.databases(this.appwrite.getServerClient()).getDocument(
             this.dbId,
             this.containerColId,
             containerId,
         )
     }
+
+    async updateContainer(containerId: string, updateContainerInfoDto: UpdateContainerInfoDto): Promise<Models.Document> {
+        return this.databases(this.appwrite.getServerClient()).updateDocument(
+            this.dbId,
+            this.containerColId,
+            containerId,
+            updateContainerInfoDto
+        );
+    }
+
 
     async registerTeamId(teamId: string): Promise<Models.Document> {
         return this.databases(this.appwrite.getServerClient()).createDocument(

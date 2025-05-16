@@ -91,14 +91,14 @@ export default function DashboardPage() {
 
           <div className="dashboard-container">
             <section className="recent-containers">
-              <h2>Recently Activated Devices</h2>
+              <h2>Added Devices</h2>
               <div className="containers-list">
                 {devices.length === 0 && <p>No devices available.</p>}
                 {devices.map((device, i) => (
                   <div key={i} className="container-card">
-                    <h3>{device.name}</h3>
-                    <p>{device.ipBlock24}</p>
                     <p>{user.email}</p>
+                    <p>{device.ipBlock24}</p>
+                    <h3>{device.name}</h3>
                   </div>
                 ))}
               </div>

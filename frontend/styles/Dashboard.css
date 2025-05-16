@@ -19,8 +19,7 @@
 .dashboard-header {
   flex: 0 0 auto;
   padding: 1.5px;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #1a2841;
+  background-color: #050a12;
 }
 
 .dashboard-container {
@@ -48,18 +47,24 @@ h2{
   overflow-x: auto;
   overflow-y: hidden;
   gap: 1rem;
-  padding-bottom: 0.5rem;
-  width: 100%;
+  padding-bottom: 0rem;
+  width: max-content; 
   background-color: #1a2841;
+  border-radius: 8px;
 }
 
 .recent-containers .container-card {
   flex: 0 0 auto;
   width: 180px;
-  background-color: #fafafa;
+  background-color: #1a2841;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   padding: 1rem;
+}
+
+.recent-containers .container-card h3,
+.recent-containers .container-card p {
+  color: #ffffff !important;
 }
 
 .recent-containers .container-card h3 {
@@ -153,28 +158,29 @@ h2{
 .devices-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: #ffffff;
+  background-color: #1a2841;
   border-radius: 0.5rem;
   overflow: hidden;
+  color: white;
 }
 
 .devices-table th,
 .devices-table td {
   padding: 0.75rem 1rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: none;
 }
 
 .devices-table th {
   font-weight: 600;
   color: #ffffff;
   background-color: #1a2841;
-  border: 1px solid #1a2841;
+  border-bottom: 0.5px solid white;
 }
 
 .device-name {
   font-weight: 500;
-  color: #111827;
+  color: white;
 }
 
 .device-email {

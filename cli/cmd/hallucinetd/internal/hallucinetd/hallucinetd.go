@@ -85,6 +85,7 @@ func (daemon *HallucinetDaemon) socketListenLoop() error {
 	running := false
 
 	for {
+		log.Printf("here")
 		conn, err := daemon.listener.AcceptUnix()
 		if err != nil {
 			return err

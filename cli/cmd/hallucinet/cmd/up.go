@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinet/internal/hallucinet"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/auth"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -28,17 +29,24 @@ var upCmd = &cobra.Command{
 			return err
 		}
 
-		token, err := os.ReadFile(upOpts.tokenPath)
+		tokenString, err := os.ReadFile(upOpts.tokenPath)
 		if err != nil {
 			log.Printf("Cannot read token file %v. %v\n", upOpts.tokenPath, err)
 			return err
 		}
-		config.Token = string(token)
+
+		token, err := auth.DecodeDeviceToken(string(tokenString))
+		if err != nil {
+			log.Printf("Cannot decode device token. %v\n", err)
+			return err
+		}
+		config.DeviceToken = token
 
 		hallucinet := hallucinet.New(config)
 		err = hallucinet.Start()
 		if err != nil {
 			log.Printf("Cannot start hallucinet. %v\n", err)
+			return err
 		}
 
 		log.Printf("Hallucinet started.")

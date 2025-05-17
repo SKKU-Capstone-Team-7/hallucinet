@@ -24,13 +24,11 @@ type ContainerInfoDto struct {
 
 type Coord struct {
 	endpoint string
-	token    string
 }
 
 func New(config types.Config) (*Coord, error) {
 	return &Coord{
 		endpoint: config.Endpoint,
-		token:    config.Token,
 	}, nil
 }
 

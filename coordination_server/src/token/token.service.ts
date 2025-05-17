@@ -16,9 +16,9 @@ export class TokenService {
   }
 
   async createToken(form: CreateTokenDto): Promise<{ token: string }> {
-    const payload = new TokenPayloadDto({
+    const payload = {
       deviceId: form.deviceId,
-    });
+    };
     const token = this.jwtService.sign(payload, {
       secret: this.secret,
       expiresIn: '1 year',

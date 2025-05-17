@@ -52,6 +52,10 @@ export class DevicesService {
       }),
     ];
   }
+
+  async createDevice(name: string): Promise<DeviceInfoDto> {
+    return new DeviceInfoDto({});
+  }
 }
 
 // async listDevices(client: Client,): Promise<DeviceInfoDto[]> {

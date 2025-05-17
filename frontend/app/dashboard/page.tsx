@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Client, Account, Models } from 'appwrite';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
-import { CirclePlus, RotateCcw } from 'lucide-react';
+import { CirclePlus, Container, RotateCcw } from 'lucide-react';
 import '@/styles/Dashboard.css';
 
 interface Device {
@@ -24,11 +24,34 @@ interface Device {
   teamId: string;
 }
 
+interface Container {
+  $id: string
+  name: string
+  image: string
+  ip: string
+  device: {
+    $id: string
+    status: boolean
+    name: string
+    ipBlock24: string
+    user: {
+      $id: string
+      name: string
+      email: string
+      teamIds: string
+    }
+    lastActivatedAt: string
+    teamId:         string
+  }
+  lastAccessed: string
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [loading, setLoading] = useState(true);
   const [devices, setDevices] = useState<Device[]>([]);
+  const [containers, setContainers] = useState<Container[]>([]);
 
   useEffect(() => {
     const endpoint   = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
@@ -52,6 +75,20 @@ export default function DashboardPage() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const devices = await res.json();
         setDevices(Array.isArray(devices) ? devices : []);
+
+        const ctrRes = await fetch(
+          `${apiBaseUrl}/teams/me/containers?sort=lastAccessed&order=asc&limit=1`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${jwt}`,
+            },
+          }
+        );
+        if (!ctrRes.ok) throw new Error(`Containers HTTP ${ctrRes.status}`);
+        const ctrs = await ctrRes.json();
+        setContainers(Array.isArray(ctrs) ? ctrs : []);
+
         setUser(user)
       } catch (err) {
         console.error(err);
@@ -59,7 +96,6 @@ export default function DashboardPage() {
       }
     })();
   }, [router]);
-  
 
   const handleLogout = async () => {
     const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
@@ -83,22 +119,20 @@ export default function DashboardPage() {
     <SidebarProvider>
       <div className="dashboard-layout">
         <AppSidebar user={user} onLogout={handleLogout} />
-
         <div className="dashboard-main">
           <header className="dashboard-header">
             <SidebarTrigger />
           </header>
-
           <div className="dashboard-container">
             <section className="recent-containers">
-              <h2>Added Devices</h2>
+              <h2>Containers</h2>
               <div className="containers-list">
-                {devices.length === 0 && <p>No devices available.</p>}
-                {devices.map((device, i) => (
+                {containers.length === 0 && <p>No containers available.</p>}
+                {containers.map((c, i) => (
                   <div key={i} className="container-card">
-                    <p>{user.email}</p>
-                    <p>{device.ipBlock24}</p>
-                    <h3>{device.name}</h3>
+                    <p>{c.name}</p>
+                    <p>{c.image}</p>
+                    <h3>{c.device.user.name}</h3>
                   </div>
                 ))}
               </div>

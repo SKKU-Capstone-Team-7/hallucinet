@@ -27,6 +27,7 @@ export class DeviceGuard implements CanActivate {
     request.token = token;
     const payload = this.tokenService.decodeToken(token);
     request.deviceId = payload.deviceId;
+
     return true;
   }
 }

@@ -58,7 +58,6 @@ func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	config.DeviceToken = token
-	os.Exit(0)
 
 	daemon, err := hallucinetd.New(config)
 	if err != nil {
@@ -66,11 +65,7 @@ func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = daemon.Start()
-	if err != nil {
-		log.Printf("Cannot start daemon. %v\n", err)
-		return err
-	}
+	daemon.Start()
 
 	return nil
 }

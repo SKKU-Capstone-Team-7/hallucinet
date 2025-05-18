@@ -45,14 +45,17 @@ func DecodeDeviceToken(tokenString string) (types.DeviceToken, error) {
 	return types.DeviceToken{
 		DeviceId:   claims["deviceId"].(string),
 		Expiration: expiration.Time,
+		JWT:        tokenString,
 	}, nil
 }
 
 func Authenticate(tokenPath string) (types.DeviceToken, error) {
 	_, err := os.Stat(tokenPath)
 	if err == nil {
-		// Token file exists
 		tokenData, err := os.ReadFile(tokenPath)
+		if err != nil {
+			return types.DeviceToken{}, err
+		}
 		token, err := DecodeDeviceToken(string(tokenData))
 		// Token is valid and not expired
 		if err == nil && token.Expiration.After(time.Now()) {
@@ -62,9 +65,17 @@ func Authenticate(tokenPath string) (types.DeviceToken, error) {
 
 	// No valid token... register device
 	token, err := registerDevice()
+	if err != nil {
+		return types.DeviceToken{}, err
+	}
 	os.WriteFile(tokenPath, []byte(token), 0600)
 
-	return types.DeviceToken{}, err
+	deviceToken, err := DecodeDeviceToken(token)
+	if err != nil {
+		return types.DeviceToken{}, err
+	}
+
+	return deviceToken, nil
 }
 
 func registerDevice() (string, error) {

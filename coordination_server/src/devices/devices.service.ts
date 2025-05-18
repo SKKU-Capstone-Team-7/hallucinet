@@ -24,33 +24,31 @@ export class DevicesService {
     const client = this.appwriteService.getServerClient();
     const databases = new Databases(client);
 
-    const deviceDoc = await databases.listDocuments(
+    const deviceDocs = await databases.listDocuments(
       this.databaseId,
       this.deviceCollectionId,
       [Query.equal('$id', [deviceId])],
     );
 
-    const teamId = deviceDoc.documents[0].team['$id'];
+    const teamId = deviceDocs.documents[0].team['$id'];
     const teamDevicesDocs = await databases.listDocuments(
       this.databaseId,
       this.deviceCollectionId,
       [Query.equal('team', [teamId])],
     );
 
-    console.log(teamDevicesDocs);
+    const dtos: DeviceInfoDto[] = [];
+    for (const doc of deviceDocs.documents) {
+      dtos.push(
+        new DeviceInfoDto({
+          name: doc['name'],
+          subnet: doc['ipBlock24'] + '/24',
+          address: doc['address'],
+        }),
+      );
+    }
 
-    return [
-      new DeviceInfoDto({
-        name: 'clientA',
-        subnet: '10.2.1.0/24',
-        address: '192.168.100.2',
-      }),
-      new DeviceInfoDto({
-        name: 'clientB',
-        subnet: '10.2.2.0/24',
-        address: '192.168.100.3',
-      }),
-    ];
+    return dtos;
   }
 
   async createDevice(name: string): Promise<DeviceInfoDto> {

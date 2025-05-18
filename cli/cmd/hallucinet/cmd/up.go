@@ -29,13 +29,7 @@ var upCmd = &cobra.Command{
 			return err
 		}
 
-		tokenString, err := os.ReadFile(upOpts.tokenPath)
-		if err != nil {
-			log.Printf("Cannot read token file %v. %v\n", upOpts.tokenPath, err)
-			return err
-		}
-
-		token, err := auth.DecodeDeviceToken(string(tokenString))
+		token, err := auth.Authenticate(upOpts.tokenPath)
 		if err != nil {
 			log.Printf("Cannot decode device token. %v\n", err)
 			return err

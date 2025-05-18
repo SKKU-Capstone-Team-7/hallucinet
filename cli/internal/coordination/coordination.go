@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
@@ -24,11 +25,13 @@ type ContainerInfoDto struct {
 
 type Coord struct {
 	endpoint string
+	JWT      string
 }
 
 func New(config types.Config) (*Coord, error) {
 	return &Coord{
 		endpoint: config.Endpoint,
+		JWT:      config.DeviceToken.JWT,
 	}, nil
 }
 
@@ -45,8 +48,14 @@ func parseContainerInfoDto(container ContainerInfoDto) (types.ContainerInfo, err
 }
 
 func (coord *Coord) GetDevices() ([]types.DeviceInfo, error) {
+	client := http.Client{}
 	deviceURL := fmt.Sprintf("%s/devices", coord.endpoint)
-	res, err := http.Get(deviceURL)
+	req, err := http.NewRequest("GET", deviceURL, nil)
+	if err != nil {
+		return []types.DeviceInfo{}, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", coord.JWT))
+	res, err := client.Do(req)
 	if err != nil {
 		return []types.DeviceInfo{}, err
 	}
@@ -75,8 +84,14 @@ func (coord *Coord) GetDevices() ([]types.DeviceInfo, error) {
 }
 
 func (coord *Coord) GetContainers() ([]types.ContainerInfo, error) {
+	client := http.Client{}
 	containerUrl := fmt.Sprintf("%s/containers", coord.endpoint)
-	res, err := http.Get(containerUrl)
+	req, err := http.NewRequest("GET", containerUrl, nil)
+	if err != nil {
+		return []types.ContainerInfo{}, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", coord.JWT))
+	res, err := client.Do(req)
 	if err != nil {
 		return []types.ContainerInfo{}, err
 	}
@@ -85,6 +100,8 @@ func (coord *Coord) GetContainers() ([]types.ContainerInfo, error) {
 	if err != nil {
 		return []types.ContainerInfo{}, err
 	}
+
+	log.Printf("Containers: %v\n", string(body))
 
 	var containerDtos []ContainerInfoDto
 	err = json.Unmarshal(body, &containerDtos)

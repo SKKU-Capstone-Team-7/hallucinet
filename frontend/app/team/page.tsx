@@ -33,15 +33,12 @@ export default function TeamPage() {
       <div className="flex h-screen w-screen overflow-hidden">
         <AppSidebar user={user} onLogout={() => {}} />
 
-        {/* 여기서부터 오른쪽 전체 영역 */}
         <div className="flex flex-col flex-1 h-full bg-[#050a12] text-white">
-          {/* 상단 헤더 */}
           <header className="flex items-center px-6 py-4 border-b border-gray-700">
             <SidebarTrigger />
             <h1 className="text-2xl font-semibold ml-4">Team</h1>
           </header>
 
-          {/* 메인 콘텐츠 영역 */}
           <main className="flex-1 px-8 py-6 overflow-auto">
             <div className="flex items-center gap-3 mb-6">
               <input

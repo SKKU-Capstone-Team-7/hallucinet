@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { Models } from "appwrite";
-import {Server, Users2, Package, Settings, } from "lucide-react";
+import { LayoutDashboard, Server, Users2, Package, Settings } from "lucide-react";
 import styles from "@/styles/app-sidebar.module.css";
 import UserFooter from "@/components/UserFooter";
 import {
@@ -15,12 +15,14 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
 
 const items = [
-  { title: "Devices",     url: "#", icon: Server },
-  { title: "Team",    url: "#", icon: Users2 },
-  { title: "Containers", url: "#", icon: Package },
-  { title: "Settings",   url: "#", icon: Settings },
+  { title: "Dashboard",   url: "/dashboard", icon: LayoutDashboard },
+  { title: "Devices",     url: "/devices",   icon: Server },
+  { title: "Team",        url: "/team",      icon: Users2 },
+  { title: "Containers",  url: "/containers",icon: Package },
+  { title: "Settings",    url: "/settings",  icon: Settings },
 ];
 
 interface AppSidebarProps {
@@ -30,11 +32,18 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user, onLogout }: AppSidebarProps) {
   return (
-    <Sidebar className="flex flex-col h-full bg-[#1a2841]">
+    <Sidebar className={styles.sidebar}>
       <SidebarContent>
         <SidebarGroup>
           <div className={styles.navbar}>
-            <div className={styles.title}>hallucinet</div>
+            <div className={styles.logo}>
+              <Image
+                src="/logowhite.svg"
+                alt="hallucinet logo"
+                fill
+                style={{ objectFit: "contain" }}
+              />
+            </div>
           </div>
         </SidebarGroup>
         <SidebarGroup>

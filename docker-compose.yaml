@@ -111,6 +111,8 @@ services:
         condition: service_completed_successfully
     networks:
       server:
+    ports:
+      - "8000:8000"
 
   frontend:
     image: node:23

@@ -30,7 +30,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user, onLogout }: AppSidebarProps) {
   return (
-    <Sidebar className="flex flex-col h-full bg-white">
+    <Sidebar className="flex flex-col h-full bg-[#1a2841]">
       <SidebarContent>
         <SidebarGroup>
           <div className={styles.navbar}>

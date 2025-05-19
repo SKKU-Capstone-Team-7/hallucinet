@@ -1,6 +1,6 @@
 import Logo from '@/components/Logo';
-import CreateTeamForm from '@/components/CreateTeamForm';
-import InvitationList from '@/components/InvitationList';
+import { CreateTeamForm } from '@/components/CreateTeamForm';
+import { InvitationList } from '@/components/InvitationList';
 
 export default function OnboardingPage() {
   return (

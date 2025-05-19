@@ -5,7 +5,8 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Client, Account, Models } from 'appwrite';
 import { useRouter } from 'next/navigation';
-import '@/styles/Dashboard.css';
+import { TeamMemberTable } from '@/components/TeamMemberTable';
+import { RefreshCw } from 'lucide-react';
 
 export default function TeamPage() {
   const router = useRouter();
@@ -14,53 +15,50 @@ export default function TeamPage() {
 
   useEffect(() => {
     const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
-    const project  = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
-
-    const client  = new Client().setEndpoint(endpoint).setProject(project);
+    const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
+    const client = new Client().setEndpoint(endpoint).setProject(project);
     const account = new Account(client);
 
     account.get()
-      .then(u => {
-        setUser(u);
-        setLoading(false);
-      })
-      .catch(() => {
-        router.replace('/login');
-      });
+      .then(setUser)
+      .catch(() => router.replace('/login'))
+      .finally(() => setLoading(false));
   }, [router]);
 
-  if (loading) return <p className="dashboard-loading">Loading…</p>;
+  if (loading) return <div className="p-8 text-white">Loading…</div>;
   if (!user) return null;
 
   return (
     <SidebarProvider>
-      <div className="dashboard-layout">
+      <div className="flex h-screen w-screen overflow-hidden">
         <AppSidebar user={user} onLogout={() => {}} />
-        <div className="dashboard-main">
-          <header className="dashboard-header">
+
+        {/* 여기서부터 오른쪽 전체 영역 */}
+        <div className="flex flex-col flex-1 h-full bg-[#050a12] text-white">
+          {/* 상단 헤더 */}
+          <header className="flex items-center px-6 py-4 border-b border-gray-700">
             <SidebarTrigger />
+            <h1 className="text-2xl font-semibold ml-4">Team</h1>
           </header>
 
-          <div className="dashboard-container">
-            <section className="team-section">
-              <h1 className="text-2xl font-semibold mb-4">Team</h1>
-              <p className="text-muted-foreground mb-6">
-                This page displays your team members.
-              </p>
-              <div className="team-members-grid">
-                {[
-                  { name: 'Kang', role: 'Frontend', email: 'kang@hallucinet.io' },
-                  { name: 'Kim', role: 'Backend', email: 'kim@hallucinet.io' },
-                ].map((m, i) => (
-                  <div key={i} className="container-card">
-                    <h3>{m.name}</h3>
-                    <p>{m.role}</p>
-                    <p>{m.email}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
+          {/* 메인 콘텐츠 영역 */}
+          <main className="flex-1 px-8 py-6 overflow-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <input
+                type="text"
+                placeholder="Search"
+                className="px-4 py-2 bg-[#1a2841] border border-gray-600 rounded-md text-white placeholder-gray-400 w-64"
+              />
+              <button className="bg-[#1c8cf0] text-white px-4 py-2 rounded-md hover:opacity-90 text-sm">
+                + Invite
+              </button>
+              <button className="p-2 rounded-md border border-gray-600 hover:bg-[#1a2841]">
+                <RefreshCw size={18} className="text-white" />
+              </button>
+            </div>
+
+            <TeamMemberTable />
+          </main>
         </div>
       </div>
     </SidebarProvider>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { Models } from "appwrite";
-import { Home, Inbox, Calendar, Search, Settings } from "lucide-react";
+import {Server, Users2, Package, Settings, } from "lucide-react";
 import styles from "@/styles/app-sidebar.module.css";
 import UserFooter from "@/components/UserFooter";
 import {
@@ -17,10 +17,10 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Devices",     url: "#", icon: Home },
-  { title: "Team",    url: "#", icon: Inbox },
-  { title: "Containers", url: "#", icon: Calendar },
-  { title: "Settings",   url: "#", icon: Search },
+  { title: "Devices",     url: "#", icon: Server },
+  { title: "Team",    url: "#", icon: Users2 },
+  { title: "Containers", url: "#", icon: Package },
+  { title: "Settings",   url: "#", icon: Settings },
 ];
 
 interface AppSidebarProps {

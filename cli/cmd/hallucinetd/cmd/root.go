@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinetd/internal/hallucinetd"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/auth"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -51,12 +52,12 @@ func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	token, err := os.ReadFile(tokenPath)
+	token, err := auth.Authenticate(tokenPath)
 	if err != nil {
-		log.Printf("Cannot read token file %v. %v\n", tokenPath, err)
+		log.Printf("Cannot decode device token. %v\n", err)
 		return err
 	}
-	config.Token = string(token)
+	config.DeviceToken = token
 
 	daemon, err := hallucinetd.New(config)
 	if err != nil {
@@ -64,11 +65,7 @@ func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = daemon.Start()
-	if err != nil {
-		log.Printf("Cannot start daemon. %v\n", err)
-		return err
-	}
+	daemon.Start()
 
 	return nil
 }

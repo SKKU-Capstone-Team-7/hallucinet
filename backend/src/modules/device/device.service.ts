@@ -16,144 +16,176 @@ import { UpdateDeviceInfoDto } from './dto/update-device-info.dto';
 
 @Injectable()
 export class DeviceService {
-    private readonly confirmBaseUrl: string = process.env.CONFIRM_BASE_URL!;
+  private readonly confirmBaseUrl: string = process.env.CONFIRM_BASE_URL!;
 
-    constructor(
-        private readonly appwriteService: AppwriteService,
-        private readonly teamService: TeamService,
-        private readonly databaseService: DatabaseService,
-        private readonly userService: UserService
-    ) { }
+  constructor(
+    private readonly appwriteService: AppwriteService,
+    private readonly teamService: TeamService,
+    private readonly databaseService: DatabaseService,
+    private readonly userService: UserService,
+  ) {}
 
-    async listDevices(client: Client,): Promise<DeviceInfoDto[]> {
-        const team = await this.teamService.getMyTeam(client);
+  async listDevices(client: Client): Promise<DeviceInfoDto[]> {
+    const team = await this.teamService.getMyTeam(client);
 
-        const { documents } = await this.databaseService.listDevicesByTeamId(team.$id);
+    const { documents } = await this.databaseService.listDevicesByTeamId(
+      team.$id,
+    );
 
-        const dtos: DeviceInfoDto[] = [];
-        for (const doc of documents) {
-            const user = await this.userService.getUserById(doc.user.$id);
-            dtos.push(new DeviceInfoDto({
-                $id: doc.$id,
-                name: doc.name,
-                status: doc.status,
-                ipBlock24: doc.ipBlock24,
-                user: user,
-                lastActivatedAt: doc.lastActivatedAt,
-            }))
-        }
-
-        return dtos;
+    const dtos: DeviceInfoDto[] = [];
+    for (const doc of documents) {
+      const user = await this.userService.getUserById(doc.user.$id);
+      dtos.push(
+        new DeviceInfoDto({
+          $id: doc.$id,
+          name: doc.name,
+          status: doc.status,
+          ipBlock24: doc.ipBlock24,
+          user: user,
+          lastActivatedAt: doc.lastActivatedAt,
+        }),
+      );
     }
 
-    //async getDeviceById(client: Client, deviceId: string):Promise<DeviceInfoDto> {
-    //    const doc = await this.databaseService.getDeviceById(client, deviceId);
-    //
-    //    return new DeviceInfoDto({
-    //        $id: doc.$id,
-    //        name: doc.name,
-    //        status: doc.status,
-    //        ipBlock24: doc.ipBlock24,
-    //        userId: doc.user.$id,
-    //        lastActivatedAt: doc.lastActivatedAt,
-    //        teamId: doc.team.$id
-    //    })
-    //}
+    return dtos;
+  }
 
-    async getDeviceById(deviceId: string):Promise<DeviceInfoDto> {
-        const doc = await this.databaseService.getDeviceById(deviceId);
-        const user = await this.userService.getUserById(doc.user.$id);
-        return new DeviceInfoDto({
-            $id: doc.$id,
-            name: doc.name,
-            status: doc.status,
-            ipBlock24: doc.ipBlock24,
-            user: user,
-            lastActivatedAt: doc.lastActivatedAt,
-        })
+  //async getDeviceById(client: Client, deviceId: string):Promise<DeviceInfoDto> {
+  //    const doc = await this.databaseService.getDeviceById(client, deviceId);
+  //
+  //    return new DeviceInfoDto({
+  //        $id: doc.$id,
+  //        name: doc.name,
+  //        status: doc.status,
+  //        ipBlock24: doc.ipBlock24,
+  //        userId: doc.user.$id,
+  //        lastActivatedAt: doc.lastActivatedAt,
+  //        teamId: doc.team.$id
+  //    })
+  //}
+
+  async getDeviceById(deviceId: string): Promise<DeviceInfoDto> {
+    const doc = await this.databaseService.getDeviceById(deviceId);
+    const user = doc.user
+      ? await this.userService.getUserById(doc.user?.$id)
+      : undefined;
+    return new DeviceInfoDto({
+      $id: doc.$id,
+      name: doc.name,
+      status: doc.status,
+      ipBlock24: doc.ipBlock24,
+      user: user,
+      lastActivatedAt: doc.lastActivatedAt,
+    });
+  }
+
+  async addDevice(deviceName: CreateDeviceDto): Promise<DeviceAuthResponseDto> {
+    const expiresAt = new Date(Date.now() + 15 * 60_000);
+
+    const doc = await this.databaseService.createDevice(
+      expiresAt,
+      ID.unique(),
+      deviceName.name,
+    );
+
+    //console.log(doc);
+    return new DeviceAuthResponseDto({
+      $id: doc.$id,
+      url: `${this.confirmBaseUrl}?deviceId=${doc.$id}`,
+    });
+  }
+
+  async confirmDevice(
+    client: Client,
+    deviceId: string,
+  ): Promise<DeviceInfoDto> {
+    // get user, team (team 있는가 check) o
+    // make ipblock
+    // check expires time o
+    // set address null (dummy) o
+    // set lastActivateAt = now o
+    // status false o
+    const userInfo = await this.userService.getCurrentUser(client);
+    const teamInfo = await this.teamService.getMyTeam(client);
+    console.log('Confirming device ' + deviceId);
+    const registrationExpiresAt =
+      await this.databaseService.getRegistrationExpiresAt(client, deviceId);
+    console.log('Confirming sdevice ' + deviceId);
+    const lastActivateAt = new Date(Date.now());
+
+    if (!userInfo.teamIds || userInfo.teamIds.length == 0) {
+      throw new BadRequestException("you don't have team.");
     }
 
-    async addDevice(deviceName: CreateDeviceDto): Promise<DeviceAuthResponseDto> {
-        const expiresAt = new Date(Date.now() + 15 * 60_000);
-
-        const doc = await this.databaseService.createDevice(expiresAt, ID.unique(), deviceName.name);
-
-        //console.log(doc);
-        return new DeviceAuthResponseDto({
-            $id: doc.$id,
-            url: `${this.confirmBaseUrl}?deviceId=${doc.$id}`
-        });
+    if (lastActivateAt > registrationExpiresAt) {
+      throw new BadRequestException('The confirmation link has expired.');
     }
 
-    async confirmDevice(client: Client, deviceId: string): Promise<DeviceInfoDto> {
-        // get user, team (team 있는가 check) o
-        // make ipblock
-        // check expires time o
-        // set address null (dummy) o
-        // set lastActivateAt = now o
-        // status false o
-        const userInfo = await this.userService.getCurrentUser(client);
-        const teamInfo = await this.teamService.getMyTeam(client);
-        const registrationExpiresAt = await this.databaseService.getRegistrationExpiresAt(client, deviceId);
-        const lastActivateAt = new Date(Date.now());
+    console.log(lastActivateAt);
+    console.log(registrationExpiresAt);
 
-        if (!userInfo.teamIds || userInfo.teamIds.length == 0) {
-            throw new BadRequestException('you don\'t have team.');
-        }
+    const prefix = getIpBlock24Prefix(teamInfo.ipBlock16);
+    const used = await this.databaseService.fetchUsedOctets(
+      userInfo.teamIds[0],
+    );
+    const octet = pickRandomOctet(used);
+    const ipBlock24 = `${prefix}${octet}.0`;
 
-        if (lastActivateAt > registrationExpiresAt) {
-            throw new BadRequestException('The confirmation link has expired.');
-        }
+    const doc = await this.databaseService.confirmDevice(
+      client,
+      deviceId,
+      userInfo.$id,
+      userInfo.teamIds[0],
+      ipBlock24,
+      new Date(Date.now()),
+    );
 
-        console.log(lastActivateAt);
-        console.log(registrationExpiresAt);
-        
-        const prefix = getIpBlock24Prefix(teamInfo.ipBlock16)
-        const used = await this.databaseService.fetchUsedOctets(userInfo.teamIds[0]);
-        const octet = pickRandomOctet(used);
-        const ipBlock24 = `${prefix}${octet}.0`;
-        
-        const doc = await this.databaseService.confirmDevice(client, deviceId, userInfo.$id, userInfo.teamIds[0],ipBlock24,new Date(Date.now()));
+    return new DeviceInfoDto({
+      $id: doc.$id,
+      name: doc.name,
+      status: doc.status,
+      ipBlock24: doc.ipBlock24,
+      user: userInfo,
+      lastActivatedAt: doc.lastActivatedAt,
+    });
+  }
 
-        return new DeviceInfoDto({
-            $id: doc.$id,
-            name: doc.name,
-            status: doc.status,
-            ipBlock24: doc.ipBlock24,
-            user: userInfo,
-            lastActivatedAt: doc.lastActivatedAt,
-        });
-    }
+  async updateDevice(
+    deviceId: string,
+    updateDeviceInfoDto: UpdateDeviceInfoDto,
+  ): Promise<DeviceInfoDto> {
+    console.log(deviceId);
+    const doc = await this.databaseService.updateDevice(
+      deviceId,
+      updateDeviceInfoDto,
+    );
+    const userInfo = await this.userService.getUserById(doc.user.$id);
 
-    async updateDevice(deviceId: string, updateDeviceInfoDto: UpdateDeviceInfoDto): Promise<DeviceInfoDto> {
-        console.log(deviceId);
-        const doc = await this.databaseService.updateDevice(deviceId, updateDeviceInfoDto);
-        const userInfo = await this.userService.getUserById(doc.user.$id);
-        
-        return new DeviceInfoDto({
-            $id: doc.$id,
-            name: doc.name,
-            status: doc.status,
-            ipBlock24: doc.ipBlock24,
-            user: userInfo,
-            lastActivatedAt: doc.lastActivatedAt,
-        });
-    }
+    return new DeviceInfoDto({
+      $id: doc.$id,
+      name: doc.name,
+      status: doc.status,
+      ipBlock24: doc.ipBlock24,
+      user: userInfo,
+      lastActivatedAt: doc.lastActivatedAt,
+    });
+  }
 }
 
 function pickRandomOctet(used: Set<number>): number {
-    const candidates = Array.from({length: 255}, (_, i) => i + 1)
-        .filter((n) => !used.has(n));
-    
-    if (!candidates.length) {
-        throw new BadRequestException('there is no available ipBlock24.');
-    }
+  const candidates = Array.from({ length: 255 }, (_, i) => i + 1).filter(
+    (n) => !used.has(n),
+  );
 
-    const idx = randomInt(0, candidates.length);
-    return candidates[idx];
+  if (!candidates.length) {
+    throw new BadRequestException('there is no available ipBlock24.');
+  }
+
+  const idx = randomInt(0, candidates.length);
+  return candidates[idx];
 }
 
 function getIpBlock24Prefix(ipBlock24: string): string {
-    const parts = ipBlock24.split('.');
-    return `${parts[0]}.${parts[1]}.`;
+  const parts = ipBlock24.split('.');
+  return `${parts[0]}.${parts[1]}.`;
 }

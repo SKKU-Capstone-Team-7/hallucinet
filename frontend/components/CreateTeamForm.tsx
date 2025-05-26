@@ -1,14 +1,45 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Client, Databases } from 'appwrite';
 import { useRouter } from 'next/navigation';
 
 export const CreateTeamForm = () => {
   const [teamName, setTeamName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [userLoading, setUserLoading] = useState(true);
   const router = useRouter();
 
+  // current login user's information
+  const getCurrentUser = async () => {
+    try {
+      const res = await fetch('/users/me', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        throw new Error('failed to get user information');
+      }
+
+      const userData = await res.json();
+      setUser(userData);
+    } catch (error) {
+      console.error('error during requesting user information:', error);
+    } finally {
+      setUserLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
+
+  // create team
   const handleCreateTeam = async () => {
     if (!teamName.trim()) {
       alert('Please enter a team name.');
@@ -28,6 +59,7 @@ export const CreateTeamForm = () => {
       await databases.createDocument(databaseId, collectionId, 'unique()', {
         name: teamName,
       });
+
       alert('Team created successfully!');
       router.push('/dashboard');
     } catch (error) {
@@ -38,6 +70,26 @@ export const CreateTeamForm = () => {
     }
   };
 
+  // loading
+  if (userLoading) {
+    return <div className="text-gray-400">Loading user info...</div>;
+  }
+
+  const hasTeam = user?.teamIds && JSON.parse(user.teamIds).length > 0;
+
+  // when the team is already existing
+  if (hasTeam) {
+    return (
+      <div className="text-gray-300">
+        You already belong to a team. 🚫 <br />
+        Redirecting to dashboard...
+      </div>
+    );
+    // 👉 필요시 자동 리다이렉트 추가
+    // useEffect(() => { router.push('/dashboard'); }, []);
+  }
+
+  // rendering team creating form
   return (
     <div className="mb-12">
       <h2 className="text-2xl font-semibold mb-2">Create a Team</h2>

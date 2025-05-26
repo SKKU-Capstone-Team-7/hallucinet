@@ -7,6 +7,7 @@ import { InvitationRow } from './InvitationRow';
 export const InvitationList = () => {
   const [invitations, setInvitations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string>('');
 
   useEffect(() => {
     const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
@@ -15,13 +16,35 @@ export const InvitationList = () => {
     const client = new Client().setEndpoint(endpoint).setProject(project);
     const databases = new Databases(client);
 
+    // Fetch current logged-in user info
+    const fetchCurrentUser = async () => {
+      const res = await fetch('/users/me', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch user info');
+      const user = await res.json();
+      setUserEmail(user.email);
+      return user.email;
+    };
+
+    // Fetch invitations from DB filtered by current user's email
     const fetchInvitations = async () => {
       try {
+        const email = await fetchCurrentUser();
+
         const response = await databases.listDocuments(
           'invitations-db',
           'invitations-collection'
         );
-        setInvitations(response.documents);
+
+        const filtered = response.documents.filter(
+          (invitation: any) => invitation.email === email
+        );
+
+        setInvitations(filtered);
       } catch (error) {
         console.error('Error fetching invitations:', error);
       } finally {
@@ -32,11 +55,44 @@ export const InvitationList = () => {
     fetchInvitations();
   }, []);
 
+  // Accept invitation and automatically reject others
+  const handleAccept = async (invitationId: string, teamId: string) => {
+    try {
+      // Update user's team information (backend API)
+      const patchRes = await fetch('/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ teamIds: JSON.stringify([teamId]) }),
+      });
+
+      if (!patchRes.ok) throw new Error('Failed to update user info');
+
+      const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
+      const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
+      const client = new Client().setEndpoint(endpoint).setProject(project);
+      const databases = new Databases(client);
+
+      // Delete all invitations for this user (auto reject others)
+      await Promise.all(
+        invitations.map((inv) =>
+          databases.deleteDocument('invitations-db', 'invitations-collection', inv.$id)
+        )
+      );
+
+      alert('Join completed!');
+      setInvitations([]); // Clear all invitations locally
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
+      alert('Error accepting invitation');
+    }
+  };
+
   return (
     <div>
-      <h2 className="text-2xl font-semibold mt-12 mb-2">Join in a Team</h2>
+      <h2 className="text-2xl font-semibold mt-12 mb-2">Join a Team</h2>
       <p className="text-sm text-gray-300 mb-4">
-        Check the invitations you got and join in a team. After you choose one team, others are automatically rejected.
+        Check your invitations and join a team. Once you accept one, other invitations are automatically rejected.
       </p>
 
       <div className="bg-[#1a2841] rounded-lg overflow-hidden">
@@ -50,13 +106,12 @@ export const InvitationList = () => {
         ) : invitations.length === 0 ? (
           <div className="text-center p-6 text-gray-400">No invitations</div>
         ) : (
-          invitations.map((invitation, index) => (
+          invitations.map((invitation) => (
             <InvitationRow
-              key={index}
-              email={invitation.email}
+              key={invitation.$id}
+              email={invitation.sender}
               dateTime={invitation.dateTime}
-              onAccept={() => handleAccept(invitation.id)}
-              onReject={() => handleReject(invitation.id)}
+              onAccept={() => handleAccept(invitation.$id, invitation.teamId)}
             />
           ))
         )}
@@ -64,7 +119,3 @@ export const InvitationList = () => {
     </div>
   );
 };
-
-// 초대 수락/거절 핸들러 (추후 구현)
-const handleAccept = (id: string) => {};
-const handleReject = (id: string) => {};

@@ -7,7 +7,6 @@ interface InvitationRowProps {
   email: string;
   dateTime: string;
   onAccept: () => void;
-  onReject: () => void;
 }
 
 export const InvitationRow: React.FC<InvitationRowProps> = ({

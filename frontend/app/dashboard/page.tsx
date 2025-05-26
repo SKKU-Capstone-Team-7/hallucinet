@@ -17,11 +17,9 @@ interface Device {
     $id: string;
     name: string;
     email: string;
-    password: string;
     teamIds: string;
   };
   lastActivatedAt: string;
-  teamId: string;
 }
 
 interface Container {
@@ -41,7 +39,7 @@ interface Container {
       teamIds: string
     }
     lastActivatedAt: string
-    teamId:         string
+    teamId: string
   }
   lastAccessed: string
 }
@@ -60,42 +58,59 @@ export default function DashboardPage() {
     const client     = new Client().setEndpoint(endpoint).setProject(project);
     const account    = new Account(client);
   
-    (async () => {
+     (async () => {
+      let me: Models.User<Models.Preferences>;
       try {
-        let user = await account.get();              
+        me = await account.get();                   
+        setUser(me);
         setLoading(false);
-  
-        const { jwt } = await account.createJWT();  
-        const res = await fetch(`${apiBaseUrl}/teams/me/devices`, {
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${jwt}` 
-          },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const devices = await res.json();
-        setDevices(Array.isArray(devices) ? devices : []);
+      } catch (err) {
+        console.error('Auth failed, redirecting to login', err);
+        router.replace('/login');
+        return;
+      }
 
+      try {
+        const { jwt } = await account.createJWT();
+        const devRes = await fetch(`${apiBaseUrl}/teams/me/devices`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${jwt}`
+          }
+        });
+        if (devRes.ok) {
+          const devData = await devRes.json();
+          setDevices(Array.isArray(devData) ? devData : []);
+        } else {
+          console.warn(`Devices returned ${devRes.status}, showing empty list`);
+          setDevices([]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch devices', err);
+      }
+
+      try {
+        const { jwt } = await account.createJWT();
         const ctrRes = await fetch(
           `${apiBaseUrl}/teams/me/containers?sort=lastAccessed&order=asc&limit=1`,
           {
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${jwt}`,
-            },
+              'Authorization': `Bearer ${jwt}`
+            }
           }
         );
-        if (!ctrRes.ok) throw new Error(`Containers HTTP ${ctrRes.status}`);
-        const ctrs = await ctrRes.json();
-        setContainers(Array.isArray(ctrs) ? ctrs : []);
-
-        setUser(user)
+        if (ctrRes.ok) {
+          const ctrData = await ctrRes.json();
+          setContainers(Array.isArray(ctrData) ? ctrData : []);
+        } else {
+          console.warn(`Containers returned ${ctrRes.status}, showing none`);
+          setContainers([]);
+        }
       } catch (err) {
-        console.error(err);
-        router.replace('/login');
+        console.error('Failed to fetch containers', err);
       }
-    })();
-  }, [router]);
+    })();}, [router]);
 
   const handleLogout = async () => {
     const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;

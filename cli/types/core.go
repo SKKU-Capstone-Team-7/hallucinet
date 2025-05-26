@@ -3,6 +3,7 @@ package types
 import (
 	"net"
 	"net/netip"
+	"time"
 )
 
 type DeviceInfo struct {
@@ -14,12 +15,19 @@ type DeviceInfo struct {
 type ContainerInfo struct {
 	Name    string
 	Device  DeviceInfo
+	Image   string
 	Address netip.Addr
+}
+
+type DeviceToken struct {
+	DeviceId   string
+	Expiration time.Time
+	JWT        string
 }
 
 type Config struct {
 	Endpoint         string
 	HallucinetSocket string
-	Token            string
+	DeviceToken      DeviceToken
 	DnsAddress       netip.AddrPort
 }

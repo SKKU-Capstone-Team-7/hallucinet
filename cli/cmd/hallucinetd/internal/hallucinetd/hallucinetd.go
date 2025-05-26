@@ -9,6 +9,7 @@ import (
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinetd/internal/dns"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/comms"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/coordination"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/docker"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/routing"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
@@ -19,6 +20,7 @@ type HallucinetDaemon struct {
 	config       types.Config
 	dns          *dns.Dns
 	coord        *coordination.Coord
+	domon        *docker.DockerMonitor
 	routeManager *routing.RouteManager
 }
 
@@ -46,6 +48,13 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 		return nil, err
 	}
 	daemon.listener = listener
+
+	// Create docker monitor
+	domon, err := docker.New(config)
+	if err != nil {
+		return nil, err
+	}
+	daemon.domon = domon
 
 	// Create dns server
 	dns, err := dns.New(config)
@@ -80,11 +89,28 @@ func (daemon *HallucinetDaemon) Close() error {
 	return nil
 }
 
+func (daemon *HallucinetDaemon) dockerListenLoop() error {
+	log.Printf("Listening to docker!!")
+	for event := range daemon.domon.EventChan {
+		switch event.Kind {
+		case comms.EventContainerConnected:
+			log.Printf("CONNECTED: %v\n", event)
+		case comms.EventContainerDisconnected:
+			log.Printf("DISCONNECTED: %v\n", event)
+		case comms.EventUnknown:
+			log.Printf("UNKNOWN: %V\n", event)
+			return comms.ErrUnknownEvent
+		}
+	}
+	return nil
+}
+
 func (daemon *HallucinetDaemon) socketListenLoop() error {
 	log.Printf("Listening on %v\n", daemon.config.HallucinetSocket)
 	running := false
 
 	for {
+		log.Printf("Accepting")
 		conn, err := daemon.listener.AcceptUnix()
 		if err != nil {
 			return err
@@ -101,11 +127,13 @@ func (daemon *HallucinetDaemon) socketListenLoop() error {
 		if err != nil {
 			return err
 		}
+
 		containers, err := daemon.coord.GetContainers()
 		if err != nil {
 			return err
 		}
 
+		log.Printf("Message!")
 		switch msg.Header.Kind {
 		case comms.MsgStartDaemon:
 			log.Printf("Received start message.")
@@ -233,7 +261,10 @@ func (daemon *HallucinetDaemon) addContainersFromServer() {
 	log.Printf("Adding entry %v %v %v\n", deviceOne.Name, containerOne.Name, containerOne.Address)
 }
 
-func (daemon *HallucinetDaemon) Start() error {
-	daemon.socketListenLoop()
-	return nil
+func (daemon *HallucinetDaemon) Start() {
+	go func() {
+		daemon.socketListenLoop()
+	}()
+
+	daemon.dockerListenLoop()
 }

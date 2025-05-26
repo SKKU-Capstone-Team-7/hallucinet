@@ -106,7 +106,9 @@ export default function Register() {
 
     try {
       const profile = await doRegister();
-      toast.success(`Welcome, ${profile.name || profile.email}!`, { transition: Bounce });
+      toast.success(`
+        
+        Welcome, ${profile.name || profile.email}!`, { transition: Bounce });
       router.push('/onboarding');
     } catch (err) {
       console.error(err);

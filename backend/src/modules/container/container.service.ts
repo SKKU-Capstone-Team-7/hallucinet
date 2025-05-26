@@ -25,22 +25,23 @@ export class ContainerService {
 
         console.log(documents);
 
-        const dtos: ContainerInfoDto[] = [];
-        for (const doc of documents) {
-            const device = await this.deviceService.getDeviceById(doc.device.$id)
-            dtos.push(new ContainerInfoDto({
-                $id: doc.$id,
-                name: doc.name,
-                image: doc.image,
-                ip: doc.ip,
-                device: device,
-                lastAccessed: doc.lastAccessed,
-            }))
-        }
-        
-        return dtos;
-    }
+        const devices = await this.deviceService.listDevices(client);
 
+        const deviceMap = new Map(
+            devices.map(d => [d.$id, d])
+        );
+
+        return documents.map(doc => {
+                return new ContainerInfoDto({
+                    $id: doc.$id,
+                    name: doc.name,
+                    image: doc.image,
+                    ip: doc.ip,
+                    device: deviceMap.get(doc.device.$id),
+                    lastAccessed: doc.lastAccessed,
+                });
+            })
+    }
     // async getContainers(client: Client, deviceId: string): Promise<ContainerInfoDto> {
     //}
 

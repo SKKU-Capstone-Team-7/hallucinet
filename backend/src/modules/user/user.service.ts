@@ -2,12 +2,15 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AppwriteService } from 'src/modules/appwrite/appwrite.service';
 import { PublicUserInfoDto, UserInfoDto } from './dto/user-info.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Account, Client, Teams, Users } from 'node-appwrite';
+import { Account, Client, Teams, Users, Query } from 'node-appwrite';
 import { DatabaseService } from '../database/database.service';
+import { TeamService } from '../team/team.service';
 
 @Injectable()
 export class UserService {
-    constructor(private readonly appwriteService: AppwriteService, private readonly databaseService: DatabaseService) { }
+    constructor(private readonly appwriteService: AppwriteService,
+        private readonly teamService: TeamService,
+        private readonly databaseService: DatabaseService) { }
 
     async getCurrentUser(client: Client): Promise<UserInfoDto> {
         const account = new Account(client);
@@ -90,4 +93,36 @@ export class UserService {
         const userInDb = this.databaseService.registerUserId(user.$id);
         console.log(userInDb);
     }
-}
+
+    async getUsersByIds(userIds: string[]) {
+        const user = new Users(this.appwriteService.getServerClient());
+
+        if (userIds.length === 0) return [];
+
+        const { users } = await user.list([
+            Query.equal('$id', userIds),
+            Query.limit(userIds.length),  
+        ]);
+
+        return users;  
+    }
+
+    async getUsersInMyTeam(client): Promise<PublicUserInfoDto[]> {
+        const team = await this.teamService.getMyTeam(client);
+        const teams = new Teams(this.appwriteService.getServerClient());
+        const { memberships } = await teams.listMemberships(
+            team.$id
+        )
+
+        console.log(memberships);
+
+        return memberships.map(m => {
+            return new PublicUserInfoDto({
+                $id:      m.userId,
+                email:    m.userEmail,
+                name:     m.userName,
+                teamIds:  [team.$id]
+            });
+        });
+    }
+} 

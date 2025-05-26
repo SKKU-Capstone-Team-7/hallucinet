@@ -32,23 +32,26 @@ export class DeviceService {
       team.$id,
     );
 
-    const dtos: DeviceInfoDto[] = [];
-    for (const doc of documents) {
-      const user = await this.userService.getUserById(doc.user.$id);
-      dtos.push(
-        new DeviceInfoDto({
-          $id: doc.$id,
-          name: doc.name,
-          status: doc.status,
-          ipBlock24: doc.ipBlock24,
-          user: user,
-          lastActivatedAt: doc.lastActivatedAt,
-        }),
-      );
-    }
+    //console.log(documents);
 
-    return dtos;
-  }
+    const users = await this.userService.getUsersInMyTeam(client);
+
+    //console.log(users);
+    const userMap = new Map(
+        users.map(u => [u.$id, u])
+    );
+
+    return documents.map(doc =>
+        new DeviceInfoDto({
+            $id: doc.$id,
+            name: doc.name,
+            status: doc.status,
+            ipBlock24: doc.ipBlock24,
+            user: userMap.get(doc.user.$id)!,
+            lastActivatedAt: doc.lastActivatedAt,
+        })
+        );
+    }
 
   //async getDeviceById(client: Client, deviceId: string):Promise<DeviceInfoDto> {
   //    const doc = await this.databaseService.getDeviceById(client, deviceId);

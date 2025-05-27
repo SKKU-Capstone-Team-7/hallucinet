@@ -11,7 +11,7 @@ import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags 
 
 @ApiTags('Users')
 @ApiBearerAuth('bearer')
-@Controller('users')
+@Controller()
 export class UserController {
     constructor(private readonly userService: UserService) { }
 
@@ -20,7 +20,7 @@ export class UserController {
         description: 'current user info',
         type: UserInfoDto,
     })
-    @Get('me')
+    @Get('users/me')
     @UseGuards(AppwriteAuthGuard)
     async getCurrentUser(@AppwriteClient() client: Client): Promise<UserInfoDto> {
         return await this.userService.getCurrentUser(client);
@@ -35,7 +35,7 @@ export class UserController {
         description: 'changed current user info',
         type: UserInfoDto,
     })
-    @Patch('me')
+    @Patch('users/me')
     @UseGuards(AppwriteAuthGuard)
     async updateCurrentUser(
         @AppwriteClient() client: Client,
@@ -49,17 +49,29 @@ export class UserController {
         description: 'user info for the given ID except password',
         type: PublicUserInfoDto,
     })
-    @Get(':userId')
+    @Get('users/:userId')
     @UseGuards(AppwriteAuthGuard)
     async getUserById(@Param('userId') userId: string): Promise<PublicUserInfoDto> {
         return await this.userService.getUserById(userId);
     }
 
     @ApiOperation({ summary: 'it is for registering userId in database(it has to be called when user is created!)' })
-    @Post('me')
+    @Post('users/me')
     @UseGuards(AppwriteAuthGuard)
     async registerUserId(@AppwriteClient() client: Client) {
         await this.userService.registerUserId(client);
+    }
+
+    @ApiOperation({ summary: 'get user info list of my team endpoint' })
+    @ApiOkResponse({
+        description: 'user info list of my team',
+        type: PublicUserInfoDto,
+        isArray: true
+    })
+    @Get('/teams/me/users')
+    @UseGuards(AppwriteAuthGuard)
+    async getUsersInMyTeam(@AppwriteClient() client: Client): Promise<PublicUserInfoDto[]> {
+        return await this.userService.getUsersInMyTeam(client);
     }
 
 }

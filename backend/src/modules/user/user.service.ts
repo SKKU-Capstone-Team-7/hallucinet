@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, NotFoundException  } from '@nestjs/common';
 import { AppwriteService } from 'src/modules/appwrite/appwrite.service';
 import { PublicUserInfoDto, UserInfoDto } from './dto/user-info.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -124,5 +124,20 @@ export class UserService {
                 teamIds:  [team.$id]
             });
         });
+    }
+
+    //for server, should not be used by user
+    async getUserByEmail(email: string): Promise<PublicUserInfoDto> {
+        const users = new Users(this.appwriteService.getServerClient());
+
+        const res = await users.list([Query.equal('email', email)]);
+
+        if (res.users.length === 0) {
+           throw new NotFoundException(`No user found with email ${email}`);
+        }
+            
+        const user = await this.getUserById(res.users[0].$id);
+        
+        return user;
     }
 } 

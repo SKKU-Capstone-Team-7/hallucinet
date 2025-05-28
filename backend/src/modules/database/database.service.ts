@@ -11,6 +11,7 @@ export class DatabaseService {
     private readonly userColId: string = process.env.USER_COLLECTION_ID!;
     private readonly deviceColId: string = process.env.DEVICE_COLLECTION_ID!;
     private readonly containerColId: string = process.env.CONTAINER_COLLECTION_ID!;
+    private readonly invitationColId: string = process.env.INVITATION_COLLECTION_ID!;
 
 
     constructor(private readonly appwrite: AppwriteService) {
@@ -178,6 +179,41 @@ export class DatabaseService {
             this.userColId,
             userId,
             {}
+        )
+    }
+
+    async createInvitation(inviterId: string, inviteeId: string, teamId: string, inviteId: string): Promise<Models.Document> {
+        return this.databases(this.appwrite.getServerClient()).createDocument(
+            this.dbId,
+            this.invitationColId,
+            inviteId,
+            {   "status" : 'pending',
+                "inviterId" : inviterId,
+                "inviteeId": inviteeId,
+                "team": teamId
+            }
+        )
+    }
+
+    async listInvitation(userId: string, status: string): Promise<Models.DocumentList<Models.Document>> {
+        return this.databases(this.appwrite.getServerClient()).listDocuments(
+            this.dbId,
+            this.invitationColId,
+            [
+                Query.equal('inviteeId', userId),
+                Query.equal('status', status)
+            ]
+        )
+    }
+
+    async handleInvitation(inviteId: string, status: string): Promise<Models.Document> {
+        return this.databases(this.appwrite.getServerClient()).updateDocument(
+            this.dbId,
+            this.invitationColId,
+            inviteId,
+            {
+                status: status
+            }
         )
     }
 }

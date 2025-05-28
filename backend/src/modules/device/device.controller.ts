@@ -91,7 +91,7 @@ export class DeviceController {
       })
     @Patch('devices/:deviceId')
     async updateDevice(@Param('deviceId') deviceId: string, @Body() updateDeviceInfoDto: UpdateDeviceInfoDto): Promise<DeviceInfoDto> {
-        console.log(deviceId);
+        //console.log(deviceId);
         return this.deviceService.updateDevice(deviceId, updateDeviceInfoDto);
     }
 

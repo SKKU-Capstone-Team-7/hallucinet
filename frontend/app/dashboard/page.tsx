@@ -46,7 +46,7 @@ function DeviceTable({ devices }: { devices: DeviceInfo[] }) {
         })}
       </div>
       <div>
-        <p className="text-center grow text-lg mb-5">Assigned Subnet</p>
+        <p className="grow text-lg mb-5">Assigned Subnet</p>
         {devices.map((dev) => {
           return (
             <div className="h-10" key={dev.subnet}>
@@ -57,7 +57,7 @@ function DeviceTable({ devices }: { devices: DeviceInfo[] }) {
         })}
       </div>
       <div>
-        <p className="text-center grow text-lg mb-5">Last Seen</p>
+        <p className="grow text-lg mb-5">Last Seen</p>
         {devices.map((dev) => {
           return (
             <div className="h-10" key={dev.subnet}>

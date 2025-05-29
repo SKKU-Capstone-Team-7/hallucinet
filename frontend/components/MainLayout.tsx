@@ -67,7 +67,11 @@ const items: SidebarItem[] = [
   },
 ];
 
-function AppSidebar({ user }: { user: Models.User<Models.Preferences> }) {
+function AppSidebar({
+  user,
+}: {
+  user: Models.User<Models.Preferences> | null;
+}) {
   return (
     <Sidebar>
       <SidebarContent>
@@ -98,7 +102,7 @@ function AppSidebar({ user }: { user: Models.User<Models.Preferences> }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 /> {user.name}
+                  <User2 /> {user?.name}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -126,7 +130,7 @@ export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
-  user: Models.User<Models.Preferences>;
+  user: Models.User<Models.Preferences> | null;
 }) {
   return (
     <SidebarProvider>

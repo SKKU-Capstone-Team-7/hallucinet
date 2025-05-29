@@ -216,7 +216,7 @@ export class DatabaseService {
         )
     }
 
-    async createInvitation(inviterId: string, inviteeId: string, teamId: string, inviteId: string): Promise<Models.Document> {
+    async createInvitation(inviterId: string, inviteeId: string, teamId: string, inviteId: string, time: Date): Promise<Models.Document> {
         return this.databases(this.appwrite.getServerClient()).createDocument(
             this.dbId,
             this.invitationColId,
@@ -224,7 +224,8 @@ export class DatabaseService {
             {   "status" : 'pending',
                 "inviterId" : inviterId,
                 "inviteeId": inviteeId,
-                "team": teamId
+                "team": teamId,
+                "createdAt": time
             }
         )
     }

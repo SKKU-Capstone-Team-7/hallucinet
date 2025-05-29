@@ -17,6 +17,7 @@ export class InvitationService {
         const inviter = await this.userService.getCurrentUser(client);
         const team = await this.teamService.getMyTeam(client);
         const invitee = await this.userService.getUserByEmail(inviteUserDto.email);
+        const time = new Date(Date.now());
         // get user info o
         // get team info o
         // get invitee info o
@@ -30,7 +31,7 @@ export class InvitationService {
             );
         }
 
-        const doc = await this.databaseService.createInvitation(inviter.$id,invitee.$id,team.$id,ID.unique());
+        const doc = await this.databaseService.createInvitation(inviter.$id,invitee.$id,team.$id,ID.unique(),time);
         
         //console.log(doc);
 
@@ -39,6 +40,7 @@ export class InvitationService {
             team: team,
             inviter: inviter,
             invitee: invitee,
+            createdAt: time
         });
     }
 
@@ -48,10 +50,10 @@ export class InvitationService {
         const { documents } = await this.databaseService.listInvitation(user.$id, status);
 
         return Promise.all(documents.map(async doc => {
-            console.log(doc.team.$id);
+            console.log(doc);
             const inviter = await this.userService.getUserById(doc.inviterId);
             const team    = await this.teamService.getTeamById(doc.team.$id);
-            return new InvitationDto({ $id: doc.$id, inviter: inviter, invitee: user, team: team });
+            return new InvitationDto({ $id: doc.$id, inviter: inviter, invitee: user, team: team, createdAt: doc.createdAt });
         }));
     }
 

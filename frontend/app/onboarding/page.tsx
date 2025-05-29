@@ -10,6 +10,54 @@ import { Check, LucideSearch, Plus, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+
+type CreateTeamInputs = {
+  name: string;
+};
+function CreateTeamForm() {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<CreateTeamInputs>();
+
+  const router = useRouter();
+
+  const onSubmit: SubmitHandler<CreateTeamInputs> = async (data) => {
+    const account = new Account(getAppwriteClient());
+    const jwt = (await account.createJWT()).jwt;
+    const createTeamRes = await backendFetch(
+      "/teams",
+      "POST",
+      jwt,
+      JSON.stringify({
+        name: data.name,
+        ipBlock16: "10.2.0.0",
+      }),
+    );
+
+    if (createTeamRes.ok) {
+      router.push("/dashboard");
+    } else {
+      console.log(await createTeamRes.json());
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="w-full">
+      <div className="flex gap-5">
+        <Input
+          className="grow"
+          placeholder="Team name here"
+          {...register("name", { required: true })}
+        />
+        <Button type="submit">Confirm</Button>
+      </div>
+    </form>
+  );
+}
 
 interface InvitationInfo {
   id: string;
@@ -137,8 +185,7 @@ export default function DashboardPage() {
         <p className="text-2xl">Create a team</p>
         <p className="mt-4">Create your own team and become an owner</p>
         <div className="w-full p-4 flex gap-4 mt-4 shadow-md rounded-md">
-          <Input placeholder="Team name here" />
-          <Button>Confirm</Button>
+          <CreateTeamForm />
         </div>
       </div>
 
@@ -149,7 +196,7 @@ export default function DashboardPage() {
           team, others are automatically rejected.
         </p>
 
-        <div className="flex gap-5 mt-4">
+        <div className="mt-4">
           <InvitationTable invitations={invitations} />
         </div>
       </div>

@@ -214,7 +214,11 @@ export class DatabaseService {
             this.dbId,
             this.teamColId,
             teamId,
-            {},
+            {
+              device: [],
+              container: [],
+              invitation: []
+            },
         )
     }
 

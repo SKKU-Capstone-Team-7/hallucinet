@@ -91,7 +91,7 @@ export default function MainLayout({
       <AppSidebar />
       <main className="w-full p-5 flex">
         <SidebarTrigger />
-        <div className="grow">{children}</div>
+        <div className="grow mr-8">{children}</div>
       </main>
     </SidebarProvider>
   );

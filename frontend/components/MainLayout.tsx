@@ -13,6 +13,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
+  House,
   LucideCommand,
   LucideIcon,
   LucideSettings,
@@ -27,6 +28,11 @@ interface SidebarItem {
 }
 
 const items: SidebarItem[] = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: House,
+  },
   {
     title: "Devices",
     url: "/devices",
@@ -83,9 +89,9 @@ export default function MainLayout({
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main>
+      <main className="w-full p-5 flex">
         <SidebarTrigger />
-        {children}
+        <div className="grow">{children}</div>
       </main>
     </SidebarProvider>
   );

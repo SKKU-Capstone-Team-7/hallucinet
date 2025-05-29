@@ -1,10 +1,11 @@
 "use client";
 import MainLayout from "@/components/MainLayout";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
 import { backendFetch } from "@/lib/utils";
 import { Account, Models } from "appwrite";
-import { LucideSearch } from "lucide-react";
+import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -26,17 +27,35 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
 
 function SearchBar() {
   return (
-    <form>
-      <div className="flex items-center bg-gray-500 rounded-sm">
-        <div className="p-2">
-          <LucideSearch />
-        </div>
-        <Input
-          placeholder="Search"
-          className="border-none focus-visible:border-none"
-        />
+    <div className="flex items-center shadow-sm rounded-sm">
+      <div className="p-2">
+        <LucideSearch />
       </div>
-    </form>
+      <Input
+        placeholder="Search"
+        className="border-none shadow-none focus:border-none focus-visible:border-none focus-within:border-none outline-none"
+      />
+      <button></button>
+    </div>
+  );
+}
+
+function ReloadButton() {
+  return (
+    <Button>
+      <RefreshCw />
+    </Button>
+  );
+}
+
+function InviteButton() {
+  return (
+    <Button>
+      <div className="flex items-center">
+        <Plus />
+        Invite
+      </div>
+    </Button>
   );
 }
 
@@ -86,10 +105,10 @@ export default function DashboardPage() {
 
   return (
     <MainLayout>
-      <div className="w-full ml-8">
+      <div className="ml-8">
         <div>
           <p className="text-2xl">Recent Containers</p>
-          <div className="flex gap-5">
+          <div className="flex gap-5 mt-4">
             {containers.map((cont) => {
               return (
                 <ContainerCard
@@ -101,9 +120,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-8">
           <p className="text-2xl">Devices</p>
-          <SearchBar />
+          <div className="mt-4 flex items-center gap-4">
+            <div className="grow max-w-lg">
+              <SearchBar />
+            </div>
+            <InviteButton />
+            <ReloadButton />
+          </div>
         </div>
       </div>
     </MainLayout>

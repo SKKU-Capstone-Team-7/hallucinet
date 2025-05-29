@@ -113,7 +113,6 @@ export class UserService {
         const { memberships } = await teams.listMemberships(
             team.$id
         )
-
         //console.log(memberships);
 
         return memberships.map(m => {
@@ -122,7 +121,8 @@ export class UserService {
                 email:    m.userEmail,
                 name:     m.userName,
                 teamIds:  [team.$id],
-                role: m.roles[0]
+                role: m.roles[0],
+                joinedAt: new Date(m.$createdAt)
             });
         });
     }

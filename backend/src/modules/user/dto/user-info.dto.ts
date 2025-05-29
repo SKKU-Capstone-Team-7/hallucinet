@@ -32,6 +32,8 @@ export class PublicUserInfoDto {
 
     readonly role?: string;
 
+    readonly joinedAt?: Date;
+
     constructor(partial: Partial<PublicUserInfoDto>) {
         Object.assign(this, partial);
     }

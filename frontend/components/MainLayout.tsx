@@ -20,6 +20,7 @@ import {
   LucideUsers,
   MonitorSmartphone,
 } from "lucide-react";
+import Image from "next/image";
 
 interface SidebarItem {
   title: string;
@@ -60,7 +61,9 @@ function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <div className="px-16 py-4 mb-8">
+            <img src="sidebar_logo.svg" />
+          </div>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (

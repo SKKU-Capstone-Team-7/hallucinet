@@ -173,6 +173,10 @@ export class DeviceService {
       lastActivatedAt: doc.lastActivatedAt,
     });
   }
+
+  async delDeviceById(deviceId: string ) {
+    await this.databaseService.delDeviceById(deviceId);
+  }
 }
 
 function pickRandomOctet(used: Set<number>): number {

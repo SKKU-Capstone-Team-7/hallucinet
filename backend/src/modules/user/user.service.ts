@@ -114,14 +114,15 @@ export class UserService {
             team.$id
         )
 
-        console.log(memberships);
+        //console.log(memberships);
 
         return memberships.map(m => {
             return new PublicUserInfoDto({
                 $id:      m.userId,
                 email:    m.userEmail,
                 name:     m.userName,
-                teamIds:  [team.$id]
+                teamIds:  [team.$id],
+                role: m.roles[0]
             });
         });
     }

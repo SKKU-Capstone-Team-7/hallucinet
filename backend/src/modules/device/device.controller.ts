@@ -80,6 +80,14 @@ export class DeviceController {
         return this.deviceService.getDeviceById(deviceId);
     }
 
+    @ApiOperation({
+        summary: 'delete device info by device ID'
+    })
+    @Delete('devices/:deviceId')
+    async delDeviceById(@Param('deviceId') deviceId :string ) {
+        return this.deviceService.delDeviceById(deviceId);
+    }
+
     @ApiOperation({ summary: 'update device info by logined user endpoint' })
     @ApiBody({
             description: 'only device info to update',
@@ -95,6 +103,7 @@ export class DeviceController {
         return this.deviceService.updateDevice(deviceId, updateDeviceInfoDto);
     }
 
+    @ApiOperation({ summary: 'delete device by device Id endpoint' })
     @Delete('devices/:deviceId')
     @UseGuards(AppwriteAuthGuard)
     async removeDevice(@Param('devicdId') deviceId: string) {

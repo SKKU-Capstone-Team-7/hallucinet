@@ -30,6 +30,8 @@ export class PublicUserInfoDto {
     })
     readonly teamIds?: string[];
 
+    readonly role?: string;
+
     constructor(partial: Partial<PublicUserInfoDto>) {
         Object.assign(this, partial);
     }

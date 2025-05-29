@@ -21,7 +21,8 @@ export class InvitationService {
         // get team info o
         // get invitee info o
         // create document o
-        // checking alreay member
+        // checking alreay member o
+        // checking he is owner
 
         if (Array.isArray(invitee.teamIds) && invitee.teamIds.includes(team.$id)) {
             throw new ConflictException(
@@ -62,9 +63,9 @@ export class InvitationService {
 
         const result = await teams.createMembership(
             doc.team.$id,
-            [],
+            ['member'],
             undefined,
-            doc.inviteeId
+            doc.inviteeId,
         )
     }
 

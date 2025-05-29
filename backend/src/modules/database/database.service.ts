@@ -124,6 +124,14 @@ export class DatabaseService {
         )
     }
 
+    async delDeviceById(deviceId: string) {
+        return this.databases(this.appwrite.getServerClient()).deleteDocument(
+            this.dbId,
+            this.deviceColId,
+            deviceId
+        )
+    }
+
     async listContainersByTeamId(teamId: string, sort: string, order: string, limit: number): Promise<Models.DocumentList<Models.Document>> {
         const orderQuery = order === 'asc'
             ? Query.orderAsc(sort)

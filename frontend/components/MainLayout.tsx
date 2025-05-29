@@ -12,15 +12,26 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Models } from "appwrite";
 import {
+  ChevronUp,
   House,
   LucideCommand,
   LucideIcon,
   LucideSettings,
   LucideUsers,
   MonitorSmartphone,
+  User2,
 } from "lucide-react";
 import Image from "next/image";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Mode } from "react-hook-form";
+import Link from "next/link";
 
 interface SidebarItem {
   title: string;
@@ -56,7 +67,7 @@ const items: SidebarItem[] = [
   },
 ];
 
-function AppSidebar() {
+function AppSidebar({ user }: { user: Models.User<Models.Preferences> }) {
   return (
     <Sidebar>
       <SidebarContent>
@@ -80,18 +91,46 @@ function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton>
+                  <User2 /> {user.name}
+                  <ChevronUp className="ml-auto" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                className="w-[--radix-popper-anchor-width]"
+              >
+                <DropdownMenuItem>
+                  <span>Account Settings</span>
+                </DropdownMenuItem>
+                <Link href="/logout">
+                  <DropdownMenuItem>Sign out</DropdownMenuItem>
+                </Link>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
 
 export default function MainLayout({
+  user,
   children,
 }: {
   children: React.ReactNode;
+  user: Models.User<Models.Preferences>;
 }) {
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar user={user} />
       <main className="w-full p-5 flex">
         <SidebarTrigger />
         <div className="grow mr-8">{children}</div>

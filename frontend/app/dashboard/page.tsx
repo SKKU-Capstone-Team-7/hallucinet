@@ -96,9 +96,9 @@ function ReloadButton() {
 function InviteButton() {
   return (
     <Button>
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
         <Plus />
-        Invite
+        Add Device
       </div>
     </Button>
   );
@@ -127,6 +127,14 @@ export default function DashboardPage() {
         const account = new Account(getAppwriteClient());
         const jwt = (await account.createJWT()).jwt;
 
+        // Check if user is in a team
+        const meRes = await backendFetch("/users/me", "GET", jwt);
+        const meJson = await meRes.json();
+        const teams: string[] = meJson["teamIds"];
+        if (teams.length == 0) {
+          router.push("/onboarding");
+        }
+
         // Get containers
         const containersRes = await backendFetch(
           "/teams/me/containers",
@@ -153,7 +161,6 @@ export default function DashboardPage() {
             last_seen: new Date(dev["lastActivatedAt"]),
           };
         });
-        console.log(devices);
         setDevices(devices);
       })();
     } catch (e) {
@@ -164,7 +171,7 @@ export default function DashboardPage() {
   if (loading) return <></>;
 
   return (
-    <MainLayout>
+    <MainLayout user={user!}>
       <div className="ml-8">
         <div>
           <p className="text-2xl">Recent Containers</p>

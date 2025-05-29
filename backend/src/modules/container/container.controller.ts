@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards, Patch, Body, Post, Delete } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Patch, Body, Post, Delete, HttpCode } from '@nestjs/common';
 import { ContainerService } from './container.service';
 import { AppwriteAuthGuard } from 'src/common/guards/appwrite-auth.guard';
 import { Client } from 'node-appwrite';
@@ -89,17 +89,24 @@ export class ContainerController {
         return this.containerService.getContainerById(containerId);
     } 
 
-    @ApiOperation({ summary: 'update device info by logined user endpoint' })
+    @ApiOperation({ summary: 'update container info by logined user endpoint' })
     @ApiBody({
-        description: 'only device info to update',
+        description: 'only container info to update',
         type: UpdateContainerInfoDto,
     })
     @ApiOkResponse({
-        description: 'updated device info',
+        description: 'updated container info',
         type: ContainerInfoDto,
     })
     @Patch('containers/:containerId')
     async updateContainer(@Param('containerId') containerId: string, @Body() updateContainerInfoDto: UpdateContainerInfoDto): Promise<ContainerInfoDto> {
         return this.containerService.updateContainer(containerId, updateContainerInfoDto);
+    }
+
+    @ApiOperation({ summary: 'update container accessed time endpoint' })
+    @HttpCode(204)
+    @Post('cotainers/:containerId/touch')
+    async updateAccessTime(@Param('containerId') containerId: string) {
+        return this.containerService.updateAccessTime(containerId);
     }
 }

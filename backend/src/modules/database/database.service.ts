@@ -172,6 +172,17 @@ export class DatabaseService {
         );
     }
 
+    async updateAccessTime(containerId: string, time: Date) {
+        return this.databases(this.appwrite.getServerClient()).updateDocument(
+            this.dbId,
+            this.containerColId,
+            containerId,
+            {
+                "lastAccessed": time
+            }
+        )
+    }
+
     async createContainer(containerId: string, createContainerDto: CreateContainerDto, teamId: string, userId: string, lastAccessed: Date): Promise<Models.Document> {
         return this.databases(this.appwrite.getServerClient()).createDocument(
             this.dbId,

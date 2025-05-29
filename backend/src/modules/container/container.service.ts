@@ -91,6 +91,11 @@ export class ContainerService {
         })
     }
 
+    async updateAccessTime(containerId: string) {
+        const time = new Date(Date.now());
+        await this.databaseService.updateAccessTime(containerId, time);
+    }
+
     async createContainer(createCotainerDto: CreateContainerDto): Promise<ContainerInfoDto> {
         const device = await this.deviceService.getDeviceById(createCotainerDto.deviceId);
 

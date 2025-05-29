@@ -96,12 +96,33 @@ function UserTable({ users }: { users: UserInfo[] }) {
   return (
     <div className="flex gap-5 max-w-4xl justify-between">
       <div>
-        <p className="grow text-lg mb-5">Invite member</p>
+        <p className="grow text-lg mb-5">Name</p>
         {users.map((usr) => {
           return (
             <div className="h-10" key={usr.email}>
               {" "}
               {usr.name}
+            </div>
+          );
+        })}
+      </div>
+      <div>
+        <p className="grow text-lg mb-5">Role</p>
+        {users.map((usr) => {
+          return (
+            <div className="h-10" key={usr.email}>
+              {" "}
+              {usr.role}
+            </div>
+          );
+        })}
+      </div>
+      <div>
+        <p className="grow text-lg mb-5">Joined</p>
+        {users.map((usr) => {
+          return (
+            <div className="h-10" key={usr.email}>
+              <TimeAgo timestamp={usr.joinedAt} /> ago
             </div>
           );
         })}

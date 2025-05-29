@@ -1,15 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Account, Client } from 'node-appwrite';
 
 @Injectable()
 export class AppwriteService {
-    private readonly endpoint: string = process.env.APPWRITE_ENDPOINT!;
-    private readonly project: string = process.env.APPWRITE_PROJECT!;
-    private readonly apiKey: string = process.env.APPWRITE_API_KEY!;
+    private readonly endpoint
+    private readonly project
+    private readonly apiKey
     private serverClient: Client;
 
-    constructor() {
+    constructor(private configService: ConfigService) {
         // new appwrite server client 
+        this.endpoint = this.configService.get<string>('APPWRITE_ENDPOINT');
+        if (!this.endpoint) throw new Error('APPWRITE_ENDPOINT is not defined'); 
+        this.project = this.configService.get<string>('APPWRITE_PROJECT');
+        if (!this.project) throw new Error('APPWRITE_PROJECT is not defined'); 
+        this.apiKey = this.configService.get<string>('APPWRITE_API_KEY');
+        if (!this.apiKey) throw new Error('APPWRITE_API_KEY is not defined'); 
         this.serverClient = new Client()
             .setEndpoint(this.endpoint)
             .setProject(this.project)

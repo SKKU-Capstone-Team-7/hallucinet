@@ -11,9 +11,13 @@ import { ContainerController } from './modules/container/container.controller';
 import { ContainerService } from './modules/container/container.service';
 import { InvitationController } from './modules/invitation/invitation.controller';
 import { InvitationService } from './modules/invitation/invitation.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [],
+  imports: [ConfigModule.forRoot({
+    envFilePath: '.env',
+    isGlobal: true
+  })],
   controllers: [UserController, DeviceController, TeamController, ContainerController, InvitationController],
   providers: [AppwriteService, DatabaseService, UserService, DeviceService, TeamService, ContainerService, InvitationService],
 })

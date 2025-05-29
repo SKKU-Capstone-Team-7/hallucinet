@@ -3,6 +3,7 @@ import { Databases, Models, Query, Client, Permission, Role } from 'node-appwrit
 import { AppwriteService } from '../appwrite/appwrite.service';
 import { UpdateDeviceInfoDto } from '../device/dto/update-device-info.dto';
 import { UpdateContainerInfoDto } from '../container/dto/update-container-info.dto';
+import { CreateContainerDto } from '../container/dto/create-container.dto';
 
 @Injectable()
 export class DatabaseService {
@@ -161,6 +162,31 @@ export class DatabaseService {
             containerId,
             updateContainerInfoDto
         );
+    }
+
+    async createContainer(containerId: string, createContainerDto: CreateContainerDto, teamId: string, userId: string, lastAccessed: Date): Promise<Models.Document> {
+        return this.databases(this.appwrite.getServerClient()).createDocument(
+            this.dbId,
+            this.containerColId,
+            containerId,
+            {
+                "name": createContainerDto.name,
+                "ip": createContainerDto.ip,
+                "image": createContainerDto.image,
+                "lastAccessed": lastAccessed,
+                "team": teamId,
+                "user": userId,
+                "device": createContainerDto.deviceId
+            }
+        )
+    }
+
+    async delContainerById(containerId: string) {
+        return this.databases(this.appwrite.getServerClient()).deleteDocument(
+            this.dbId,
+            this.containerColId,
+            containerId
+        )
     }
 
 

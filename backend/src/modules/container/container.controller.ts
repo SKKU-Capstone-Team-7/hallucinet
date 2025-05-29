@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards, Patch, Body } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Patch, Body, Post, Delete } from '@nestjs/common';
 import { ContainerService } from './container.service';
 import { AppwriteAuthGuard } from 'src/common/guards/appwrite-auth.guard';
 import { Client } from 'node-appwrite';
@@ -6,6 +6,7 @@ import { AppwriteClient } from 'src/common/decorators/appwrite-client.decorator'
 import { ContainerInfoDto } from './dto/container-info.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiQuery, ApiTags, ApiBody } from '@nestjs/swagger';
 import { UpdateContainerInfoDto } from './dto/update-container-info.dto';
+import { CreateContainerDto } from './dto/create-container.dto';
 
 @ApiTags('Containers')
 @ApiBearerAuth('bearer')
@@ -56,6 +57,27 @@ export class ContainerController {
     //async getContainerById(@AppwriteClient() client: Client, @Param('containerId') containerId: string): Promise<ContainerInfoDto> {
     //    return this.ContainerService.getContainerById(client, containerId);
     //} 
+
+    
+    @ApiOperation({ summary: 'create container endpoint' })
+    @ApiBody({
+        description: 'container info to create',
+        type: CreateContainerDto,
+    })
+    @ApiOkResponse({
+        description: 'created device info',
+        type: ContainerInfoDto,
+    })
+    @Post('containers')
+    async createContainer(@Body() createCotainerDto: CreateContainerDto): Promise<ContainerInfoDto> {
+        return this.containerService.createContainer(createCotainerDto);
+    }
+
+    @ApiOperation({ summary: 'delete container using container ID endpoint' })
+    @Delete('cotainers/:containerId')
+    async delContainerById(@Param('containerId') containerId: string) {
+        return this.containerService.delContainerById(containerId);
+    }
 
     @ApiOperation({ summary: 'get container info using container ID(it only works by team member)' })
     @ApiOkResponse({

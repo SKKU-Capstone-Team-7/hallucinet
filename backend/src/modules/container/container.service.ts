@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ContainerInfoDto } from './dto/container-info.dto';
-import { Client, Databases } from 'node-appwrite';
+import { Client, Databases, ID } from 'node-appwrite';
 import { AppwriteService } from '../appwrite/appwrite.service';
 import { DatabaseService } from '../database/database.service';
 import { TeamService } from '../team/team.service';
 import { UserService } from '../user/user.service';
 import { DeviceService } from '../device/device.service';
 import { UpdateContainerInfoDto } from './dto/update-container-info.dto';
+import { CreateContainerDto } from './dto/create-container.dto';
 
 @Injectable()
 export class ContainerService {
@@ -88,5 +89,31 @@ export class ContainerService {
             device: device,
             lastAccessed: doc.lastAccessed,
         })
+    }
+
+    async createContainer(createCotainerDto: CreateContainerDto): Promise<ContainerInfoDto> {
+        const device = await this.deviceService.getDeviceById(createCotainerDto.deviceId);
+
+        if (device.user.teamIds == undefined)
+            throw new BadRequestException("It should not be done because this device doesn't have team.");
+
+        const teamId= device.user.teamIds[0];
+        const userId= device.user.$id;
+        const lastAccessed = new Date(Date.now());
+
+        const doc = await this.databaseService.createContainer(ID.unique(), createCotainerDto, teamId, userId, lastAccessed);
+
+        return new ContainerInfoDto({
+            $id: doc.$id,
+            name: doc.name,
+            image: doc.image,
+            ip: doc.ip,
+            device: device,
+            lastAccessed: doc.lastAccessed,
+        })
+    }
+
+    async delContainerById(containerId: string) {
+        await this.databaseService.delContainerById(containerId);
     }
 }

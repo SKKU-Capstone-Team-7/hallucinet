@@ -120,7 +120,7 @@ export default function DashboardPage() {
         setUser(u);
         setLoading(false);
 
-        if (!loading && !user) {
+        if (!u) {
           router.push("/login");
         }
 
@@ -132,6 +132,7 @@ export default function DashboardPage() {
         const meJson = await meRes.json();
         const teams: string[] = meJson["teamIds"];
         if (teams.length == 0) {
+          console.log(teams);
           router.push("/onboarding");
         }
 

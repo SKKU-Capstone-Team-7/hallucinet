@@ -223,7 +223,10 @@ export class DatabaseService {
             this.dbId,
             this.userColId,
             userId,
-            {}
+            {
+              device: [],
+              container: []
+            }
         )
     }
 

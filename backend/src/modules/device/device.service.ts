@@ -28,18 +28,13 @@ export class DeviceService {
   async listDevices(client: Client): Promise<DeviceInfoDto[]> {
     const team = await this.teamService.getMyTeam(client);
 
-    const { documents } = await this.databaseService.listDevicesByTeamId(
-      team.$id,
-    );
+    const [ devicesResult, users ] = await Promise.all([
+            this.databaseService.listDevicesByTeamId(team.$id,),
+            this.userService.getUsersInMyTeam(client),
+    ]);
 
-    //console.log(documents);
-
-    const users = await this.userService.getUsersInMyTeam(client);
-
-    //console.log(users);
-    const userMap = new Map(
-        users.map(u => [u.$id, u])
-    );
+    const { documents } = devicesResult;
+    const userMap = new Map(users.map(u => [u.$id, u]));
 
     return documents.map(doc =>
         new DeviceInfoDto({

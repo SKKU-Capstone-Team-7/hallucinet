@@ -22,15 +22,13 @@ export class ContainerService {
     async getTeamContainers(client: Client, sort: string, order: string, limit: number): Promise<ContainerInfoDto[]> {
         const team = await this.teamService.getMyTeam(client);
 
-        const { documents } = await this.databaseService.listContainersByTeamId(team.$id, sort, order, limit);
+        const [ containersResult, devices ] = await Promise.all([
+            this.databaseService.listContainersByTeamId(team.$id, sort, order, limit),
+            this.deviceService.listDevices(client),
+        ]);
 
-        console.log(documents);
-
-        const devices = await this.deviceService.listDevices(client);
-
-        const deviceMap = new Map(
-            devices.map(d => [d.$id, d])
-        );
+        const { documents } = containersResult;
+        const deviceMap = new Map(devices.map(d => [d.$id, d]));
 
         return documents.map(doc => {
                 return new ContainerInfoDto({

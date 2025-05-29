@@ -2,52 +2,106 @@
 import MainLayout from "@/components/MainLayout";
 import { TimeAgo } from "@/components/TimeAgo";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
 import { backendFetch } from "@/lib/utils";
 import { Account, Models } from "appwrite";
 import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+
+type InviteInputs = {
+  email: string;
+};
+function InviteButton() {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<InviteInputs>();
+
+  const router = useRouter();
+  const onSubmit: SubmitHandler<InviteInputs> = async (data) => {
+    const account = new Account(getAppwriteClient());
+    const jwt = (await account.createJWT()).jwt;
+    const inviteRes = await backendFetch(
+      "/teams/me/invitations",
+      "POST",
+      jwt,
+      JSON.stringify({
+        email: data.email,
+      }),
+    );
+
+    if (inviteRes.ok) {
+      window.location.href = "/team"; // Hard reload
+    } else {
+      console.log(await inviteRes.json());
+    }
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>
+          <div className="flex items-center gap-4">
+            <Plus />
+            Invite
+          </div>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle>Invite Member</DialogTitle>
+            <DialogDescription>
+              Invite a user to join your team
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="Email"
+              {...register("email", { required: true })}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="submit">Invite</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 interface UserInfo {
-    name: string;
-    email: string;
-    role: string;
-    joinedAt: Date;
+  name: string;
+  email: string;
+  role: string;
+  joinedAt: Date;
 }
 
 function UserTable({ users }: { users: UserInfo[] }) {
   return (
     <div className="flex gap-5 max-w-4xl justify-between">
       <div>
-        <p className="grow text-lg mb-5">Name</p>
+        <p className="grow text-lg mb-5">Invite member</p>
         {users.map((usr) => {
           return (
             <div className="h-10" key={usr.email}>
               {" "}
               {usr.name}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="grow text-lg mb-5">Role</p>
-        {users.map((usr) => {
-          return (
-            <div className="h-10" key={usr.email}>
-              {" "}
-              {usr.role}
-            </div>
-          );
-        })}
-      </div>
-       <div>
-        <p className="text-center grow text-lg mb-5">Joined</p>
-        {users.map((usr) => {
-          return (
-            <div className="h-10" key={usr.email}>
-              <TimeAgo timestamp={usr.joinedAt} />
             </div>
           );
         })}
@@ -79,17 +133,6 @@ function ReloadButton() {
   );
 }
 
-function InviteButton() {
-  return (
-    <Button>
-      <div className="flex items-center gap-4">
-        <Plus />
-        Invite
-      </div>
-    </Button>
-  );
-}
-
 export default function TeamPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
@@ -112,7 +155,6 @@ export default function TeamPage() {
         const account = new Account(getAppwriteClient());
         const jwt = (await account.createJWT()).jwt;
 
-        console.log(jwt); 
         // Check if user is in a team
         const meRes = await backendFetch("/users/me", "GET", jwt);
         const meJson = await meRes.json();
@@ -124,14 +166,13 @@ export default function TeamPage() {
         // Get Team Users
         const teamUsersRes = await backendFetch("/teams/me/users", "GET", jwt);
         const teamUsersJsons: any[] = await teamUsersRes.json();
-        console.log(teamUsersJsons);
         const teamUsers: UserInfo[] = teamUsersJsons.map((usr) => {
-            return {
-                name: usr["name"],
-                email: usr["email"],
-                role: usr["role"],
-                joinedAt: new Date(usr["joinedAt"])
-            };
+          return {
+            name: usr["name"],
+            email: usr["email"],
+            role: usr["role"],
+            joinedAt: new Date(usr["joinedAt"]),
+          };
         });
         setTeamUsers(teamUsers);
       })();

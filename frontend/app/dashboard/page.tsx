@@ -1,14 +1,19 @@
 "use client";
+import { ReloadButton } from "@/components/common/ReloadButtion";
 import MainLayout from "@/components/MainLayout";
 import { TimeAgo } from "@/components/TimeAgo";
 import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
 import { backendFetch } from "@/lib/utils";
 import { Account, Models } from "appwrite";
 import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { columns } from "./columns";
+import * as React from "react"
 
 interface ContainerInfo {
   name: string;
@@ -25,72 +30,23 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
   );
 }
 
-interface DeviceInfo {
+function ContainerScrollArea({ containers }: {containers: ContainerInfo[]}) {
+  return (
+    <ScrollArea className="max-w-4xl whitespace-nowrap">
+      <div className="flex gap-5 mt-4 mb-4">
+        {containers.map((cont) => (
+          <ContainerCard container={cont} key={cont.name}/>
+        ))}
+      </div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
+  )
+}
+
+export interface DeviceInfo {
   name: string;
   subnet: string;
   last_seen: Date;
-}
-
-function DeviceTable({ devices }: { devices: DeviceInfo[] }) {
-  return (
-    <div className="flex gap-5 max-w-4xl justify-between">
-      <div>
-        <p className="grow text-lg mb-5">Name</p>
-        {devices.map((dev) => {
-          return (
-            <div className="h-10" key={dev.subnet}>
-              {" "}
-              {dev.name}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="grow text-lg mb-5">Assigned Subnet</p>
-        {devices.map((dev) => {
-          return (
-            <div className="h-10" key={dev.subnet}>
-              {" "}
-              {dev.subnet}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="grow text-lg mb-5">Last Seen</p>
-        {devices.map((dev) => {
-          return (
-            <div className="h-10" key={dev.subnet}>
-              <TimeAgo timestamp={dev.last_seen} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function SearchBar() {
-  return (
-    <div className="flex items-center shadow-sm rounded-sm">
-      <div className="p-2">
-        <LucideSearch />
-      </div>
-      <Input
-        placeholder="Search"
-        className="border-none shadow-none focus:border-none focus-visible:border-none focus-within:border-none outline-none"
-      />
-      <button></button>
-    </div>
-  );
-}
-
-function ReloadButton() {
-  return (
-    <Button>
-      <RefreshCw />
-    </Button>
-  );
 }
 
 function InviteButton() {
@@ -176,29 +132,13 @@ export default function DashboardPage() {
       <div className="ml-8">
         <div>
           <p className="text-2xl">Recent Containers</p>
-          <div className="flex gap-5 mt-4">
-            {containers.map((cont) => {
-              return (
-                <ContainerCard
-                  key={`${cont.name}.${cont.deviceName}`}
-                  container={cont}
-                />
-              );
-            })}
-          </div>
+          <div><ContainerScrollArea containers={containers}/></div>
         </div>
 
         <div className="mt-8">
           <p className="text-2xl">Devices</p>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="grow max-w-lg">
-              <SearchBar />
-            </div>
-            <InviteButton />
-            <ReloadButton />
-          </div>
-          <div className="mt-4">
-            <DeviceTable devices={devices} />
+          <div>
+            <DataTable columns={columns} data={devices} filterColumnKey="name" option={<InviteButton/>}/>
           </div>
         </div>
       </div>

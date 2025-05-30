@@ -1,25 +1,19 @@
 "use client";
+import { ReloadButton } from "@/components/common/ReloadButtion";
 import MainLayout from "@/components/MainLayout";
 import { TimeAgo } from "@/components/TimeAgo";
 import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
 import { backendFetch } from "@/lib/utils";
 import { Account, Models } from "appwrite";
 import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { columns } from "./columns";
 
-interface ContainerInfo {
+export interface ContainerInfo {
   name: string;
   deviceName: string;
   image: string;
@@ -37,6 +31,17 @@ function ContainerTable({ containers }: { containers: ContainerInfo[] }) {
             <div className="h-10" key={cont.ip}>
               {" "}
               {cont.name}
+            </div>
+          );
+        })}
+      </div>
+      <div>
+        <p className="grow text-lg mb-5">Device</p>
+        {containers.map((cont) => {
+          return (
+            <div className="h-10" key={cont.ip}>
+              {" "}
+              {cont.deviceName}
             </div>
           );
         })}
@@ -89,25 +94,6 @@ function SearchBar() {
       />
       <button></button>
     </div>
-  );
-}
-
-function ReloadButton() {
-  return (
-    <Button>
-      <RefreshCw />
-    </Button>
-  );
-}
-
-function InviteButton() {
-  return (
-    <Button>
-      <div className="flex items-center gap-4">
-        <Plus />
-        Add Container
-      </div>
-    </Button>
   );
 }
 
@@ -170,17 +156,10 @@ export default function DashboardPage() {
   return (
     <MainLayout user={user!}>
       <div className="ml-8">
-        <div className="mt-48">
+        <div className="mt-18">
           <p className="text-2xl">Containers</p>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="grow max-w-lg">
-              <SearchBar />
-            </div>
-            <InviteButton />
-            <ReloadButton />
-          </div>
-          <div className="mt-4">
-            <ContainerTable containers={containers} />
+          <div>
+            <DataTable columns={columns} data={containers} filterColumnKey="name"/>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 "use client";
+import { ReloadButton } from "@/components/common/ReloadButtion";
 import MainLayout from "@/components/MainLayout";
 import { TimeAgo } from "@/components/TimeAgo";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { columns } from "./columns";
+import { DataTable } from "@/components/ui/data-table";
 
 type InviteInputs = {
   email: string;
@@ -85,7 +88,7 @@ function InviteButton() {
   );
 }
 
-interface UserInfo {
+export interface UserInfo {
   name: string;
   email: string;
   role: string;
@@ -146,14 +149,6 @@ function SearchBar() {
   );
 }
 
-function ReloadButton() {
-  return (
-    <Button>
-      <RefreshCw />
-    </Button>
-  );
-}
-
 export default function TeamPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
@@ -207,17 +202,10 @@ export default function TeamPage() {
   return (
     <MainLayout user={user!}>
       <div className="ml-8">
-        <div className="mt-48">
+        <div className="mt-18">
           <p className="text-2xl">Team</p>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="grow max-w-lg">
-              <SearchBar />
-            </div>
-            <InviteButton />
-            <ReloadButton />
-          </div>
-          <div className="mt-4">
-            <UserTable users={teamUsers} />
+          <div>
+            <DataTable columns={columns} data={teamUsers} filterColumnKey="name" option={<InviteButton/>}/>
           </div>
         </div>
       </div>

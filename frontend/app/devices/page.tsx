@@ -1,4 +1,5 @@
 "use client";
+import { ReloadButton } from "@/components/common/ReloadButtion";
 import MainLayout from "@/components/MainLayout";
 import { TimeAgo } from "@/components/TimeAgo";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { Account, Models } from "appwrite";
 import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { columns } from "../dashboard/columns";
+import { DataTable } from "@/components/ui/data-table";
 
 interface DeviceInfo {
   name: string;
@@ -43,7 +46,7 @@ function DeviceTable({ devices }: { devices: DeviceInfo[] }) {
         })}
       </div>
       <div>
-        <p className="text-center grow text-lg mb-5">Last Seen</p>
+        <p className="text-center grow text-lg mb-5">Last Activated</p>
         {devices.map((dev) => {
           return (
             <div className="h-10" key={dev.subnet}>
@@ -68,14 +71,6 @@ function SearchBar() {
       />
       <button></button>
     </div>
-  );
-}
-
-function ReloadButton() {
-  return (
-    <Button>
-      <RefreshCw />
-    </Button>
   );
 }
 
@@ -145,15 +140,8 @@ export default function DevicesPage() {
       <div className="ml-8">
         <div className="mt-48">
           <p className="text-2xl">Devices</p>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="grow max-w-lg">
-              <SearchBar />
-            </div>
-            <InviteButton />
-            <ReloadButton />
-          </div>
-          <div className="mt-4">
-            <DeviceTable devices={devices} />
+          <div>
+            <DataTable columns={columns} data={devices} filterColumnKey="name" option={<InviteButton/>}/>
           </div>
         </div>
       </div>

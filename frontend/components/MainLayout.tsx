@@ -12,6 +12,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { Models } from "appwrite";
 import {
   ChevronUp,
@@ -69,8 +70,10 @@ const items: SidebarItem[] = [
 
 function AppSidebar({
   user,
+  menuDisabled
 }: {
   user: Models.User<Models.Preferences> | null;
+  menuDisabled: boolean;
 }) {
   return (
     <Sidebar>
@@ -84,7 +87,17 @@ function AppSidebar({
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <a href={menuDisabled ? "#" : item.url}
+                    className={cn(
+                          "flex items-center w-full", // 기존 스타일 유지 (필요시 추가)
+                          menuDisabled && "opacity-50 cursor-not-allowed pointer-events-none"
+                        )}
+                        onClick={(e) => {
+                          if (menuDisabled) {
+                            e.preventDefault(); // 확실하게 클릭 방지
+                          }
+                        }}
+                        aria-disabled={menuDisabled}>
                       <item.icon />
                       <span>{item.title}</span>
                     </a>
@@ -128,13 +141,15 @@ function AppSidebar({
 export default function MainLayout({
   user,
   children,
+  menuDisabled=false
 }: {
   children: React.ReactNode;
   user: Models.User<Models.Preferences> | null;
+  menuDisabled?: boolean;
 }) {
   return (
     <SidebarProvider>
-      <AppSidebar user={user} />
+      <AppSidebar user={user} menuDisabled={menuDisabled} />
       <main className="w-full p-5 flex">
         <SidebarTrigger />
         <div className="grow mr-8">{children}</div>

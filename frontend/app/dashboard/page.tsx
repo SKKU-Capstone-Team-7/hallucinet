@@ -23,7 +23,7 @@ interface ContainerInfo {
 function ContainerCard({ container }: { container: ContainerInfo }) {
   return (
     <div className="p-5 shadow-sm">
-      <p>{container.name}</p>
+      <p className="h-9 font-bold">{container.name}</p>
       <p>{container.image}</p>
       <p>{container.deviceName}</p>
     </div>
@@ -46,7 +46,8 @@ function ContainerScrollArea({ containers }: {containers: ContainerInfo[]}) {
 export interface DeviceInfo {
   name: string;
   subnet: string;
-  last_seen: Date;
+  userEmail: string;
+  last_activate: Date;
 }
 
 function InviteButton() {
@@ -115,7 +116,8 @@ export default function DashboardPage() {
           return {
             name: dev["name"],
             subnet: dev["ipBlock24"],
-            last_seen: new Date(dev["lastActivatedAt"]),
+            userEmail: dev["user"]["email"],
+            last_activate: new Date(dev["lastActivatedAt"]),
           };
         });
         setDevices(devices);

@@ -8,6 +8,16 @@ export const columns: ColumnDef<UserInfo>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    cell: ({ row }) => {
+      const name = row.getValue<string>("name");
+      const email = row.original.email;
+      return (
+        <div>
+          <div>{name}</div>
+          <small style={{ color: "#777"}}>{email}</small>
+        </div>
+      )
+    }
   },
   {
     accessorKey: "role",

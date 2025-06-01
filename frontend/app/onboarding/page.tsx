@@ -2,6 +2,7 @@
 import MainLayout from "@/components/MainLayout";
 import { TimeAgo } from "@/components/TimeAgo";
 import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
 import { backendFetch } from "@/lib/utils";
@@ -11,6 +12,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { columns } from "./columns";
 
 type CreateTeamInputs = {
   name: string;
@@ -48,80 +50,25 @@ function CreateTeamForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full">
       <div className="flex gap-5">
+        <div className="w-full max-w-2xl">
         <Input
-          className="grow"
+          className="grow max-w-2xl"
           placeholder="Team name here"
           {...register("name", { required: true })}
         />
-        <Button type="submit">Confirm</Button>
+        </div>
+        <div className="flex-grow"></div>
+        <Button className="mr-0" type="submit">Confirm</Button>
       </div>
     </form>
   );
 }
 
-interface InvitationInfo {
+export interface InvitationInfo {
   id: string;
-  sender: string;
+  senderName: string;
+  senderEmail: string;
   invitation_time: Date;
-}
-
-function InvitationTable({ invitations }: { invitations: InvitationInfo[] }) {
-  const router = useRouter();
-  return (
-    <div className="flex gap-5 max-w-4xl justify-between w-full">
-      <div className="grow">
-        <p className="grow text-lg mb-5">Name</p>
-        {invitations.map((invi) => {
-          return (
-            <div className="h-10" key={invi.invitation_time.toTimeString()}>
-              {invi.sender}
-            </div>
-          );
-        })}
-      </div>
-      <div className="grow">
-        <p className="grow text-lg mb-5">Invitation Date</p>
-        {invitations.map((invi) => {
-          return (
-            <div className="h-10" key={invi.invitation_time.toLocaleString()}>
-              {invi.invitation_time.toLocaleString()}
-            </div>
-          );
-        })}
-      </div>
-      <div className="grow text-center">
-        <p className="grow text-lg mb-5">Select</p>
-        {invitations.map((invi) => {
-          return (
-            <div
-              className="flex justify-center mx-auto cursor-pointer"
-              onClick={async () => {
-                try {
-                  const account = new Account(getAppwriteClient());
-                  const jwt = (await account.createJWT()).jwt;
-                  const joinRes = await backendFetch(
-                    "/invitations/" + invi.id + "/accept",
-                    "POST",
-                    jwt,
-                  );
-
-                  if (joinRes.ok) {
-                    router.push("/dashboard");
-                  } else {
-                    console.log(await joinRes.json());
-                  }
-                } catch (e) {
-                  console.log(e);
-                }
-              }}
-            >
-              <Check />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
 
 export default function DashboardPage() {
@@ -165,7 +112,8 @@ export default function DashboardPage() {
         const invitations: InvitationInfo[] = invitationJsons.map((invi) => {
           return {
             id: invi["$id"],
-            sender: invi["inviter"]["email"],
+            senderName: invi["inviter"]["name"],
+            senderEmail: invi["inviter"]["email"],
             invitation_time: new Date(invi["createdAt"]),
           };
         });
@@ -179,6 +127,7 @@ export default function DashboardPage() {
   if (loading) return <></>;
 
   return (
+    <MainLayout user={user!} menuDisabled={true}>
     <div className="mx-8 mt-8">
       <p className="text-center text-3xl">Hello, {user?.name}</p>
       <div className="mt-4">
@@ -195,11 +144,11 @@ export default function DashboardPage() {
           Check the invitations you got and join in a team. After you choose one
           team, others are automatically rejected.
         </p>
-
-        <div className="mt-4">
-          <InvitationTable invitations={invitations} />
+        <div>
+          <DataTable columns={columns} data={invitations} filterColumnKey="id"/>
         </div>
       </div>
     </div>
+    </MainLayout>
   );
 }

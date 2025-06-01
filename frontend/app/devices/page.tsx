@@ -17,61 +17,7 @@ interface DeviceInfo {
   name: string;
   subnet: string;
   userEmail: string;
-  last_seen: Date;
-}
-
-function DeviceTable({ devices }: { devices: DeviceInfo[] }) {
-  return (
-    <div className="flex gap-5 max-w-4xl justify-between">
-      <div>
-        <p className="grow text-lg mb-5">Name</p>
-        {devices.map((dev) => {
-          return (
-            <div className="h-10" key={dev.subnet}>
-              {" "}
-              {dev.name}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="text-center grow text-lg mb-5">Assigned Subnet</p>
-        {devices.map((dev) => {
-          return (
-            <div className="h-10" key={dev.subnet}>
-              {" "}
-              {dev.subnet}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="text-center grow text-lg mb-5">Last Activated</p>
-        {devices.map((dev) => {
-          return (
-            <div className="h-10" key={dev.subnet}>
-              <TimeAgo timestamp={dev.last_seen} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function SearchBar() {
-  return (
-    <div className="flex items-center shadow-sm rounded-sm">
-      <div className="p-2">
-        <LucideSearch />
-      </div>
-      <Input
-        placeholder="Search"
-        className="border-none shadow-none focus:border-none focus-visible:border-none focus-within:border-none outline-none"
-      />
-      <button></button>
-    </div>
-  );
+  last_activate: Date;
 }
 
 function InviteButton() {
@@ -123,7 +69,7 @@ export default function DevicesPage() {
             name: dev["name"],
             subnet: dev["ipBlock24"],
             userEmail: dev["user"]["email"],
-            last_seen: new Date(dev["lastActivatedAt"]),
+            last_activate: new Date(dev["lastActivatedAt"]),
           };
         });
         setDevices(devices);
@@ -138,7 +84,7 @@ export default function DevicesPage() {
   return (
     <MainLayout user={user!}>
       <div className="ml-8">
-        <div className="mt-48">
+        <div className="mt-18">
           <p className="text-2xl">Devices</p>
           <div>
             <DataTable columns={columns} data={devices} filterColumnKey="name" option={<InviteButton/>}/>

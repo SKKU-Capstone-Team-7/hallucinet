@@ -34,8 +34,8 @@ function InviteButton() {
     watch,
     formState: { errors },
   } = useForm<InviteInputs>();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const router = useRouter();
   const onSubmit: SubmitHandler<InviteInputs> = async (data) => {
     const account = new Account(getAppwriteClient());
     const jwt = (await account.createJWT()).jwt;
@@ -49,14 +49,15 @@ function InviteButton() {
     );
 
     if (inviteRes.ok) {
-      window.location.href = "/team"; // Hard reload
+      setIsDialogOpen(false);
+      // we need to add some success event
     } else {
       console.log(await inviteRes.json());
     }
   };
 
   return (
-    <Dialog>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
         <Button>
           <div className="flex items-center gap-4">
@@ -93,60 +94,6 @@ export interface UserInfo {
   email: string;
   role: string;
   joinedAt: Date;
-}
-
-function UserTable({ users }: { users: UserInfo[] }) {
-  return (
-    <div className="flex gap-5 max-w-4xl justify-between">
-      <div>
-        <p className="grow text-lg mb-5">Name</p>
-        {users.map((usr) => {
-          return (
-            <div className="h-10" key={usr.email}>
-              {" "}
-              {usr.name}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="grow text-lg mb-5">Role</p>
-        {users.map((usr) => {
-          return (
-            <div className="h-10" key={usr.email}>
-              {" "}
-              {usr.role}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="grow text-lg mb-5">Joined</p>
-        {users.map((usr) => {
-          return (
-            <div className="h-10" key={usr.email}>
-              <TimeAgo timestamp={usr.joinedAt} /> ago
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function SearchBar() {
-  return (
-    <div className="flex items-center shadow-sm rounded-sm">
-      <div className="p-2">
-        <LucideSearch />
-      </div>
-      <Input
-        placeholder="Search"
-        className="border-none shadow-none focus:border-none focus-visible:border-none focus-within:border-none outline-none"
-      />
-      <button></button>
-    </div>
-  );
 }
 
 export default function TeamPage() {

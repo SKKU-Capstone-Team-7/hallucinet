@@ -15,6 +15,7 @@ import { columns } from "./columns";
 
 export interface ContainerInfo {
   name: string;
+  userEmail: string;
   deviceName: string;
   image: string;
   ip: string;
@@ -137,6 +138,7 @@ export default function DashboardPage() {
         const containers: ContainerInfo[] = containerJsons.map((cont) => {
           return {
             name: cont["name"],
+            userEmail: cont["device"]["user"]["email"],
             image: cont["image"],
             deviceName: cont["device"]["name"],
             ip: cont["ip"],

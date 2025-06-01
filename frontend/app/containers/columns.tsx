@@ -3,11 +3,19 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { ContainerInfo } from "./page"
 import { TimeAgo } from "@/components/TimeAgo"
+import { NameTag } from "@/components/common/NameTag"
  
 export const columns: ColumnDef<ContainerInfo>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    cell: ({ row }) => {
+      const name = row.getValue<string>("name");
+      const email = row.original.userEmail;
+      return (
+                    <NameTag name={name} email={email} />
+      )
+    }
   },
   {
     accessorKey: "deviceName",

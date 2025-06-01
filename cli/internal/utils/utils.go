@@ -11,7 +11,7 @@ import (
 )
 
 type ConfigJson struct {
-	Endpoint         string `json:"coordination_endpoint"`
+	Endpoint         string `json:"hallucinet_endpoint"`
 	HallucinetSocket string `json:"hallucinet_socket"`
 	DnsAddress       string `json:"dns_address"`
 }

@@ -29,7 +29,7 @@ var upCmd = &cobra.Command{
 			return err
 		}
 
-		token, err := auth.Authenticate(upOpts.tokenPath)
+		token, err := auth.Authenticate(upOpts.tokenPath, config.Endpoint)
 		if err != nil {
 			log.Printf("Cannot decode device token. %v\n", err)
 			return err

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"log"
 	"net"
+	"net/url"
 	"os"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinetd/internal/dns"
@@ -13,6 +14,7 @@ import (
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/routing"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
+	"github.com/gorilla/websocket"
 )
 
 type HallucinetDaemon struct {
@@ -22,6 +24,7 @@ type HallucinetDaemon struct {
 	coord        *coordination.Coord
 	domon        *docker.DockerMonitor
 	routeManager *routing.RouteManager
+	ws           *websocket.Conn
 }
 
 func New(config types.Config) (*HallucinetDaemon, error) {
@@ -77,6 +80,24 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 	}
 	daemon.routeManager = roma
 
+	// Create websocket connection
+	coordUrl, err := url.Parse(config.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	u := url.URL{
+		Scheme: "wss",
+		Host:   coordUrl.Host,
+		Path:   "/api/coordination/events",
+	}
+	log.Println(u.String())
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	daemon.ws = c
+
 	return &daemon, nil
 }
 
@@ -86,7 +107,19 @@ func (daemon *HallucinetDaemon) Close() error {
 		return err
 	}
 
+	err = daemon.ws.Close()
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (daemon *HallucinetDaemon) sendWsEvent(data string) error {
+	return daemon.ws.WriteJSON(comms.WsMsg{
+		Event: "event",
+		Data:  data,
+	})
 }
 
 func (daemon *HallucinetDaemon) dockerListenLoop() error {
@@ -95,8 +128,10 @@ func (daemon *HallucinetDaemon) dockerListenLoop() error {
 		switch event.Kind {
 		case comms.EventContainerConnected:
 			log.Printf("CONNECTED: %v\n", event)
+			daemon.sendWsEvent("CONNECTED: " + event.ContainerName)
 		case comms.EventContainerDisconnected:
 			log.Printf("DISCONNECTED: %v\n", event)
+			daemon.sendWsEvent("DISCONNECTED: " + event.ContainerName)
 		case comms.EventUnknown:
 			log.Printf("UNKNOWN: %V\n", event)
 			return comms.ErrUnknownEvent

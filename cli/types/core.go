@@ -31,3 +31,8 @@ type Config struct {
 	DeviceToken      DeviceToken
 	DnsAddress       netip.AddrPort
 }
+
+type WsMsg struct {
+	Event string `json:"event"`
+	Data  string `json:"data"`
+}

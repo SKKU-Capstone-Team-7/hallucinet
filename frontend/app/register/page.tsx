@@ -65,29 +65,27 @@ export default function RegisterPage() {
       );
 
       await account.createEmailPasswordSession(data.email, data.password);
+      const { jwt } = await account.createJWT();
 
       const verificationUrl = `${window.location.origin}/verify-email`
       await account.createVerification(verificationUrl);
 
-      toast.info("Verification email sent.", {
+      const registerRes = await backendFetch(
+        "/users/me",
+        "POST",
+        jwt,
+        JSON.stringify({}),
+      );
+
+      if (registerRes.ok) {
+        toast.info("Verification email sent.", {
         description: "Please check your email inbox.",
-    });
-      router.push("/verify-email");
+        });
+        router.push("/verify-email");
+      } else {
+        console.log(await registerRes.json());
+      }
       //await account.createEmailPasswordSession(data.email, data.password);
-      //const { jwt } = await account.createJWT();
-
-      //const registerRes = await backendFetch(
-      //  "/users/me",
-      //  "POST",
-      //  jwt,
-      //  JSON.stringify({}),
-      //);
-
-      //if (registerRes.ok) {
-      //  router.push("/onboarding");
-      //} else {
-      //  console.log(await registerRes.json());
-      //}
     } catch (e) {
       console.log(e);
     }

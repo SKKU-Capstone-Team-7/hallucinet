@@ -5,15 +5,6 @@ import { TeamInfoDto } from "src/modules/team/dto/team-info.dto";
 import { PublicUserInfoDto, UserInfoDto } from "src/modules/user/dto/user-info.dto";
 
 export class UpdateDeviceInfoDto {
-
-    @ApiPropertyOptional({
-        example: 'true',
-        description: 'device status(ture: online, false: offline)'
-    })
-    @IsOptional()
-    @IsBoolean()
-    readonly status?: boolean;
-
     @ApiPropertyOptional({
         example: 'dev-mac',
         description: 'name of device'

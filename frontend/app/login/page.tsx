@@ -27,8 +27,10 @@ export default function LoginPage() {
   useEffect(() => {
     (async () => {
       const u = await getCurrentUser();
-      if (u) {
+      if (u && u.emailVerification) {
         router.push("/dashboard");
+      } else if (u && !u.emailVerification) {
+        router.push("/verify-email");
       } else {
         setUser(await getCurrentUser());
         setLoading(false);
@@ -47,6 +49,7 @@ export default function LoginPage() {
     try {
       await account.createEmailPasswordSession(data.email, data.password);
       router.push("/dashboard");
+      return;
     } catch (e) {
       console.log(e);
     }

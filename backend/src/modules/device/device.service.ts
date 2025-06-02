@@ -40,7 +40,6 @@ export class DeviceService {
         new DeviceInfoDto({
             $id: doc.$id,
             name: doc.name,
-            status: doc.status,
             ipBlock24: doc.ipBlock24,
             user: userMap.get(doc.user.$id)!,
             lastActivatedAt: doc.lastActivatedAt,
@@ -70,7 +69,6 @@ export class DeviceService {
     return new DeviceInfoDto({
       $id: doc.$id,
       name: doc.name,
-      status: doc.status,
       ipBlock24: doc.ipBlock24,
       user: user,
       lastActivatedAt: doc.lastActivatedAt,
@@ -105,15 +103,30 @@ export class DeviceService {
     // status false o
     const userInfo = await this.userService.getCurrentUser(client);
     const teamInfo = await this.teamService.getMyTeam(client);
-    console.log('Confirming device ' + deviceId);
-    const registrationExpiresAt =
-      await this.databaseService.getRegistrationExpiresAt(client, deviceId);
-    console.log('Confirming sdevice ' + deviceId);
-    const lastActivateAt = new Date(Date.now());
 
     if (!userInfo.teamIds || userInfo.teamIds.length == 0) {
       throw new BadRequestException("you don't have team.");
     }
+
+    //console.log('Confirming device ' + deviceId);
+    //console.log('Confirming sdevice ' + deviceId);
+
+    const device = await this.databaseService.getDeviceById(deviceId);
+    const registrationExpiresAt = new Date(device.registrationExpiresAt)
+    const baseName: string = device.name;
+
+    const devices = await this.databaseService.listDevicesByTeamId(userInfo.teamIds[0]);
+
+    //console.log(devices);
+
+    const uniqeName = generateUniqueName(devices.documents, baseName);
+
+    const prefix = getIpBlock24Prefix(teamInfo.ipBlock16);
+    const used = fetchUsedOctets(devices);
+    const octet = pickRandomOctet(used);
+    const ipBlock24 = `${prefix}${octet}.0`;
+
+    const lastActivateAt = new Date(Date.now());
 
     if (lastActivateAt > registrationExpiresAt) {
       throw new BadRequestException('The confirmation link has expired.');
@@ -122,26 +135,20 @@ export class DeviceService {
     console.log(lastActivateAt);
     console.log(registrationExpiresAt);
 
-    const prefix = getIpBlock24Prefix(teamInfo.ipBlock16);
-    const used = await this.databaseService.fetchUsedOctets(
-      userInfo.teamIds[0],
-    );
-    const octet = pickRandomOctet(used);
-    const ipBlock24 = `${prefix}${octet}.0`;
 
     const doc = await this.databaseService.confirmDevice(
-      client,
       deviceId,
+      uniqeName,
       userInfo.$id,
       userInfo.teamIds[0],
       ipBlock24,
       new Date(Date.now()),
     );
 
+
     return new DeviceInfoDto({
       $id: doc.$id,
       name: doc.name,
-      status: doc.status,
       ipBlock24: doc.ipBlock24,
       user: userInfo,
       lastActivatedAt: doc.lastActivatedAt,
@@ -162,7 +169,6 @@ export class DeviceService {
     return new DeviceInfoDto({
       $id: doc.$id,
       name: doc.name,
-      status: doc.status,
       ipBlock24: doc.ipBlock24,
       user: userInfo,
       lastActivatedAt: doc.lastActivatedAt,
@@ -191,3 +197,45 @@ function getIpBlock24Prefix(ipBlock24: string): string {
   const parts = ipBlock24.split('.');
   return `${parts[0]}.${parts[1]}.`;
 }
+
+function fetchUsedOctets(docs) {
+  const set = new Set<number>();
+  for (const doc of docs.documents) {
+    const octet = Number(doc.ipBlock24.split('.')[2]);
+    if (!isNaN(octet)) set.add(octet);
+  }
+
+  return set;
+}
+
+function generateUniqueName(documents, baseName: string): string {
+  const existingNamesInTeam = documents.map(doc => doc.name);
+  console.log(existingNamesInTeam);
+
+  let isNameTaken =false;
+  for (const name of existingNamesInTeam) {
+    if (name == baseName) {
+      isNameTaken = true;
+      break;
+    }
+  }
+
+  if (!isNameTaken) {
+    return baseName;
+  }
+
+  let maxSuffix = 0;
+  const suffixRegex = new RegExp(`^${baseName}-(\\d+)$`);
+
+  for (const name of existingNamesInTeam) {
+    const match = name.match(suffixRegex);
+    if (match && match[1]) {
+      const num = parseInt(match[1], 10);
+      if (num > maxSuffix) {
+        maxSuffix = num;
+      }
+    }
+  }
+
+  return `${baseName}-${maxSuffix + 1}`;
+} 

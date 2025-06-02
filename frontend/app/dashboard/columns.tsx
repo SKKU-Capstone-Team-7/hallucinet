@@ -11,21 +11,25 @@ export const columns: ColumnDef<DeviceInfo>[] = [
     accessorKey: "status",
     header: "",
     cell: ({ row }) => {
-      console.log(row.original);
+      //console.log(row.original);
         const date = row.original.last_activate;
-        
+
+        console.log(date);
+        console.log("this time:");
+        console.log(new Date());
         const timeDiff = new Date().getTime() - date.getTime();
 
+        //console.log(timeDiff);
         let dotColorClass;
         
-        if (timeDiff >= 0 && timeDiff <= 10 * 1000 ) {
+        if (timeDiff >= 0 && timeDiff <= 100 * 1000 ) {
           dotColorClass = "text-green-500 fill-green-500";
         } else {
           dotColorClass = "text-red-500 fill-red-500";
         }
 
         return (
-          <div className="w-3 relative">
+          <div className="w-1 relative">
           <Dot className={`absolute top-1/2 left-1/2 -translate-x-1/3 -translate-y-1/2 ${dotColorClass}`} size={50}/>
           </div>
         )

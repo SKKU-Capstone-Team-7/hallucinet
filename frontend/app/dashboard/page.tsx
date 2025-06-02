@@ -32,7 +32,7 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
 
 function ContainerScrollArea({ containers }: {containers: ContainerInfo[]}) {
   return (
-    <ScrollArea className="max-w-4xl whitespace-nowrap">
+    <ScrollArea className="w-full whitespace-nowrap">
       <div className="flex gap-5 mt-4 mb-4">
         {containers.map((cont) => (
           <ContainerCard container={cont} key={cont.name}/>
@@ -79,10 +79,16 @@ export default function DashboardPage() {
 
         if (!u) {
           router.push("/login");
+          return;
+        } else if (!u.emailVerification) {
+          router.push("/verify-email");
+          return;
         }
 
         const account = new Account(getAppwriteClient());
         const jwt = (await account.createJWT()).jwt;
+
+        console.log(jwt);
 
         // Check if user is in a team
         const meRes = await backendFetch("/users/me", "GET", jwt);
@@ -91,14 +97,24 @@ export default function DashboardPage() {
         if (teams.length == 0) {
           console.log(teams);
           router.push("/onboarding");
+          return;
         }
 
+      const containersPromise = backendFetch("/teams/me/containers", "GET", jwt);
+      const devicesPromise = backendFetch("/teams/me/devices", "GET", jwt);
+
+      // Promise.all을 사용하여 두 요청이 모두 완료될 때까지 기다립니다.
+      const [containersRes, devicesRes] = await Promise.all([
+        containersPromise,
+        devicesPromise,
+      ]);
+
         // Get containers
-        const containersRes = await backendFetch(
-          "/teams/me/containers",
-          "GET",
-          jwt,
-        );
+        //const containersRes = await backendFetch(
+        //  "/teams/me/containers",
+        //  "GET",
+        //  jwt,
+        //);
         const containerJsons: any[] = await containersRes.json();
         const containers: ContainerInfo[] = containerJsons.map((cont) => {
           return {
@@ -110,7 +126,7 @@ export default function DashboardPage() {
         setContainers(containers);
 
         // Get devices
-        const devicesRes = await backendFetch("/teams/me/devices", "GET", jwt);
+        //const devicesRes = await backendFetch("/teams/me/devices", "GET", jwt);
         const deviceJsons: any[] = await devicesRes.json();
         const devices: DeviceInfo[] = deviceJsons.map((dev) => {
           return {
@@ -134,7 +150,7 @@ export default function DashboardPage() {
       <div className="ml-8">
         <div>
           <p className="text-2xl">Recent Containers</p>
-          <div><ContainerScrollArea containers={containers}/></div>
+          <div className="container"><ContainerScrollArea containers={containers}/></div>
         </div>
 
         <div className="mt-8">

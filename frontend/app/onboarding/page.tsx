@@ -42,6 +42,7 @@ function CreateTeamForm() {
 
     if (createTeamRes.ok) {
       router.push("/dashboard");
+      return;
     } else {
       console.log(await createTeamRes.json());
     }
@@ -89,6 +90,10 @@ export default function DashboardPage() {
 
         if (!u) {
           router.push("/login");
+          return;
+        } else if (u && !u.emailVerification) {
+          router.push("/verify-email");
+          return;
         }
 
         const account = new Account(getAppwriteClient());
@@ -100,6 +105,7 @@ export default function DashboardPage() {
         const teams: string[] = meJson["teamIds"];
         if (teams.length > 0) {
           router.push("/dashboard");
+          return;
         }
 
         // Get invitations

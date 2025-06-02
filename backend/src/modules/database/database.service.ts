@@ -22,17 +22,17 @@ export class DatabaseService {
         return new Databases(client);
     }
 
-    async fetchUsedOctets(teamId: string): Promise<Set<number>> {
-        const docs = await this.listDevicesByTeamId(teamId);
-
-        const set = new Set<number>();
-        for (const doc of docs.documents) {
-            const octet = Number(doc.ipBlock24.split('.')[2]);
-            if (!isNaN(octet)) set.add(octet);
-        }
-
-        return set;
-    }
+    //async fetchUsedOctets(teamId: string): Promise<Set<number>> {
+    //    const docs = await this.listDevicesByTeamId(teamId);
+    //
+    //    const set = new Set<number>();
+    //    for (const doc of docs.documents) {
+    //        const octet = Number(doc.ipBlock24.split('.')[2]);
+    //        if (!isNaN(octet)) set.add(octet);
+    //    }
+    //
+    //    return set;
+    //}
 
 
     //async getRegistrationExpiresAt(client: Client, deviceId: string): Promise<Date> {
@@ -40,10 +40,10 @@ export class DatabaseService {
     //    return new Date(doc.registrationExpiresAt);
     //}
 
-    async getRegistrationExpiresAt(client: Client, deviceId: string): Promise<Date> {
-        const doc = await this.getDeviceById(deviceId);
-        return new Date(doc.registrationExpiresAt);
-    }
+    //async getRegistrationExpiresAt(client: Client, deviceId: string): Promise<Date> {
+    //    const doc = await this.getDeviceById(deviceId);
+    //    return new Date(doc.registrationExpiresAt);
+    //}
 
     async updateDevice(deviceId: string, updateDeviceInfoDto:UpdateDeviceInfoDto): Promise<Models.Document> {
         const doc = await this.databases(this.appwrite.getServerClient()).updateDocument(
@@ -55,13 +55,13 @@ export class DatabaseService {
         return doc;
     }
 
-    async confirmDevice(client: Client, deviceId: string, userId: string, teamId: string, ipBlock24: string, date: Date): Promise<Models.Document> {
-        const doc = await this.databases(client).updateDocument(
+    async confirmDevice(deviceId: string, name: string, userId: string, teamId: string, ipBlock24: string, date: Date): Promise<Models.Document> {
+        const doc = await this.databases(this.appwrite.getServerClient()).updateDocument(
             this.dbId,
             this.deviceColId,
             deviceId,
             {
-                "status": false,
+                "name": name,
                 "ipBlock24": ipBlock24,
                 "lastActivatedAt": date,
                 "user": userId,
@@ -107,6 +107,17 @@ export class DatabaseService {
             [Query.equal('team', teamId)],
         );
     }
+
+    //async checkDeviceNameDup(teamId: string, name: string): Promise<Models.DocumentList<Models.Document>> {
+    //    return this.databases(this.appwrite.getServerClient()).listDocuments(
+    //        this.dbId,
+    //        this.deviceColId,
+    //        [
+    //            Query.equal("team", teamId), 
+    //            Query.startsWith("name", name)
+    //        ]
+    //    )
+    //}
 
     //async getDeviceById(client: Client, deviceId: string): Promise<Models.Document> {
     //    return this.databases(client).getDocument(

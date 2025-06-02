@@ -87,7 +87,7 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 	}
 
 	u := url.URL{
-		Scheme: "wss",
+		Scheme: "ws",
 		Host:   coordUrl.Host,
 		Path:   "/api/coordination/events",
 	}
@@ -115,27 +115,23 @@ func (daemon *HallucinetDaemon) Close() error {
 	return nil
 }
 
-func (daemon *HallucinetDaemon) sendWsEvent(data string) error {
-	return daemon.ws.WriteJSON(comms.WsMsg{
-		Event: "event",
-		Data:  data,
-	})
-}
-
 func (daemon *HallucinetDaemon) dockerListenLoop() error {
-	log.Printf("Listening to docker!!")
 	for event := range daemon.domon.EventChan {
+		var wsMsg comms.WsMsg
+		wsMsg.Data.Token = daemon.coord.JWT
+		wsMsg.Data.Event = event
+
 		switch event.Kind {
 		case comms.EventContainerConnected:
-			log.Printf("CONNECTED: %v\n", event)
-			daemon.sendWsEvent("CONNECTED: " + event.ContainerName)
+			wsMsg.Event = "container_connected"
 		case comms.EventContainerDisconnected:
-			log.Printf("DISCONNECTED: %v\n", event)
-			daemon.sendWsEvent("DISCONNECTED: " + event.ContainerName)
+			wsMsg.Event = "container_disconnected"
 		case comms.EventUnknown:
 			log.Printf("UNKNOWN: %V\n", event)
 			return comms.ErrUnknownEvent
 		}
+
+		daemon.ws.WriteJSON(wsMsg)
 	}
 	return nil
 }

@@ -73,6 +73,21 @@ func (domon *DockerMonitor) getContainerName(containerID string) string {
 	return conJson.Name
 }
 
+func (domon *DockerMonitor) getContainerImage(containerID string) string {
+	cli := domon.client
+	conJson, err := cli.ContainerInspect(context.Background(), containerID)
+	if err != nil {
+		log.Panicf("Cannot inspect container %v: %v\n", containerID, err)
+	}
+
+	img, _, err := cli.ImageInspectWithRaw(context.Background(), conJson.Image)
+	if err != nil {
+		log.Panicf("Cannot inspect image %v\n", conJson.Image)
+	}
+
+	return img.RepoTags[0]
+}
+
 func (domon *DockerMonitor) getContainerIP(containerID string, networkName string) string {
 	cli := domon.client
 	conJson, err := cli.ContainerInspect(context.Background(), containerID)
@@ -87,6 +102,7 @@ func (domon *DockerMonitor) translateDockerEvent(e events.Message) comms.Event {
 	containerID := e.Actor.Attributes["container"]
 	containerName := domon.getContainerName(containerID)[1:]
 	containerIP := domon.getContainerIP(containerID, networkName)
+	containerImage := domon.getContainerImage(containerID)
 
 	var kind comms.EventKind
 	switch e.Action {
@@ -98,10 +114,13 @@ func (domon *DockerMonitor) translateDockerEvent(e events.Message) comms.Event {
 		kind = comms.EventUnknown
 	}
 
+	log.Printf("event: %v\n", e.Actor.Attributes)
+
 	return comms.Event{
-		Kind:          kind,
-		ContainerName: containerName,
-		ContainerIP:   containerIP,
+		Kind:           kind,
+		ContainerName:  containerName,
+		ContainerIP:    containerIP,
+		ContainerImage: containerImage,
 	}
 }
 

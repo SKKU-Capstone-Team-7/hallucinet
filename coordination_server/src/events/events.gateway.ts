@@ -8,6 +8,7 @@ import { WsDeviceStatusPayload } from './ws-device-status.dto';
 import { WsContainerEvent } from './ws-container-event';
 import { WsContainerEventPayload } from './ws-container-event-payload.dto';
 import { ContainersService } from 'src/containers/containers.service';
+import { WsPingPayload } from './ws-ping-payload.dto';
 
 type UserIdentifier = {
   userId: string;
@@ -182,5 +183,11 @@ export class EventsGateway {
     );
 
     this.broadcastEventToOtherDevices(id, 'container_disconnected', payload);
+  }
+
+  @SubscribeMessage('ping')
+  async handlePing(client: WebSocket, payload: WsPingPayload) {
+    const id = await this.identifyUser(payload.token);
+    await this.appwriteService.touchDeviceActivationTime(id.deviceId);
   }
 }

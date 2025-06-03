@@ -87,4 +87,11 @@ export class AppwriteService {
 
     return containerDocs;
   }
+
+  async touchDeviceActivationTime(deviceId: string) {
+    const db = new Databases(this.getServerClient());
+    await db.updateDocument(this.dbId, this.deviceCol, deviceId, {
+      lastActivatedAt: new Date(),
+    });
+  }
 }

@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinetd/internal/dns"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/comms"
@@ -163,6 +164,30 @@ func (daemon *HallucinetDaemon) handleContainerConnected(payload comms.WsContEve
 func (daemon *HallucinetDaemon) handleContainerDisconnected(payload comms.WsContEventPayload) {
 }
 
+func (daemon *HallucinetDaemon) pingLoop() {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		<-ticker.C
+
+		wsMsg := comms.WsMsg{
+			Event: "ping",
+			Data: struct {
+				Token string `json:"token"`
+			}{
+				Token: daemon.coord.JWT,
+			},
+		}
+
+		err := daemon.ws.WriteJSON(wsMsg)
+		if err != nil {
+			log.Printf("Ping write error: %v", err)
+			return
+		}
+	}
+}
+
 func (daemon *HallucinetDaemon) wsListenLoop() error {
 	for {
 		messageType, eventBytes, err := daemon.ws.ReadMessage()
@@ -170,6 +195,7 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 			log.Printf("Cannot read ws message: type %v msg %v\n", messageType, string(eventBytes))
 			continue
 		}
+		log.Printf("Got ws message: type %v msg %v\n", messageType, string(eventBytes))
 
 		wsMsg := comms.WsMsg{}
 		err = json.Unmarshal(eventBytes, &wsMsg)
@@ -414,12 +440,9 @@ func (daemon *HallucinetDaemon) Start() error {
 		defer daemon.stopDns()
 	}()
 
-	go func() {
-		daemon.socketListenLoop()
-	}()
-	go func() {
-		daemon.wsListenLoop()
-	}()
+	go daemon.socketListenLoop()
+	go daemon.pingLoop()
+	go daemon.wsListenLoop()
 
 	daemon.dockerListenLoop()
 

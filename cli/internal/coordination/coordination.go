@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
@@ -100,8 +99,6 @@ func (coord *Coord) GetContainers() ([]types.ContainerInfo, error) {
 	if err != nil {
 		return []types.ContainerInfo{}, err
 	}
-
-	log.Printf("Containers: %v\n", string(body))
 
 	var containerDtos []ContainerInfoDto
 	err = json.Unmarshal(body, &containerDtos)

@@ -62,7 +62,10 @@ func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	daemon.Start()
+	err = daemon.Start()
+	if err != nil {
+		return err
+	}
 	defer daemon.Close()
 
 	return nil

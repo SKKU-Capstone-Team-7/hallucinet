@@ -85,7 +85,6 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	u := url.URL{
 		Scheme: "ws",
 		Host:   coordUrl.Host,
@@ -117,11 +116,11 @@ func (daemon *HallucinetDaemon) Close() error {
 
 func (daemon *HallucinetDaemon) dockerListenLoop() error {
 	for event := range daemon.domon.EventChan {
-		var wsMsg comms.WsMsg
+		var wsMsg comms.WsContMsg
 		wsMsg.Data.Token = daemon.coord.JWT
 		wsMsg.Data.Event = event
 
-		switch event.Kind {
+		switch event.ConvEventKind {
 		case comms.EventContainerConnected:
 			wsMsg.Event = "container_connected"
 		case comms.EventContainerDisconnected:
@@ -133,6 +132,19 @@ func (daemon *HallucinetDaemon) dockerListenLoop() error {
 
 		daemon.ws.WriteJSON(wsMsg)
 	}
+	return nil
+}
+
+func (daemon *HallucinetDaemon) wsListenLoop() error {
+	// for {
+	// 	messageType, p, err := daemon.ws.ReadMessage()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	//
+	// 	log.Printf("WS Received: %v %v\n", messageType, string(p))
+	// }
+	//
 	return nil
 }
 
@@ -292,10 +304,27 @@ func (daemon *HallucinetDaemon) addContainersFromServer() {
 	log.Printf("Adding entry %v %v %v\n", deviceOne.Name, containerOne.Name, containerOne.Address)
 }
 
-func (daemon *HallucinetDaemon) Start() {
+func (daemon *HallucinetDaemon) Start() error {
+	// Register device socket and send current state
+	containers, err := daemon.domon.GetDeviceContainers()
+	if err != nil {
+		return err
+	}
+
+	var wsMsg comms.WsDevStateMsg
+	wsMsg.Event = "device_connected"
+	wsMsg.Data.Token = daemon.coord.JWT
+	wsMsg.Data.Containers = containers
+	daemon.ws.WriteJSON(wsMsg)
+
 	go func() {
 		daemon.socketListenLoop()
 	}()
+	go func() {
+		daemon.wsListenLoop()
+	}()
 
 	daemon.dockerListenLoop()
+
+	return nil
 }

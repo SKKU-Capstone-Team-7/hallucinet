@@ -46,6 +46,7 @@ export class AppwriteService {
 
   async createContainer(dto: CreateContainerDto) {
     const db = new Databases(this.getServerClient());
+    console.log(dto);
     return await db.createDocument(
       this.dbId,
       this.containerCol,
@@ -66,5 +67,16 @@ export class AppwriteService {
       this.containerCol,
       containerDocs.documents[0]['$id'],
     );
+  }
+
+  async clearDeviceContainers(deviceId: string) {
+    const db = new Databases(this.getServerClient());
+    const containerDocs = await db.listDocuments(this.dbId, this.containerCol, [
+      Query.equal('device', deviceId),
+    ]);
+
+    containerDocs.documents.forEach((doc) => {
+      db.deleteDocument(this.dbId, this.containerCol, doc['$id']);
+    });
   }
 }

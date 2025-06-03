@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -146,7 +145,6 @@ func createJWT(deviceId string, endpoint string) (string, error) {
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
-	log.Printf("Body: %v\n", string(body))
 	if err != nil {
 		return "", err
 	}

@@ -63,7 +63,7 @@ const items: SidebarItem[] = [
   },
   {
     title: "Settings",
-    url: "/devices",
+    url: "/settings",
     icon: LucideSettings,
   },
 ];

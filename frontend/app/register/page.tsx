@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FaApple, FaGithub, FaGoogle, FaMicrosoft } from "react-icons/fa";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -28,8 +29,10 @@ export default function RegisterPage() {
   useEffect(() => {
     (async () => {
       const u = await getCurrentUser();
-      if (u) {
+      if (u && u.emailVerification) {
         router.push("/dashboard");
+      } else if (u && !u.emailVerification) {
+        router.push("/verify-email");
       } else {
         setUser(await getCurrentUser());
         setLoading(false);
@@ -64,6 +67,9 @@ export default function RegisterPage() {
       await account.createEmailPasswordSession(data.email, data.password);
       const { jwt } = await account.createJWT();
 
+      const verificationUrl = `${window.location.origin}/verify-email`
+      await account.createVerification(verificationUrl);
+
       const registerRes = await backendFetch(
         "/users/me",
         "POST",
@@ -72,10 +78,14 @@ export default function RegisterPage() {
       );
 
       if (registerRes.ok) {
-        router.push("/onboarding");
+        toast.info("Verification email sent.", {
+        description: "Please check your email inbox.",
+        });
+        router.push("/verify-email");
       } else {
         console.log(await registerRes.json());
       }
+      //await account.createEmailPasswordSession(data.email, data.password);
     } catch (e) {
       console.log(e);
     }

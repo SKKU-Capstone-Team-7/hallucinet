@@ -13,13 +13,6 @@ export class DeviceInfoDto {
     readonly $id: string;
 
     @ApiProperty({
-        example: 'true',
-        description: 'device status(ture: online, false: offline)'
-    })
-    @IsBoolean()
-    readonly status: boolean;
-
-    @ApiProperty({
         example: 'dev-mac',
         description: 'name of device'
     })

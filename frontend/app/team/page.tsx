@@ -22,7 +22,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { columns } from "./columns";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable } from "@/components/ui/data-table"
+import { toast } from "sonner";
 
 type InviteInputs = {
   email: string;
@@ -51,6 +52,10 @@ function InviteButton() {
     if (inviteRes.ok) {
       setIsDialogOpen(false);
       // we need to add some success event
+      toast.success("Invitation Sent", {
+        description: "The team invitation was sent successfully.",
+        duration: 3000,
+      })
     } else {
       console.log(await inviteRes.json());
     }

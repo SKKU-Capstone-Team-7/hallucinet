@@ -46,7 +46,6 @@ export class AppwriteService {
 
   async createContainer(dto: CreateContainerDto) {
     const db = new Databases(this.getServerClient());
-    console.log(dto);
     return await db.createDocument(
       this.dbId,
       this.containerCol,

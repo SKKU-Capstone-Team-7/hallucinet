@@ -136,15 +136,15 @@ func (daemon *HallucinetDaemon) dockerListenLoop() error {
 }
 
 func (daemon *HallucinetDaemon) wsListenLoop() error {
-	// for {
-	// 	messageType, p, err := daemon.ws.ReadMessage()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	//
-	// 	log.Printf("WS Received: %v %v\n", messageType, string(p))
-	// }
-	//
+	for {
+		messageType, p, err := daemon.ws.ReadMessage()
+		if err != nil {
+			return err
+		}
+
+		log.Printf("WS Received: %v %v\n", messageType, string(p))
+	}
+
 	return nil
 }
 

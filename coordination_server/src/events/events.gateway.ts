@@ -16,32 +16,65 @@ type UserIdentifier = {
 
 @WebSocketGateway({ path: 'events' })
 export class EventsGateway {
-  private deviceSocket: Map<string, any>;
-  private socketDevice: Map<any, string>;
+  private idSocket: Map<UserIdentifier, WebSocket>;
+  private socketId: Map<WebSocket, UserIdentifier>;
 
   constructor(
     private tokenService: TokenService,
     private appwriteService: AppwriteService,
   ) {
-    this.deviceSocket = new Map<string, any>();
-    this.socketDevice = new Map<any, string>();
+    this.idSocket = new Map<UserIdentifier, WebSocket>();
+    this.socketId = new Map<WebSocket, UserIdentifier>();
   }
 
-  mapDeviceToSocket(deviceId: string, socket: any) {
-    this.deviceSocket.set(deviceId, socket);
-    this.socketDevice.set(socket, deviceId);
+  mapIdToSocket(id: UserIdentifier, socket: WebSocket) {
+    this.idSocket.set(id, socket);
+    this.socketId.set(socket, id);
   }
 
-  unmapDevice(deviceId: string) {
-    const sock = this.deviceSocket.get(deviceId);
-    this.deviceSocket.delete(deviceId);
-    this.socketDevice.delete(sock);
+  unmapDevice(deviceId: UserIdentifier) {
+    const sock = this.idSocket.get(deviceId);
+    this.idSocket.delete(deviceId);
+    this.socketId.delete(sock!);
   }
 
   unmapSocket(socket: any) {
-    const device = this.socketDevice.get(socket);
-    this.socketDevice.delete(socket);
-    this.deviceSocket.delete(device!);
+    const id = this.socketId.get(socket);
+    this.socketId.delete(socket);
+    this.idSocket.delete(id!);
+  }
+
+  getTeamSockets(id) {
+    const entries = Array.from(this.idSocket.entries());
+    const teamEntries = entries.filter(([entId, sock]) => {
+      return entId.teamId == id.teamId;
+    });
+    return teamEntries.map(([id, sock]) => {
+      return sock;
+    });
+  }
+
+  getTeamSocketsExclusive(id) {
+    const entries = Array.from(this.idSocket.entries());
+    const teamEntries = entries.filter(([entId, sock]) => {
+      return entId.teamId == id.teamId && entId.deviceId != id.deviceId;
+    });
+
+    return teamEntries.map(([id, sock]) => {
+      return sock;
+    });
+  }
+
+  broadcastEventToOtherDevices(id: UserIdentifier, event: string, payload) {
+    const teamSockets = this.getTeamSocketsExclusive(id);
+    teamSockets.forEach((sock) => {
+      sock.send(
+        JSON.stringify({
+          event: event,
+          data: payload,
+        }),
+      );
+    });
   }
 
   async identifyUser(token: string): Promise<UserIdentifier> {
@@ -56,17 +89,19 @@ export class EventsGateway {
   }
 
   @SubscribeMessage('device_connected')
-  async handleDeviceConnected(client: any, payload: WsDeviceStatusPayload) {
+  async handleDeviceConnected(
+    client: WebSocket,
+    payload: WsDeviceStatusPayload,
+  ) {
     const id = await this.identifyUser(payload.token);
 
+    // Reset device containers to the current state
     this.appwriteService.clearDeviceContainers(id.deviceId);
-
-    this.mapDeviceToSocket(id.deviceId, client);
-
+    this.mapIdToSocket(id, client);
     payload.containers.forEach((cont) => {
       this.appwriteService.createContainer(
         new CreateContainerDto({
-          name: cont.container_image,
+          name: cont.container_name,
           ip: cont.container_ip,
           image: cont.container_image,
           user: id.userId,
@@ -77,26 +112,29 @@ export class EventsGateway {
       );
     });
 
-    return HttpStatus.OK;
+    this.broadcastEventToOtherDevices(id, 'device_connected', payload);
   }
 
-  async handleDisconnect(client: any) {
-    const deviceId = this.socketDevice.get(client);
-    if (!deviceId) {
-      return HttpStatus.INTERNAL_SERVER_ERROR;
+  async handleDisconnect(client: WebSocket) {
+    const id = this.socketId.get(client);
+    if (!id) {
+      return;
     }
-    this.unmapDevice(deviceId!);
-    this.appwriteService.clearDeviceContainers(deviceId!);
+    this.unmapDevice(id!);
+    this.appwriteService.clearDeviceContainers(id.deviceId);
+    this.broadcastEventToOtherDevices(id, 'container_connected', {
+      deviceId: id.deviceId,
+    });
   }
 
   @SubscribeMessage('container_connected')
   async handleContainerConnected(
-    client: any,
+    client: WebSocket,
     payload: WsContainerEventPayload,
   ) {
     const id = await this.identifyUser(payload.token);
     const dto = new CreateContainerDto({
-      name: payload.event.container_image,
+      name: payload.event.container_name,
       ip: payload.event.container_ip,
       image: payload.event.container_image,
       user: id.userId,
@@ -105,18 +143,22 @@ export class EventsGateway {
       lastAccessed: new Date().toISOString(),
     });
 
-    return this.appwriteService.createContainer(dto);
+    this.appwriteService.createContainer(dto);
+
+    this.broadcastEventToOtherDevices(id, 'container_connected', payload);
   }
 
   @SubscribeMessage('container_disconnected')
   async handleContainerDisconnected(
-    client: any,
+    client: WebSocket,
     payload: WsContainerEventPayload,
   ) {
     const id = await this.identifyUser(payload.token);
-    return await this.appwriteService.deleteContainer(
+    await this.appwriteService.deleteContainer(
       id.deviceId,
-      payload['event']['container_name'],
+      payload.event.container_name,
     );
+
+    this.broadcastEventToOtherDevices(id, 'container_disconnected', payload);
   }
 }

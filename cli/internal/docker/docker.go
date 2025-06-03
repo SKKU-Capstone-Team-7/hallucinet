@@ -74,6 +74,7 @@ func (domon *DockerMonitor) getContainerName(containerID string) string {
 	if err != nil {
 		log.Panicf("Cannot inspect container %v: %v\n", containerID, err)
 	}
+
 	return conJson.Name
 }
 
@@ -118,8 +119,6 @@ func (domon *DockerMonitor) translateDockerEvent(e events.Message) comms.ContEve
 		kind = comms.EventUnknown
 	}
 
-	log.Printf("event: %v\n", e.Actor.Attributes)
-
 	return comms.ContEvent{
 		ConvEventKind:  kind,
 		ContainerName:  containerName,
@@ -131,7 +130,7 @@ func (domon *DockerMonitor) translateDockerEvent(e events.Message) comms.ContEve
 func (domon *DockerMonitor) containerDoContEvent(cont dockerTypes.Container) comms.ContEvent {
 	contEvent := comms.ContEvent{
 		ConvEventKind:  comms.EventContainerConnected,
-		ContainerName:  domon.getContainerName(cont.ID),
+		ContainerName:  domon.getContainerName(cont.ID)[1:],
 		ContainerIP:    domon.getContainerIP(cont.ID, domon.networkName),
 		ContainerImage: domon.getContainerImage(cont.ID),
 	}

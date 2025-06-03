@@ -111,6 +111,9 @@ function AppSidebar({
 }) {
   const [isAccountSettingsDialogOpen, setIsAccountSettingsDialogOpen] = useState(false);
 
+  if (!user) {
+    return <></>
+  }
   const { 
     register: registerAccountForm,
     handleSubmit: handleSubmitAccountForm, 

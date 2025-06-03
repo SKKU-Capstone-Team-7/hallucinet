@@ -37,7 +37,7 @@ function DeleteButton() {
             <p className="mt-2 text-sm">
             Before proceeding to delete your team, please be aware that this action is irreversible. This deletion can only be performed only if the team currently has no other members.
             </p> 
-            <div className="mt-6">
+            <div className="mt-6 flex justify-end">
             <Button className="w-28 bg-red-600 hover:bg-red-700">
               Delete Team
             </Button>
@@ -167,20 +167,20 @@ export default function SettingPage() {
           </Alert>
           </div>
           <div className="mt-8 gap-4 flex max-w-4xl shadow-sm max-w-lg p-4 border rounded-md">
-            <form className="">
+            <form className="w-full">
               <div className="grid gap-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <label htmlFor="teamName" className="w-full sm:w-32 flex-shrink-0 mb-1 sm:mb-0">
                     Team name
                   </label>
                   <Input
                     id="teamName"
                     placeholder="Enter team name"
-                    className="flex-grow "
+                    className="w-43 sm:w-43 sm:max-w-sm"
                     {...register("name")}
                   />
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-start sm:gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <label htmlFor="subnetOctet1" className="w-full sm:w-32 flex-shrink-0 mb-1 sm:mb-0 pt-1">
                     Team subnet
                   </label>
@@ -220,10 +220,12 @@ export default function SettingPage() {
                   </div>
                 </div>
               </div>
-
+                
+              <div className="flex justify-end">
               <Button type="submit" className="mt-4 py-4">
                 Update
               </Button>
+              </div>
             </form>
           </div>
           <DeleteButton />

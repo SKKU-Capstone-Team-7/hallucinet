@@ -19,7 +19,7 @@ export class BaseAPIDocument {
                 }
             )
             .addTag('swagger')
-            .addServer('')
+            .addServer('/api/v1')
             .build();
     }
 }

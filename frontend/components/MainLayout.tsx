@@ -12,8 +12,28 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
-import { Models } from "appwrite";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { backendFetch, cn } from "@/lib/utils";
+import { Account, Models } from "appwrite";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import {
   ChevronUp,
   House,
@@ -31,8 +51,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Mode } from "react-hook-form";
+import { Mode, SubmitHandler, useForm } from "react-hook-form";
 import Link from "next/link";
+import { useState } from "react";
+import { Label } from "@radix-ui/react-dropdown-menu";
+import { Input } from "./ui/input";
+import { DialogClose } from "@radix-ui/react-dialog";
+import { Button } from "./ui/button";
+import { Trash2 } from 'lucide-react';
+import { getAppwriteClient } from "@/lib/appwrite";
+import { toast } from "sonner";
 
 interface SidebarItem {
   title: string;
@@ -63,18 +91,61 @@ const items: SidebarItem[] = [
   },
   {
     title: "Settings",
-    url: "/devices",
+    url: "/settings",
     icon: LucideSettings,
   },
 ];
+
+interface UpdateUserInfo {
+  username: string;
+  oldPassword? : string;
+  newPassword? : string;
+}
 
 function AppSidebar({
   user,
   menuDisabled
 }: {
-  user: Models.User<Models.Preferences> | null;
+  user: Models.User<Models.Preferences>;
   menuDisabled: boolean;
 }) {
+  const [isAccountSettingsDialogOpen, setIsAccountSettingsDialogOpen] = useState(false);
+
+  const { 
+    register: registerAccountForm,
+    handleSubmit: handleSubmitAccountForm, 
+    setValue: setAccountFormValue,
+    formState: { errors: accountFormErrors } 
+  } = useForm<UpdateUserInfo>({
+    defaultValues: {
+      username: user.name || '',
+      oldPassword: '',
+      newPassword: '',
+    }
+  });
+
+  const onAccountSettingsSubmit: SubmitHandler<UpdateUserInfo> = async (data) => {
+
+    try {
+      const account = new Account(getAppwriteClient());
+      const jwt = (await account.createJWT()).jwt;
+
+      const payload = {
+        name: data.username,
+        password: data.newPassword,
+        oldPassword: data.oldPassword
+      }
+      console.log(payload);
+      await backendFetch("/users/me", "PATCH", jwt, JSON.stringify(payload));
+      window.location.reload();
+      toast.success("Account settings updated successfully!");
+      setIsAccountSettingsDialogOpen(false);
+      return;
+    } catch (error) {
+      console.error("Failed to save account settings:", error);
+    }
+  } 
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -112,25 +183,83 @@ function AppSidebar({
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <User2 /> {user?.name}
-                  <ChevronUp className="ml-auto" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
+            <Dialog open={isAccountSettingsDialogOpen} onOpenChange={setIsAccountSettingsDialogOpen}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <SidebarMenuButton>
+                    <User2 /> {user.name}
+                    <ChevronUp className="ml-auto" />
+                  </SidebarMenuButton>
+                </DropdownMenuTrigger>
               <DropdownMenuContent
                 side="top"
                 className="w-[--radix-popper-anchor-width]"
               >
-                <DropdownMenuItem>
-                  <span>Account Settings</span>
-                </DropdownMenuItem>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem>Account Settings</DropdownMenuItem>
+                </DialogTrigger>
+
                 <Link href="/logout">
                   <DropdownMenuItem>Sign out</DropdownMenuItem>
                 </Link>
+
               </DropdownMenuContent>
             </DropdownMenu>
+              <DialogContent>
+                <form onSubmit={handleSubmitAccountForm(onAccountSettingsSubmit)}>
+                <DialogHeader>
+                  <DialogTitle>Account Settings</DialogTitle>
+                  <DialogDescription>
+                    Make changes to your account here. Click save when you're done.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 mt-4">
+                  <div className="grid gap-3">
+                  <label htmlFor="username">Username</label>
+                  <Input 
+                    id="username"
+                    {...registerAccountForm("username", { required: "Username is required" })} 
+                  />
+                  </div>
+                </div>
+                <div className="grid gap-4 mt-4">
+                  <div className="grid gap-3">
+                  <label htmlFor="oldPassword">Old password</label>
+                  <Input 
+                    id="oldPassword"
+                    type="password" 
+                    {...registerAccountForm("oldPassword")} 
+                  />
+                  </div>
+                </div>
+                <div className="grid gap-4 mt-4">
+                  <div className="grid gap-3">
+                  <label htmlFor="newPassword">New password</label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    {...registerAccountForm("newPassword")}
+                  />
+                    </div>
+                </div>
+          <DialogFooter className="mt-4">
+            <Button type="submit">Save changes</Button>
+          </DialogFooter>
+          </form>
+          <div className="mt-0">
+          <DialogHeader>
+            <DialogTitle>Delete Account</DialogTitle>
+            <DialogDescription>
+                    Permanently delete your account. This action cannot be undone.
+                  </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button className="w-30 bg-red-600 hover:bg-red-700"><Link href="/logout">Delete Account</Link></Button>
+          </DialogFooter>
+          </div>
+              </DialogContent>
+            </Dialog>
+
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -144,7 +273,7 @@ export default function MainLayout({
   menuDisabled=false
 }: {
   children: React.ReactNode;
-  user: Models.User<Models.Preferences> | null;
+  user: Models.User<Models.Preferences>;
   menuDisabled?: boolean;
 }) {
   return (

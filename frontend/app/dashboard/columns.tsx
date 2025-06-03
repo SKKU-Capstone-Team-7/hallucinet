@@ -14,9 +14,6 @@ export const columns: ColumnDef<DeviceInfo>[] = [
       //console.log(row.original);
         const date = row.original.last_activate;
 
-        console.log(date);
-        console.log("this time:");
-        console.log(new Date());
         const timeDiff = new Date().getTime() - date.getTime();
 
         //console.log(timeDiff);

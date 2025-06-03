@@ -8,6 +8,7 @@ import { AppwriteAuthGuard } from 'src/common/guards/appwrite-auth.guard';
 import { Client } from 'node-appwrite';
 import { UserInfo } from 'os';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { UserRoleDto } from './dto/user-role.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth('bearer')
@@ -74,4 +75,14 @@ export class UserController {
         return await this.userService.getUsersInMyTeam(client);
     }
 
+    @ApiOperation({ summary: 'get user membership' })
+    @ApiBody({
+        description: 'team id and user id',
+        type: UserRoleDto,
+    })
+    @Post('users/role')
+    @UseGuards(AppwriteAuthGuard)
+    async getUserRole(@Body() userRoleDto: UserRoleDto) {
+        return await this.userService.getUserRole(userRoleDto);
+    }
 }

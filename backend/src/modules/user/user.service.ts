@@ -5,6 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Account, Client, Teams, Users, Query } from 'node-appwrite';
 import { DatabaseService } from '../database/database.service';
 import { TeamService } from '../team/team.service';
+import { UserRoleDto } from './dto/user-role.dto';
 
 @Injectable()
 export class UserService {
@@ -140,5 +141,13 @@ export class UserService {
         const user = await this.getUserById(res.users[0].$id);
         
         return user;
+    }
+
+    async getUserRole(userRoleDto: UserRoleDto) {
+        const teams = new Teams(this.appwriteService.getServerClient());
+        //console.log(teams.listMemberships(userRoleDto.teamId));
+        //console.log(userRoleDto);
+        const membership = (await teams.listMemberships(userRoleDto.teamId)).memberships.find((m) => m.userId === userRoleDto.userId);
+        return membership;
     }
 } 

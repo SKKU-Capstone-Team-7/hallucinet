@@ -36,16 +36,16 @@ type WsMsg struct {
 	Event string `json:"event"`
 	Data  any    `json:"data"`
 }
-type WsContEventPayload struct {
-	Token string    `json:"token"`
-	Event ContEvent `json:"event"`
-}
-
 type ContEvent struct {
 	ConvEventKind  EventKind `json:"kind"`
 	ContainerName  string    `json:"container_name"`
 	ContainerIP    string    `json:"container_ip"`
 	ContainerImage string    `json:"container_image"`
+}
+
+type WsSendContEventPayload struct {
+	Token string    `json:"token"`
+	Event ContEvent `json:"event"`
 }
 
 type WsDevConnectPayload struct {
@@ -57,6 +57,10 @@ type WsDevDisconnectPayload struct {
 	DeviceId string `json:"deviceId"`
 }
 
-type WsTeamContainersPayload struct {
+type WsRecvTeamContainersPayload struct {
 	Containers []coordination.ContainerInfoDto `json:"containers"`
+}
+
+type WsRecvContEventPayload struct {
+	Container coordination.ContainerInfoDto `json:"container"`
 }

@@ -7,7 +7,7 @@ export function ReloadButton() {
     window.location.reload();
   }
   return (
-    <Button onClick={handleReload}>
+    <Button className="cursor-pointer" onClick={handleReload}>
       <RefreshCw />
     </Button>
   );

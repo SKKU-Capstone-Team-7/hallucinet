@@ -13,6 +13,11 @@ import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { columns } from "./columns";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import * as React from "react"
 
 interface ContainerInfo {
@@ -21,12 +26,38 @@ interface ContainerInfo {
   image: string;
 }
 function ContainerCard({ container }: { container: ContainerInfo }) {
+  const [showTip, setShowTip] = useState(false);
+  
+  const text = `${container.name}.${container.deviceName}.test`;
+
+  const handleCopy = React.useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setShowTip(true); 
+    } catch (err) {
+      console.error(err);
+    }
+  }, [text]);
+
+  useEffect(() => {
+    if (!showTip) return;
+    const id = setTimeout(() => setShowTip(false), 1500);
+    return () => clearTimeout(id);
+  }, [showTip]);
+
   return (
-    <div className="p-5 shadow-sm">
-      <p className="h-9 font-bold">{container.name}</p>
-      <p>{container.image}</p>
-      <p>{container.deviceName}</p>
-    </div>
+  <Tooltip open={showTip} delayDuration={0}>
+    <TooltipTrigger asChild>
+      <div className="p-5 shadow-sm rounded-lg cursor-pointer select-none hover:bg-muted" onClick={handleCopy}>
+        <p className="h-9 font-bold">{container.name}</p>
+        <p>{container.image}</p>
+        <p>{container.deviceName}</p>
+      </div>
+    </TooltipTrigger>
+    <TooltipContent>
+      <p>Copied DNS name!</p>
+    </TooltipContent>
+  </Tooltip>
   );
 }
 
@@ -52,7 +83,7 @@ export interface DeviceInfo {
 
 function InviteButton() {
   return (
-    <Button>
+    <Button className="cursor-pointer">
       <div className="flex items-center gap-4">
         <Plus />
         Add Device

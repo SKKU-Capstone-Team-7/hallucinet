@@ -34,8 +34,7 @@ export class TeamService {
     async getMyTeam(client: Client, index: number = 0): Promise<TeamInfoDto> {
         const teams = new Teams(client);
         try {
-            const teamId = (await teams.list()).teams.map((team) => team.$id)[index];
-            const team = await teams.get(teamId);
+            const team = (await teams.list()).teams[index];
             console.log('Fetched team: ', team);
             const teamInfo: TeamInfoDto = new TeamInfoDto({
                 $id: team.$id,

@@ -9,6 +9,8 @@ import { WsContainerEvent } from './ws-container-event';
 import { WsContainerEventPayload } from './ws-container-event-payload.dto';
 import { ContainersService } from 'src/containers/containers.service';
 import { WsPingPayload } from './ws-ping-payload.dto';
+import { ContainerInfoDto } from 'src/containers/container-info.dto';
+import { DevicesService } from 'src/devices/devices.service';
 
 type UserIdentifier = {
   userId: string;
@@ -25,6 +27,7 @@ export class EventsGateway {
     private tokenService: TokenService,
     private appwriteService: AppwriteService,
     private containersService: ContainersService,
+    private devicesService: DevicesService,
   ) {
     this.idSocket = new Map<UserIdentifier, WebSocket>();
     this.socketId = new Map<WebSocket, UserIdentifier>();
@@ -88,6 +91,19 @@ export class EventsGateway {
         data: payload,
       }),
     );
+  }
+
+  async contEventToContainerInfoDto(
+    event: WsContainerEvent,
+    id: UserIdentifier,
+  ) {
+    const device = await this.devicesService.getDevice(id.deviceId);
+    return new ContainerInfoDto({
+      name: event.container_name,
+      address: event.container_ip ? event.container_ip : '0.0.0.0',
+      image: event.container_image,
+      device: device,
+    });
   }
 
   async identifyUser(token: string): Promise<UserIdentifier> {
@@ -155,8 +171,9 @@ export class EventsGateway {
     payload: WsContainerEventPayload,
   ) {
     const id = await this.identifyUser(payload.token);
-    // Broadcast client containers to other devices
-    const dto = new CreateContainerDto({
+
+    // Create device in db
+    const createDeviceDto = new CreateContainerDto({
       name: payload.event.container_name,
       ip: payload.event.container_ip,
       image: payload.event.container_image,
@@ -165,10 +182,14 @@ export class EventsGateway {
       device: id.deviceId,
       lastAccessed: new Date().toISOString(),
     });
+    this.appwriteService.createContainer(createDeviceDto);
 
-    this.appwriteService.createContainer(dto);
-
-    this.broadcastEventToOtherDevices(id, 'container_connected', payload);
+    // Broadcast the new container to other devices
+    const dto = await this.contEventToContainerInfoDto(payload.event, id);
+    console.log('Sending container_connected event: ' + JSON.stringify(dto));
+    this.broadcastEventToOtherDevices(id, 'container_connected', {
+      container: dto,
+    });
   }
 
   @SubscribeMessage('container_disconnected')
@@ -177,12 +198,19 @@ export class EventsGateway {
     payload: WsContainerEventPayload,
   ) {
     const id = await this.identifyUser(payload.token);
+
+    // Broadcast the new container to other devices
+    const dto = await this.contEventToContainerInfoDto(payload.event, id);
+    console.log('Sending container_disconnected event: ' + JSON.stringify(dto));
+    this.broadcastEventToOtherDevices(id, 'container_disconnected', {
+      container: dto,
+    });
+
+    // IMPORTANT! Broadcast then delete. We need the IP in db.
     await this.appwriteService.deleteContainer(
       id.deviceId,
       payload.event.container_name,
     );
-
-    this.broadcastEventToOtherDevices(id, 'container_disconnected', payload);
   }
 
   @SubscribeMessage('ping')

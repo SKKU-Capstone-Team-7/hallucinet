@@ -3,7 +3,7 @@ package comms
 import (
 	"errors"
 
-	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/coordination"
 )
 
 type MsgKind int32
@@ -32,14 +32,15 @@ const (
 	EventUnknown
 )
 
-type WsContMsg struct {
-	Event string        `json:"event"`
-	Data  WsContPayload `json:"data"`
+type WsMsg struct {
+	Event string `json:"event"`
+	Data  any    `json:"data"`
 }
-type WsContPayload struct {
+type WsContEventPayload struct {
 	Token string    `json:"token"`
 	Event ContEvent `json:"event"`
 }
+
 type ContEvent struct {
 	ConvEventKind  EventKind `json:"kind"`
 	ContainerName  string    `json:"container_name"`
@@ -47,16 +48,15 @@ type ContEvent struct {
 	ContainerImage string    `json:"container_image"`
 }
 
-type WsDevStateMsg struct {
-	Event string            `json:"event"`
-	Data  WsDevStatePayload `json:"data"`
-}
-
-type WsDevStatePayload struct {
+type WsDevConnectPayload struct {
 	Token      string      `json:"token"`
 	Containers []ContEvent `json:"containers"`
 }
 
-func CreateContainer(types.ContainerInfo) error {
-	return nil
+type WsDevDisconnectPayload struct {
+	DeviceId string `json:"deviceId"`
+}
+
+type WsTeamContainersPayload struct {
+	Containers []coordination.ContainerInfoDto `json:"containers"`
 }

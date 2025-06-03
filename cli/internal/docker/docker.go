@@ -47,7 +47,6 @@ func (domon *DockerMonitor) createDockerChannel() (<-chan events.Message, <-chan
 func (domon *DockerMonitor) createEventsChannel() chan comms.ContEvent {
 	dockerChan, dockerErrChan := domon.createDockerChannel()
 	eventChan := make(chan comms.ContEvent)
-	domon.publishExistingContainers()
 
 	go func() {
 		for {
@@ -62,10 +61,6 @@ func (domon *DockerMonitor) createEventsChannel() chan comms.ContEvent {
 	}()
 
 	return eventChan
-}
-
-func (domon *DockerMonitor) publishExistingContainers() {
-	log.Printf("Pubishing existing containers...")
 }
 
 func (domon *DockerMonitor) getContainerName(containerID string) string {

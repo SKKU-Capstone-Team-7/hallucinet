@@ -2,6 +2,8 @@ package hallucinetd
 
 import (
 	"encoding/binary"
+	"encoding/json"
+	"errors"
 	"log"
 	"net"
 	"net/url"
@@ -16,6 +18,8 @@ import (
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
 	"github.com/gorilla/websocket"
 )
+
+var ErrUnknownWSMsg = errors.New("Unknown socket message")
 
 type HallucinetDaemon struct {
 	listener     *net.UnixListener
@@ -116,9 +120,11 @@ func (daemon *HallucinetDaemon) Close() error {
 
 func (daemon *HallucinetDaemon) dockerListenLoop() error {
 	for event := range daemon.domon.EventChan {
-		var wsMsg comms.WsContMsg
-		wsMsg.Data.Token = daemon.coord.JWT
-		wsMsg.Data.Event = event
+		var wsMsg comms.WsMsg
+		wsMsg.Data = comms.WsContEventPayload{
+			Token: daemon.coord.JWT,
+			Event: event,
+		}
 
 		switch event.ConvEventKind {
 		case comms.EventContainerConnected:
@@ -135,14 +141,98 @@ func (daemon *HallucinetDaemon) dockerListenLoop() error {
 	return nil
 }
 
+func (daemon *HallucinetDaemon) handleTeamContainers(payload comms.WsTeamContainersPayload) {
+	for _, dto := range payload.Containers {
+		cont, err := coordination.ParseContainerInfoDto(dto)
+		if err != nil {
+			log.Printf("Cannot parse container: %v.%v", dto.Name, dto.Device.Name)
+		}
+		daemon.dns.AddEntry(cont)
+	}
+}
+
+func (daemon *HallucinetDaemon) handleDeviceConnected(payload comms.WsDevConnectPayload) {
+}
+
+func (daemon *HallucinetDaemon) handleDeviceDisconnected(payload comms.WsDevDisconnectPayload) {
+}
+
+func (daemon *HallucinetDaemon) handleContainerConnected(payload comms.WsContEventPayload) {
+}
+
+func (daemon *HallucinetDaemon) handleContainerDisconnected(payload comms.WsContEventPayload) {
+}
+
 func (daemon *HallucinetDaemon) wsListenLoop() error {
 	for {
-		messageType, p, err := daemon.ws.ReadMessage()
+		messageType, eventBytes, err := daemon.ws.ReadMessage()
 		if err != nil {
-			return err
+			log.Printf("Cannot read ws message: type %v msg %v\n", messageType, string(eventBytes))
+			continue
 		}
 
-		log.Printf("WS Received: %v %v\n", messageType, string(p))
+		wsMsg := comms.WsMsg{}
+		err = json.Unmarshal(eventBytes, &wsMsg)
+		if err != nil {
+			log.Printf("Cannot unmarshal ws message: %v\n", err)
+			continue
+		}
+
+		data, err := json.Marshal(wsMsg.Data)
+		if err != nil {
+			log.Printf("Cannot read data: %v\n", err)
+			continue
+		}
+
+		switch wsMsg.Event {
+		case "team_containers":
+			var payload comms.WsTeamContainersPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal team containers payload: %v\n", err)
+				log.Printf("%v\n", string(data))
+				continue
+			}
+			daemon.handleTeamContainers(payload)
+
+		case "device_disconnected":
+			var payload comms.WsDevDisconnectPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal device disconnected payload: %v\n", err)
+				continue
+			}
+			daemon.handleDeviceDisconnected(payload)
+
+		case "device_connected":
+			var payload comms.WsDevConnectPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal device connected payload: %v\n", err)
+				continue
+			}
+			daemon.handleDeviceConnected(payload)
+
+		case "container_connected":
+			var payload comms.WsContEventPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal container connected payload: %v\n", err)
+				continue
+			}
+			daemon.handleContainerConnected(payload)
+
+		case "container_disconnected":
+			var payload comms.WsContEventPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal container disconnected payload: %v\n", err)
+				continue
+			}
+			daemon.handleContainerDisconnected(payload)
+		default:
+			log.Printf("Unknown ws event: %v\n", wsMsg.Event)
+		}
 	}
 
 	return nil
@@ -311,11 +401,18 @@ func (daemon *HallucinetDaemon) Start() error {
 		return err
 	}
 
-	var wsMsg comms.WsDevStateMsg
+	var wsMsg comms.WsMsg
 	wsMsg.Event = "device_connected"
-	wsMsg.Data.Token = daemon.coord.JWT
-	wsMsg.Data.Containers = containers
+	wsMsg.Data = comms.WsDevConnectPayload{
+		Token:      daemon.coord.JWT,
+		Containers: containers,
+	}
 	daemon.ws.WriteJSON(wsMsg)
+
+	go func() {
+		daemon.startDns()
+		defer daemon.stopDns()
+	}()
 
 	go func() {
 		daemon.socketListenLoop()

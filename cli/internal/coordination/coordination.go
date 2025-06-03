@@ -34,12 +34,12 @@ func New(config types.Config) (*Coord, error) {
 	}, nil
 }
 
-func parseDeviceInfoDto(dev DeviceInfoDto) (types.DeviceInfo, error) {
+func ParseDeviceInfoDto(dev DeviceInfoDto) (types.DeviceInfo, error) {
 	return utils.CreateDeviceInfo(dev.Name, dev.Subnet, dev.Address)
 }
 
-func parseContainerInfoDto(container ContainerInfoDto) (types.ContainerInfo, error) {
-	device, err := parseDeviceInfoDto(container.Device)
+func ParseContainerInfoDto(container ContainerInfoDto) (types.ContainerInfo, error) {
+	device, err := ParseDeviceInfoDto(container.Device)
 	if err != nil {
 		return types.ContainerInfo{}, err
 	}
@@ -72,7 +72,7 @@ func (coord *Coord) GetDevices() ([]types.DeviceInfo, error) {
 
 	var devices []types.DeviceInfo
 	for _, dto := range deviceDtos {
-		dev, err := parseDeviceInfoDto(dto)
+		dev, err := ParseDeviceInfoDto(dto)
 		if err != nil {
 			return []types.DeviceInfo{}, err
 		}
@@ -108,7 +108,7 @@ func (coord *Coord) GetContainers() ([]types.ContainerInfo, error) {
 
 	var containers []types.ContainerInfo
 	for _, dto := range containerDtos {
-		cont, err := parseContainerInfoDto(dto)
+		cont, err := ParseContainerInfoDto(dto)
 		if err != nil {
 			return []types.ContainerInfo{}, err
 		}

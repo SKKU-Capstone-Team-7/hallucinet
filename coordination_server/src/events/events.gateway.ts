@@ -7,6 +7,7 @@ import { HttpStatus } from '@nestjs/common';
 import { WsDeviceStatusPayload } from './ws-device-status.dto';
 import { WsContainerEvent } from './ws-container-event';
 import { WsContainerEventPayload } from './ws-container-event-payload.dto';
+import { ContainersService } from 'src/containers/containers.service';
 
 type UserIdentifier = {
   userId: string;
@@ -22,6 +23,7 @@ export class EventsGateway {
   constructor(
     private tokenService: TokenService,
     private appwriteService: AppwriteService,
+    private containersService: ContainersService,
   ) {
     this.idSocket = new Map<UserIdentifier, WebSocket>();
     this.socketId = new Map<WebSocket, UserIdentifier>();
@@ -32,9 +34,9 @@ export class EventsGateway {
     this.socketId.set(socket, id);
   }
 
-  unmapDevice(deviceId: UserIdentifier) {
-    const sock = this.idSocket.get(deviceId);
-    this.idSocket.delete(deviceId);
+  unmapId(id: UserIdentifier) {
+    const sock = this.idSocket.get(id);
+    this.idSocket.delete(id);
     this.socketId.delete(sock!);
   }
 
@@ -77,6 +79,16 @@ export class EventsGateway {
     });
   }
 
+  sendEventToId(id: UserIdentifier, event: string, payload: any) {
+    const sock = this.idSocket.get(id);
+    sock!.send(
+      JSON.stringify({
+        event: event,
+        data: payload,
+      }),
+    );
+  }
+
   async identifyUser(token: string): Promise<UserIdentifier> {
     const tokenData = this.tokenService.decodeToken(token);
     const deviceId = tokenData['deviceId'];
@@ -94,10 +106,19 @@ export class EventsGateway {
     payload: WsDeviceStatusPayload,
   ) {
     const id = await this.identifyUser(payload.token);
+    this.mapIdToSocket(id, client);
+
+    // Send team containers to the client
+    const teamContainers = await this.containersService.getTeamContainers(
+      id.teamId,
+    );
+    this.sendEventToId(id, 'team_containers', {
+      containers: teamContainers,
+    });
+    console.log('Sent: ' + JSON.stringify({ containers: teamContainers }));
 
     // Reset device containers to the current state
     this.appwriteService.clearDeviceContainers(id.deviceId);
-    this.mapIdToSocket(id, client);
     payload.containers.forEach((cont) => {
       this.appwriteService.createContainer(
         new CreateContainerDto({
@@ -120,9 +141,9 @@ export class EventsGateway {
     if (!id) {
       return;
     }
-    this.unmapDevice(id!);
+    this.unmapId(id!);
     this.appwriteService.clearDeviceContainers(id.deviceId);
-    this.broadcastEventToOtherDevices(id, 'container_connected', {
+    this.broadcastEventToOtherDevices(id, 'device_disconnected', {
       deviceId: id.deviceId,
     });
   }
@@ -133,6 +154,7 @@ export class EventsGateway {
     payload: WsContainerEventPayload,
   ) {
     const id = await this.identifyUser(payload.token);
+    // Broadcast client containers to other devices
     const dto = new CreateContainerDto({
       name: payload.event.container_name,
       ip: payload.event.container_ip,

@@ -54,6 +54,31 @@ export class ContainersService {
     return dtos;
   }
 
+  async getTeamContainers(teamId: string): Promise<ContainerInfoDto[]> {
+    const { documents } = await this.databases.listDocuments(
+      this.databaseId,
+      this.containerCollectionId,
+      [Query.equal('team', teamId)],
+    );
+    const dtos: ContainerInfoDto[] = [];
+
+    for (const doc of documents) {
+      dtos.push(
+        new ContainerInfoDto({
+          name: doc['name'],
+          address: doc['ip'],
+          device: new DeviceInfoDto({
+            name: doc['device']['name'],
+            subnet: doc['device']['ipBlock24'] + '/24',
+            address: doc['device']['address'],
+          }),
+        }),
+      );
+    }
+
+    return dtos;
+  }
+
   async createContainers(
     deviceId: string,
     dto: CreateContainerDto,

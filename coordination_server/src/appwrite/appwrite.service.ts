@@ -78,4 +78,13 @@ export class AppwriteService {
       db.deleteDocument(this.dbId, this.containerCol, doc['$id']);
     });
   }
+
+  async getTeamContainers(teamId: string) {
+    const db = new Databases(this.getServerClient());
+    const containerDocs = await db.listDocuments(this.dbId, this.containerCol, [
+      Query.equal('team', teamId),
+    ]);
+
+    return containerDocs;
+  }
 }

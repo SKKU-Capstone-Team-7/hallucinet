@@ -38,7 +38,7 @@ function LeaveButton() {
             Are you sure you want to leave this team? You’ll immediately lose access to all shared devices and containers.
             </p> 
             <div className="mt-6 flex justify-end">
-            <Button className="w-28 bg-red-600 hover:bg-red-700">
+            <Button className="w-28 bg-red-600 hover:bg-red-700 cursor-pointer">
               Leave Team
             </Button>
             </div>
@@ -53,7 +53,7 @@ function DeleteButton() {
             Before proceeding to delete your team, please be aware that this action is irreversible. This deletion can only be performed only if the team currently has no other members.
             </p> 
             <div className="mt-6 flex justify-end">
-            <Button className="w-28 bg-red-600 hover:bg-red-700">
+            <Button className="w-28 bg-red-600 hover:bg-red-700 cursor-pointer">
               Delete Team
             </Button>
             </div>
@@ -125,7 +125,7 @@ export default function SettingPage() {
         const roleRes = await backendFetch("/users/role", "POST", jwt, JSON.stringify(payload)); 
         const roleJson: any = await roleRes.json();
 
-        setRole(roleJson["roles"][0]);
+        setRole(roleJson["roles"][0] ? roleJson["roles"][0] : "member");
       })();
     } catch (e) {
       console.log(e);
@@ -248,9 +248,11 @@ export default function SettingPage() {
               </div>
                 
               <div className="flex justify-end">
-              <Button type="submit" className="mt-4 py-4">
+                {role === "owner" ? <Button type="submit" className="mt-4 py-4 cursor-pointer">
                 Update
-              </Button>
+              </Button> : <Button disabled type="submit" className="mt-4 py-4">
+                Update
+              </Button>}
               </div>
             </form>
           </div>

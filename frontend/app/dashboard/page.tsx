@@ -48,37 +48,35 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
 
   const fadeEffectClasses = "whitespace-nowrap overflow-hidden [mask-image:linear-gradient(to_right,black_75%,transparent_100%)]";
 
-  const cardContent = (
-    <div 
-      className="p-5 w-40 shadow-sm rounded-lg cursor-pointer select-none hover:bg-muted bg-white dark:bg-gray-800" 
-      onClick={handleCopy}
-    >
-      <p className={`h-9 font-bold ${fadeEffectClasses}`}>
-        {container.name} 
-      </p>
-      <p className={`${fadeEffectClasses}`}>
-        {container.image}
-      </p>
-      <p className={`${fadeEffectClasses}`}>
-        {container.deviceName}
-      </p>
-    </div>
-  )
-
   return (
     <Tooltip open={showTip} delayDuration={200}>
-        <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
-        <TooltipContent>
-          <p>Copied DNS name!</p>
-        </TooltipContent>
-      </Tooltip>
+      <TooltipTrigger asChild>
+        <div 
+          className="p-4 w-44 bg-[#1a2841] border border-[#e5e7eb] rounded-md shadow-sm cursor-pointer select-none hover:bg-[#273755] text-white"
+          onClick={handleCopy}
+        >
+          <p className={`h-9 font-bold ${fadeEffectClasses} text-white`}>
+            {container.name}
+          </p>
+          <p className={`${fadeEffectClasses} text-gray-400 text-sm`}>
+            {container.image}
+          </p>
+          <p className={`${fadeEffectClasses} text-gray-300 text-sm`}>
+            {container.deviceName}
+          </p>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Copied DNS name!</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
 function ContainerScrollArea({ containers }: {containers: ContainerInfo[]}) {
   return (
-    <ScrollArea className="w-full whitespace-nowrap">
-      <div className="flex gap-5 mt-4 mb-4">
+    <ScrollArea className="w-full whitespace-nowrap max-w-4xl rounded-md overflow-hidden" style={{backgroundColor: '#1a2841'}}>
+      <div className="flex gap-4 mt-4 mb-4 px-4">
         {containers.map((cont) => (
           <ContainerCard container={cont} key={cont.name}/>
         ))}
@@ -97,11 +95,9 @@ export interface DeviceInfo {
 
 function InviteButton() {
   return (
-    <Button className="cursor-pointer">
-      <div className="flex items-center gap-4">
-        <Plus />
-        Add Device
-      </div>
+    <Button className="cursor-pointer bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-md px-3 py-2 flex items-center gap-2 text-sm">
+      <Plus size={16} />
+      Add Device
     </Button>
   );
 }
@@ -128,9 +124,9 @@ export default function DashboardPage() {
           image: cont["image"],
           deviceName: cont["device"]?.["name"] || "N/A",
         }));
-    setContainers(fetchedContainers);
+        setContainers(fetchedContainers);
     } catch (error) {
-      console.error("fetch cotainer error");
+      console.error("fetch container error");
     }
   }
 
@@ -152,67 +148,50 @@ export default function DashboardPage() {
         const account = new Account(getAppwriteClient());
         const jwt = (await account.createJWT()).jwt;
 
-        console.log(jwt);
-
         // Check if user is in a team
         const meRes = await backendFetch("/users/me", "GET", jwt);
         const meJson = await meRes.json();
         const teams: string[] = meJson["teamIds"];
-        if (teams.length == 0) {
-          console.log(teams);
+        if (teams.length === 0) {
           router.push("/onboarding");
           return;
         }
 
-      const containersPromise = backendFetch("/teams/me/containers", "GET", jwt);
-      const devicesPromise = backendFetch("/teams/me/devices", "GET", jwt);
+        const containersPromise = backendFetch("/teams/me/containers", "GET", jwt);
+        const devicesPromise = backendFetch("/teams/me/devices", "GET", jwt);
 
-      // Promise.all을 사용하여 두 요청이 모두 완료될 때까지 기다립니다.
-      const [containersRes, devicesRes] = await Promise.all([
-        containersPromise,
-        devicesPromise,
-      ]);
+        const [containersRes, devicesRes] = await Promise.all([
+          containersPromise,
+          devicesPromise,
+        ]);
 
-        // Get containers
-        //const containersRes = await backendFetch(
-        //  "/teams/me/containers",
-        //  "GET",
-        //  jwt,
-        //);
+        // Containers
         const containerJsons: any[] = await containersRes.json();
-        const containers: ContainerInfo[] = containerJsons.map((cont) => {
-          return {
-            name: cont["name"],
-            image: cont["image"],
-            deviceName: cont["device"]["name"],
-          };
-        });
+        const containers: ContainerInfo[] = containerJsons.map((cont) => ({
+          name: cont["name"],
+          image: cont["image"],
+          deviceName: cont["device"]["name"],
+        }));
         setContainers(containers);
 
-        // Get devices
-        //const devicesRes = await backendFetch("/teams/me/devices", "GET", jwt);
+        // Devices
         const deviceJsons: any[] = await devicesRes.json();
-        const devices: DeviceInfo[] = deviceJsons.map((dev) => {
-          return {
-            name: dev["name"],
-            subnet: dev["ipBlock24"],
-            userEmail: dev["user"]["email"],
-            last_activate: new Date(dev["lastActivatedAt"]),
-          };
-        });
+        const devices: DeviceInfo[] = deviceJsons.map((dev) => ({
+          name: dev["name"],
+          subnet: dev["ipBlock24"],
+          userEmail: dev["user"]["email"],
+          last_activate: new Date(dev["lastActivatedAt"]),
+        }));
         setDevices(devices);
-
 
       })();
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   }, [router]);
 
   useEffect(() => {
-
     if (!user) {
-      console.log("no user");
       return;
     }
 
@@ -225,15 +204,11 @@ export default function DashboardPage() {
         const databaseId = await getDBId("database");
         const collectionId = await getDBId("container");
 
-        console.log(databaseId, collectionId);
-
         const channel = `databases.${databaseId}.collections.${collectionId}.documents`;
 
-        unsubscribe = client.subscribe(channel, response => {
-          console.log('subscribe response: ', response);
+        unsubscribe = client.subscribe(channel, () => {
           refreshContainers();
         });
-        console.log("subscribe starts");
       } catch (error) {
         console.error("subscribe error:", error);
       }
@@ -252,20 +227,22 @@ export default function DashboardPage() {
 
   return (
     <MainLayout user={user!}>
-      <div className="ml-8">
-        <div>
-          <p className="text-2xl">Recent Containers</p>
-          <div className="max-w-4xl">
-            <div className="container"><ContainerScrollArea containers={containers}/></div>
-          </div>
-        </div>
+      <div className="ml-8 mr-8 mt-4 mb-8 bg-[#050a12] flex flex-col h-full max-w-screen-xl">
+        <section className="recent-containers">
+          <h2 className="text-2xl font-semibold text-white mb-3">Recent Containers</h2>
+          <ContainerScrollArea containers={containers}/>
+        </section>
 
-        <div className="mt-8">
-          <p className="text-2xl">Devices</p>
-          <div>
-            <DataTable columns={columns} data={devices} filterColumnKey="name" option={<InviteButton/>}/>
-          </div>
-        </div>
+        <section className="devices-section mt-10 flex-grow flex flex-col">
+          <h2 className="text-2xl font-semibold text-white mb-3">Devices</h2>
+          <DataTable 
+            columns={columns} 
+            data={devices} 
+            filterColumnKey="name" 
+            option={<InviteButton/>} 
+            className="devices-table"
+          />
+        </section>
       </div>
     </MainLayout>
   );

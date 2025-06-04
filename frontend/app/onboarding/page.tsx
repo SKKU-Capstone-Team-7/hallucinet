@@ -58,7 +58,7 @@ function CreateTeamForm() {
           {...register("name", { required: true })}
         />
         </div>
-        <div className="flex-grow"></div>
+        <div className="flex-grow justify-center"></div>
         <Button className="mr-0" type="submit">Confirm</Button>
       </div>
     </form>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
   return (
     <MainLayout user={user!} menuDisabled={true}>
     <div className="mx-8 mt-8">
-      <p className="text-center text-3xl">Hello, {user?.name}</p>
+      <p className="text-center text-3xl font-michroma">Hello, {user?.name}</p>
       <div className="mt-4">
         <p className="text-2xl">Create a team</p>
         <p className="mt-4">Create your own team and become an owner</p>

@@ -151,7 +151,7 @@ function AppSidebar({
       <SidebarContent>
         <SidebarGroup>
           <div className="px-16 py-4 mb-8">
-            <img src="sidebar_logo.svg" />
+            <img src="logoWhite.svg" />
           </div>
           <SidebarGroupContent>
             <SidebarMenu>

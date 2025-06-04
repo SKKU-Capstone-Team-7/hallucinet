@@ -22,7 +22,7 @@ interface DeviceInfo {
 
 function InviteButton() {
   return (
-    <Button>
+    <Button className="cursor-pointer">
       <div className="flex items-center gap-4">
         <Plus />
         Add Device

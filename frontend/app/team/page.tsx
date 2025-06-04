@@ -19,16 +19,16 @@ import { backendFetch } from "@/lib/utils";
 import { Account, Models } from "appwrite";
 import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { columns } from "./columns";
 import { DataTable } from "@/components/ui/data-table"
 import { toast } from "sonner";
+import { getColumns } from "./columns";
 
 type InviteInputs = {
   email: string;
 };
-function InviteButton() {
+function InviteButton({isOwner} : {isOwner: boolean}) {
   const {
     register,
     handleSubmit,
@@ -64,12 +64,17 @@ function InviteButton() {
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button>
+        {isOwner ? <Button>
           <div className="flex items-center gap-4">
             <Plus />
             Invite
           </div>
-        </Button>
+        </Button> : <Button disabled>
+          <div className="flex items-center gap-4">
+            <Plus />
+            Invite
+          </div>
+        </Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -97,7 +102,7 @@ function InviteButton() {
 export interface UserInfo {
   name: string;
   email: string;
-  role: string;
+  role: "owner" | "member";
   joinedAt: Date;
 }
 
@@ -107,6 +112,7 @@ export default function TeamPage() {
     null,
   );
   const [teamUsers, setTeamUsers] = useState<UserInfo[]>([]);
+  const [isOwner, setIsOwner] = useState<boolean>(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -135,10 +141,11 @@ export default function TeamPage() {
         const teamUsersRes = await backendFetch("/teams/me/users", "GET", jwt);
         const teamUsersJsons: any[] = await teamUsersRes.json();
         const teamUsers: UserInfo[] = teamUsersJsons.map((usr) => {
+          if (usr["role"] === "owner" && usr["$id"] === meJson["$id"]) setIsOwner(true);
           return {
             name: usr["name"],
             email: usr["email"],
-            role: usr["role"],
+            role: (usr["role"] ? usr["role"] : "member"),
             joinedAt: new Date(usr["joinedAt"]),
           };
         });
@@ -149,6 +156,11 @@ export default function TeamPage() {
     }
   }, []);
 
+  const columns = useMemo(
+    () => getColumns(isOwner),
+    [isOwner]
+  );
+
   if (loading) return <></>;
 
   return (
@@ -157,7 +169,7 @@ export default function TeamPage() {
         <div className="mt-18">
           <p className="text-2xl">Team</p>
           <div>
-            <DataTable columns={columns} data={teamUsers} filterColumnKey="name" option={<InviteButton/>}/>
+            <DataTable columns={columns} data={teamUsers} filterColumnKey="name" option={<InviteButton isOwner={isOwner}/>}/>
           </div>
         </div>
       </div>

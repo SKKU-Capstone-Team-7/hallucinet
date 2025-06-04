@@ -189,7 +189,7 @@ function AppSidebar({
             <Dialog open={isAccountSettingsDialogOpen} onOpenChange={setIsAccountSettingsDialogOpen}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton>
+                  <SidebarMenuButton className="cursor-pointer">
                     <User2 /> {user.name}
                     <ChevronUp className="ml-auto" />
                   </SidebarMenuButton>
@@ -199,11 +199,11 @@ function AppSidebar({
                 className="w-[--radix-popper-anchor-width]"
               >
                 <DialogTrigger asChild>
-                  <DropdownMenuItem>Account Settings</DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">Account Settings</DropdownMenuItem>
                 </DialogTrigger>
 
                 <Link href="/logout">
-                  <DropdownMenuItem>Sign out</DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">Sign out</DropdownMenuItem>
                 </Link>
 
               </DropdownMenuContent>
@@ -246,7 +246,7 @@ function AppSidebar({
                     </div>
                 </div>
           <DialogFooter className="mt-4">
-            <Button type="submit">Save changes</Button>
+            <Button type="submit" className="cursor-pointer">Save changes</Button>
           </DialogFooter>
           </form>
           <div className="mt-0">

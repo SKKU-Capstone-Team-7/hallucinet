@@ -79,6 +79,41 @@ export default function VerifyEmailPage() {
 
   if (loading) return <></>;
 
+  if (!user) {
+    return (
+      <div className="mx-8 mt-8 flex flex-col items-center">
+        <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-sm">
+          <Mail className="size-13" />
+        </div>
+
+        <div className="mt-4 text-center">
+          <p className="text-3xl">Verify your email address</p>
+          <p className="mt-4">We have sent a verification link.</p>
+          <p className="mt-1">Click the link to complete the process.</p>
+          <p>You might need to check your spam folder.</p>
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <Button
+            onClick={async () => {
+              const verificationUrl = `${window.location.origin}/verify-email`;
+              try {
+                await account.createVerification(verificationUrl);
+                toast.info("Verification email resent.", {
+                  description: "Please check your email inbox.",
+                });
+              } catch (error) {
+                console.error(error);
+              }
+            }}
+          >
+            Resend email
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <MainLayout user={user!} menuDisabled={true}>
       <div className="mx-8 mt-8 flex flex-col items-center">

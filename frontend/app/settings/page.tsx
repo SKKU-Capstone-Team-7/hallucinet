@@ -30,6 +30,21 @@ interface TeamInfo {
   total: number;
 }
 
+function LeaveButton() {
+
+  return (<div className="shadow-sm max-w-lg mt-8 p-4 border border-red-300 rounded-md bg-red-50">
+            <h3 className="text-xl font-medium mb-2">Leave Team</h3>
+            <p className="mt-2 text-sm">
+            Are you sure you want to leave this team? You’ll immediately lose access to all shared devices and containers.
+            </p> 
+            <div className="mt-6 flex justify-end">
+            <Button className="w-28 bg-red-600 hover:bg-red-700 cursor-pointer">
+              Leave Team
+            </Button>
+            </div>
+          </div>);
+}
+
 function DeleteButton() {
 
   return (<div className="shadow-sm max-w-lg mt-8 p-4 border border-red-300 rounded-md bg-red-50">
@@ -38,7 +53,7 @@ function DeleteButton() {
             Before proceeding to delete your team, please be aware that this action is irreversible. This deletion can only be performed only if the team currently has no other members.
             </p> 
             <div className="mt-6 flex justify-end">
-            <Button className="w-28 bg-red-600 hover:bg-red-700">
+            <Button className="w-28 bg-red-600 hover:bg-red-700 cursor-pointer">
               Delete Team
             </Button>
             </div>
@@ -51,6 +66,7 @@ export default function SettingPage() {
     null,
   );
   const [team, setTeam] = useState<TeamInfo | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const router = useRouter();
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<TeamUpdateInfo>({
@@ -83,7 +99,7 @@ export default function SettingPage() {
           router.push("/onboarding");
         }
 
-        // Get devices
+        // Get team info
         const teamRes = await backendFetch("/teams/me/", "GET", jwt);
         const teamJson: any = await teamRes.json();
         const parts = teamJson["ipBlock16"].split('.');
@@ -100,6 +116,16 @@ export default function SettingPage() {
             total: teamJson["total"],
         };
         setTeam(team);
+
+        const payload = {
+          teamId: teamJson["$id"],
+          userId: meJson["$id"]
+        }
+        console.log(payload);
+        const roleRes = await backendFetch("/users/role", "POST", jwt, JSON.stringify(payload)); 
+        const roleJson: any = await roleRes.json();
+
+        setRole(roleJson["roles"][0] ? roleJson["roles"][0] : "member");
       })();
     } catch (e) {
       console.log(e);
@@ -162,7 +188,7 @@ export default function SettingPage() {
             <AlertCircleIcon />
             <AlertTitle>Important Note</AlertTitle>
             <AlertDescription>
-              Only the team owner can update or delete in this page.
+              Only the team owner can update or delete the team on this page.
             </AlertDescription>
           </Alert>
           </div>
@@ -222,13 +248,21 @@ export default function SettingPage() {
               </div>
                 
               <div className="flex justify-end">
-              <Button type="submit" className="mt-4 py-4">
+                {role === "owner" ? <Button type="submit" className="mt-4 py-4 cursor-pointer">
                 Update
-              </Button>
+              </Button> : <Button disabled type="submit" className="mt-4 py-4">
+                Update
+              </Button>}
               </div>
             </form>
           </div>
-          <DeleteButton />
+          <div>
+          {role == null ? null : (
+            role === "owner"
+              ? <DeleteButton />   // owner일 때만 Delete
+              : <LeaveButton />    // owner가 아니면 Leave
+          )}
+        </div>
         </div>
       </div>
     </MainLayout>

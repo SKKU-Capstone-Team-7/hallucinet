@@ -10,6 +10,9 @@ export const columns: ColumnDef<DeviceInfo>[] = [
     {
     accessorKey: "status",
     header: "",
+    meta: {
+      widthClass: "w-[5%]"
+    },
     cell: ({ row }) => {
       //console.log(row.original);
         const date = row.original.last_activate;
@@ -35,7 +38,9 @@ export const columns: ColumnDef<DeviceInfo>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    size: 150,
+    meta: {
+      widthClass: "w-[30%]"
+    },
     cell: ({ row }) => {
       const name = row.getValue<string>("name");
       const email = row.original.userEmail;
@@ -47,12 +52,16 @@ export const columns: ColumnDef<DeviceInfo>[] = [
   {
     accessorKey: "subnet",
     header: "Assigned Subnet",
-    size: 150,
+    meta: {
+      widthClass: "w-[35%]"
+    },
   },
   {
     accessorKey: "last_activate",
     header: "Last Activated",
-    size: 150,
+    meta: {
+      widthClass: "w-[30%]"
+    },
     cell: ({ row }) => {
         const date = row.original.last_activate;
         return <TimeAgo timestamp={date} />

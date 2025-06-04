@@ -19,7 +19,7 @@ import { backendFetch } from "@/lib/utils";
 import { Account, Models } from "appwrite";
 import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { DataTable } from "@/components/ui/data-table"
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import { getColumns } from "./columns";
 type InviteInputs = {
   email: string;
 };
+
 function InviteButton({isOwner} : {isOwner: boolean}) {
   const {
     register,
@@ -38,43 +39,46 @@ function InviteButton({isOwner} : {isOwner: boolean}) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const onSubmit: SubmitHandler<InviteInputs> = async (data) => {
-    const account = new Account(getAppwriteClient());
-    const jwt = (await account.createJWT()).jwt;
-    const inviteRes = await backendFetch(
-      "/teams/me/invitations",
-      "POST",
-      jwt,
-      JSON.stringify({
-        email: data.email,
-      }),
-    );
+    try {
+      const account = new Account(getAppwriteClient());
+      const jwt = (await account.createJWT()).jwt;
+      const inviteRes = await backendFetch(
+        "/teams/me/invitations",
+        "POST",
+        jwt,
+        JSON.stringify({
+          email: data.email,
+        }),
+      );
 
-    if (inviteRes.ok) {
-      setIsDialogOpen(false);
-      // we need to add some success event
-      toast.success("Invitation Sent", {
-        description: "The team invitation was sent successfully.",
-        duration: 3000,
-      })
-    } else {
-      console.log(await inviteRes.json());
+      if (inviteRes.ok) {
+        setIsDialogOpen(false);
+        // we need to add some success event
+        toast.success("Invitation Sent", {
+          description: "The team invitation was sent successfully.",
+          duration: 3000,
+        });
+      } else {
+        console.log(await inviteRes.json());
+      }
+    } catch (e) {
+      console.error("Error submitting invitation: ", e);
+      toast.error("An Unexpected Error Occurred", {
+        description: "Please try again later.",
+        duration:3000,
+      });
     }
   };
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        {isOwner ? <Button>
+        <Button className="cursor-pointer" disabled={!isOwner}>
           <div className="flex items-center gap-4">
             <Plus />
             Invite
           </div>
-        </Button> : <Button disabled>
-          <div className="flex items-center gap-4">
-            <Plus />
-            Invite
-          </div>
-        </Button>}
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -87,11 +91,17 @@ function InviteButton({isOwner} : {isOwner: boolean}) {
           <div className="py-4">
             <Input
               placeholder="Email"
-              {...register("email", { required: true })}
+              {...register("email", { 
+                required: true,
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Invalid email address"
+                }
+              })}
             />
           </div>
           <DialogFooter>
-            <Button type="submit">Invite</Button>
+            <Button className="cursor-pointer" type="submit">Invite</Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -107,7 +117,8 @@ export interface UserInfo {
 }
 
 export default function TeamPage() {
-  const [loading, setLoading] = useState<boolean>(true);
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
+  const [isTeamUsersLoading, setIsTeamUsersLoading] = useState<boolean>(false);
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
     null,
   );
@@ -115,53 +126,91 @@ export default function TeamPage() {
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const router = useRouter();
 
-  useEffect(() => {
-    try {
-      (async () => {
-        const u = await getCurrentUser();
-        setUser(u);
-        setLoading(false);
+  const loadTeamUsers = useCallback(async () => {
+    if (!user) {
+      console.log("User not available, cannot load team users.");
+      return;
+    }
 
-        if (!loading && !user) {
+    const userId = user.$id;
+
+    setIsTeamUsersLoading(true);
+    try {
+      const account = new Account(getAppwriteClient());
+      const jwt = (await account.createJWT()).jwt;
+
+      // Get Team Users
+      const teamUsersRes = await backendFetch("/teams/me/users", "GET", jwt);
+      if (!teamUsersRes.ok) throw new Error(`Failed to fetch team users: ${teamUsersRes.statusText} (${teamUsersRes.status})`);
+      const teamUsersJsons: any[] = await teamUsersRes.json();
+      const fetchedTeamUsers: UserInfo[] = teamUsersJsons.map((usr) => {
+          if (usr["role"] === "owner" && usr["$id"] === userId) setIsOwner(true);
+          return {
+            name: usr["name"],
+            email: usr["email"],
+            role: usr["role"] || "member",
+            joinedAt: new Date(usr["joinedAt"]),
+          };
+      });
+
+      setTeamUsers(fetchedTeamUsers);
+    } catch (e) {
+      console.error("Failed to load team users:", e);
+      setTeamUsers([]);
+      setIsOwner(false);
+    } finally {
+      setIsTeamUsersLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const initializePage = async () => {
+      setInitialLoading(true);
+      try {
+        const user = await getCurrentUser();
+        setUser(user);
+
+        if (!user) {
           router.push("/login");
+          setInitialLoading(false);
+          return;
         }
 
         const account = new Account(getAppwriteClient());
         const jwt = (await account.createJWT()).jwt;
-
         // Check if user is in a team
         const meRes = await backendFetch("/users/me", "GET", jwt);
+        if (!meRes.ok) {
+          throw new Error(`Failed to fetch user info: ${meRes.statusText}`);
+        }
         const meJson = await meRes.json();
         const teams: string[] = meJson["teamIds"];
         if (teams.length == 0) {
           router.push("/onboarding");
+          setInitialLoading(false);
+          return;
         }
+      } catch (e) {
+        console.error("Initialization error:", e);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    initializePage();
+  }, [router]);
 
-        // Get Team Users
-        const teamUsersRes = await backendFetch("/teams/me/users", "GET", jwt);
-        const teamUsersJsons: any[] = await teamUsersRes.json();
-        const teamUsers: UserInfo[] = teamUsersJsons.map((usr) => {
-          if (usr["role"] === "owner" && usr["$id"] === meJson["$id"]) setIsOwner(true);
-          return {
-            name: usr["name"],
-            email: usr["email"],
-            role: (usr["role"] ? usr["role"] : "member"),
-            joinedAt: new Date(usr["joinedAt"]),
-          };
-        });
-        setTeamUsers(teamUsers);
-      })();
-    } catch (e) {
-      console.log(e);
+  useEffect(() => {
+    if (user && !initialLoading) {
+      loadTeamUsers();
     }
-  }, []);
+  }, [user, initialLoading, loadTeamUsers]);
 
   const columns = useMemo(
     () => getColumns(isOwner),
     [isOwner]
   );
 
-  if (loading) return <></>;
+  if (initialLoading) return <></>;
 
   return (
     <MainLayout user={user!}>
@@ -169,7 +218,17 @@ export default function TeamPage() {
         <div className="mt-18">
           <p className="text-2xl">Team</p>
           <div>
-            <DataTable columns={columns} data={teamUsers} filterColumnKey="name" option={<InviteButton isOwner={isOwner}/>}/>
+            <DataTable 
+              columns={columns} 
+              data={teamUsers} 
+              filterColumnKey="name" 
+              option={
+                <div className="flex gap-4">
+                  <InviteButton isOwner={isOwner}/>
+                  <ReloadButton onClick={loadTeamUsers}/>
+                </div>
+              }
+            />
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
+import { getAppwriteClient, getCurrentUser, getDBId } from "@/lib/appwrite";
 import { backendFetch } from "@/lib/utils";
 import { Account, Models } from "appwrite";
 import { LucideSearch, Plus, RefreshCw } from "lucide-react";
@@ -25,9 +25,10 @@ interface ContainerInfo {
   deviceName: string;
   image: string;
 }
+
 function ContainerCard({ container }: { container: ContainerInfo }) {
   const [showTip, setShowTip] = useState(false);
-  
+
   const text = `${container.name}.${container.deviceName}.test`;
 
   const handleCopy = React.useCallback(async () => {
@@ -45,19 +46,32 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
     return () => clearTimeout(id);
   }, [showTip]);
 
+  const fadeEffectClasses = "whitespace-nowrap overflow-hidden [mask-image:linear-gradient(to_right,black_75%,transparent_100%)]";
+
+  const cardContent = (
+    <div 
+      className="p-5 w-40 shadow-sm rounded-lg cursor-pointer select-none hover:bg-muted bg-white dark:bg-gray-800" 
+      onClick={handleCopy}
+    >
+      <p className={`h-9 font-bold ${fadeEffectClasses}`}>
+        {container.name} 
+      </p>
+      <p className={`${fadeEffectClasses}`}>
+        {container.image}
+      </p>
+      <p className={`${fadeEffectClasses}`}>
+        {container.deviceName}
+      </p>
+    </div>
+  )
+
   return (
-  <Tooltip open={showTip} delayDuration={0}>
-    <TooltipTrigger asChild>
-      <div className="p-5 shadow-sm rounded-lg cursor-pointer select-none hover:bg-muted" onClick={handleCopy}>
-        <p className="h-9 font-bold">{container.name}</p>
-        <p>{container.image}</p>
-        <p>{container.deviceName}</p>
-      </div>
-    </TooltipTrigger>
-    <TooltipContent>
-      <p>Copied DNS name!</p>
-    </TooltipContent>
-  </Tooltip>
+    <Tooltip open={showTip} delayDuration={200}>
+        <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
+        <TooltipContent>
+          <p>Copied DNS name!</p>
+        </TooltipContent>
+      </Tooltip>
   );
 }
 
@@ -100,6 +114,25 @@ export default function DashboardPage() {
   const [containers, setContainers] = useState<ContainerInfo[]>([]);
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const router = useRouter();
+
+  const refreshContainers = async () => {
+    try {
+        const account = new Account(getAppwriteClient());
+        const jwt = (await account.createJWT()).jwt;
+
+        const containersRes = await backendFetch("/teams/me/containers", "GET", jwt);
+
+        const containerJsons: any[] = await containersRes.json();
+        const fetchedContainers: ContainerInfo[] = containerJsons.map((cont) => ({
+          name: cont["name"],
+          image: cont["image"],
+          deviceName: cont["device"]?.["name"] || "N/A",
+        }));
+    setContainers(fetchedContainers);
+    } catch (error) {
+      console.error("fetch cotainer error");
+    }
+  }
 
   useEffect(() => {
     try {
@@ -168,11 +201,52 @@ export default function DashboardPage() {
           };
         });
         setDevices(devices);
+
+
       })();
     } catch (e) {
       console.log(e);
     }
-  }, []);
+  }, [router]);
+
+  useEffect(() => {
+
+    if (!user) {
+      console.log("no user");
+      return;
+    }
+
+    const client = getAppwriteClient();
+
+    let unsubscribe: (() => void) | undefined;
+      
+    const setupSubscribe = async () => {
+      try {
+        const databaseId = await getDBId("database");
+        const collectionId = await getDBId("container");
+
+        console.log(databaseId, collectionId);
+
+        const channel = `databases.${databaseId}.collections.${collectionId}.documents`;
+
+        unsubscribe = client.subscribe(channel, response => {
+          console.log('subscribe response: ', response);
+          refreshContainers();
+        });
+        console.log("subscribe starts");
+      } catch (error) {
+        console.error("subscribe error:", error);
+      }
+    };
+
+    setupSubscribe();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    }
+  }, [user]);
 
   if (loading) return <></>;
 
@@ -181,7 +255,9 @@ export default function DashboardPage() {
       <div className="ml-8">
         <div>
           <p className="text-2xl">Recent Containers</p>
-          <div className="container"><ContainerScrollArea containers={containers}/></div>
+          <div className="max-w-4xl">
+            <div className="container"><ContainerScrollArea containers={containers}/></div>
+          </div>
         </div>
 
         <div className="mt-8">

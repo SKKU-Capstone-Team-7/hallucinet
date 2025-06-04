@@ -33,7 +33,8 @@ export const columns: ColumnDef<ContainerInfo>[] = [
     accessorKey: "last_seen",
     header: "Last Seen",
     cell: ({ row }) => {
-        const date = row.getValue<Date>("last_seen");
+        const date = row.original.last_seen;
+        console.log(date);
         return <TimeAgo timestamp={date} />
     }
   },

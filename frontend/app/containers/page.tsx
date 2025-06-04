@@ -22,83 +22,7 @@ export interface ContainerInfo {
   last_seen: Date;
 }
 
-function ContainerTable({ containers }: { containers: ContainerInfo[] }) {
-  return (
-    <div className="flex gap-5 max-w-4xl justify-between">
-      <div>
-        <p className="grow text-lg mb-5">Name</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              {" "}
-              {cont.name}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="grow text-lg mb-5">Device</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              {" "}
-              {cont.deviceName}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="text-center grow text-lg mb-5">Image</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              {" "}
-              {cont.image}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="text-center grow text-lg mb-5">Assigned Ip</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              {" "}
-              {cont.ip}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="text-center grow text-lg mb-5">Last Seen</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              <TimeAgo timestamp={cont.last_seen} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function SearchBar() {
-  return (
-    <div className="flex items-center shadow-sm rounded-sm">
-      <div className="p-2">
-        <LucideSearch />
-      </div>
-      <Input
-        placeholder="Search"
-        className="border-none shadow-none focus:border-none focus-visible:border-none focus-within:border-none outline-none"
-      />
-      <button></button>
-    </div>
-  );
-}
-
-export default function DashboardPage() {
+export default function ContainerPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
     null,
@@ -142,10 +66,10 @@ export default function DashboardPage() {
             image: cont["image"],
             deviceName: cont["device"]["name"],
             ip: cont["ip"],
-            last_seen: new Date(cont["lastActivatedAt"])
+            last_seen: new Date(cont["lastAccessed"])
           };
         });
-        console.log(containers);
+        //console.log(containers);
         setContainers(containers);
       })();
     } catch (e) {

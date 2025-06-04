@@ -73,7 +73,7 @@ function CreateTeamForm() {
           />
         </div>
         <div className="flex-grow"></div>
-        <Button className="mr-0" type="submit" disabled={isSubmitting}>Confirm</Button>
+        <Button className="mr-0" type="submit">Confirm</Button>
       </div>
     </form>
   );
@@ -206,6 +206,15 @@ export default function OnboardingPage() {
             <CreateTeamForm />
           </div>
         </div>
+    <div className="mx-8 mt-8">
+      <p className="text-center text-3xl font-michroma">Hello, {user?.name}</p>
+      <div className="mt-4">
+        <p className="text-2xl">Create a team</p>
+        <p className="mt-4">Create your own team and become an owner</p>
+        <div className="w-full p-4 flex gap-4 mt-4 shadow-md rounded-md">
+          <CreateTeamForm />
+        </div>
+      </div>
 
         <div className="mt-4">
           <p className="text-2xl">Join in a team</p>

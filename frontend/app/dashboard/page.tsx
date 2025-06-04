@@ -54,6 +54,26 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
 
   const fadeEffectClasses = "whitespace-nowrap overflow-hidden [mask-image:linear-gradient(to_right,black_75%,transparent_100%)]";
 
+<<<<<<< HEAD
+  return (
+    <Tooltip open={showTip} delayDuration={200}>
+      <TooltipTrigger asChild>
+        <div 
+          className="p-4 w-44 bg-[#1a2841] border border-[#e5e7eb] rounded-md shadow-sm cursor-pointer select-none hover:bg-[#273755] text-white"
+          onClick={handleCopy}
+        >
+          <p className={`h-9 font-bold ${fadeEffectClasses} text-white`}>
+            {container.name}
+          </p>
+          <p className={`${fadeEffectClasses} text-gray-400 text-sm`}>
+            {container.image}
+          </p>
+          <p className={`${fadeEffectClasses} text-gray-300 text-sm`}>
+            {container.deviceName}
+          </p>
+        </div>
+      </TooltipTrigger>
+=======
   const cardContent = (
     <div 
       className="p-5 w-40 shadow-sm rounded-lg cursor-pointer select-none hover:bg-muted bg-white dark:bg-gray-800" 
@@ -74,6 +94,7 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
   return (
     <Tooltip open={showTip} delayDuration={200}>
       <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
+>>>>>>> 25ae35ea8adcde25da19711513efb55ee3a0d15a
       <TooltipContent>
         <p>Copied DNS name!</p>
       </TooltipContent>
@@ -83,8 +104,8 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
 
 function ContainerScrollArea({ containers }: {containers: ContainerInfo[]}) {
   return (
-    <ScrollArea className="w-full whitespace-nowrap">
-      <div className="flex gap-5 mt-4 mb-4">
+    <ScrollArea className="w-full whitespace-nowrap max-w-4xl rounded-md overflow-hidden" style={{backgroundColor: '#1a2841'}}>
+      <div className="flex gap-4 mt-4 mb-4 px-4">
         {containers.map((cont) => (
           <ContainerCard container={cont} key={cont.name}/>
         ))}
@@ -96,11 +117,9 @@ function ContainerScrollArea({ containers }: {containers: ContainerInfo[]}) {
 
 function AddDeviceButton() {
   return (
-    <Button className="cursor-pointer">
-      <div className="flex items-center gap-4">
-        <Plus />
-        Add Device
-      </div>
+    <Button className="cursor-pointer bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-md px-3 py-2 flex items-center gap-2 text-sm">
+      <Plus size={16} />
+      Add Device
     </Button>
   );
 }
@@ -118,10 +137,29 @@ export default function DashboardPage() {
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const router = useRouter();
 
+<<<<<<< HEAD
+  const refreshContainers = async () => {
+    try {
+        const account = new Account(getAppwriteClient());
+        const jwt = (await account.createJWT()).jwt;
+
+        const containersRes = await backendFetch("/teams/me/containers", "GET", jwt);
+
+        const containerJsons: any[] = await containersRes.json();
+        const fetchedContainers: ContainerInfo[] = containerJsons.map((cont) => ({
+          name: cont["name"],
+          image: cont["image"],
+          deviceName: cont["device"]?.["name"] || "N/A",
+        }));
+        setContainers(fetchedContainers);
+    } catch (error) {
+      console.error("fetch container error");
+=======
   const loadContainers = useCallback(async () => {
     if (!user) {
       console.log("User not available, cannot load containers.");
       return;
+>>>>>>> 25ae35ea8adcde25da19711513efb55ee3a0d15a
     }
   
     console.log("fetch container");
@@ -225,19 +263,59 @@ export default function DashboardPage() {
         const account = new Account(getAppwriteClient());
         const jwt = (await account.createJWT()).jwt;
 
-        console.log(jwt);
-
         // Check if user is in a team
         const meRes = await backendFetch("/users/me", "GET", jwt);
         if (!meRes.ok) throw new Error(`Initial user check failed: ${meRes.statusText}`);
         const meJson = await meRes.json();
+<<<<<<< HEAD
+        const teams: string[] = meJson["teamIds"];
+        if (teams.length === 0) {
+=======
         const teams: string[] = meJson["teamIds"] || [];
         if (teams.length == 0) {
+>>>>>>> 25ae35ea8adcde25da19711513efb55ee3a0d15a
           router.push("/onboarding");
           setInitialLoading(false);
           return;
         }
 
+<<<<<<< HEAD
+        const containersPromise = backendFetch("/teams/me/containers", "GET", jwt);
+        const devicesPromise = backendFetch("/teams/me/devices", "GET", jwt);
+
+        const [containersRes, devicesRes] = await Promise.all([
+          containersPromise,
+          devicesPromise,
+        ]);
+
+        // Containers
+        const containerJsons: any[] = await containersRes.json();
+        const containers: ContainerInfo[] = containerJsons.map((cont) => ({
+          name: cont["name"],
+          image: cont["image"],
+          deviceName: cont["device"]["name"],
+        }));
+        setContainers(containers);
+
+        // Devices
+        const deviceJsons: any[] = await devicesRes.json();
+        const devices: DeviceInfo[] = deviceJsons.map((dev) => ({
+          name: dev["name"],
+          subnet: dev["ipBlock24"],
+          userEmail: dev["user"]["email"],
+          last_activate: new Date(dev["lastActivatedAt"]),
+        }));
+        setDevices(devices);
+
+      })();
+    } catch (e) {
+      console.error(e);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (!user) {
+=======
         setIsReadyForDashboard(true);
       } catch (e) {
         console.error("Initialization error:", e);
@@ -260,11 +338,36 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user || !isReadyForDashboard || !process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || !process.env.NEXT_PUBLIC_APPWRITE_CONTAINER_COLLECTION_ID) {
+>>>>>>> 25ae35ea8adcde25da19711513efb55ee3a0d15a
       return;
     }
 
     const client = getAppwriteClient();
     let unsubscribe: (() => void) | undefined;
+<<<<<<< HEAD
+      
+    const setupSubscribe = async () => {
+      try {
+        const databaseId = await getDBId("database");
+        const collectionId = await getDBId("container");
+
+        const channel = `databases.${databaseId}.collections.${collectionId}.documents`;
+
+        unsubscribe = client.subscribe(channel, () => {
+          refreshContainers();
+        });
+      } catch (error) {
+        console.error("subscribe error:", error);
+      }
+    };
+
+    setupSubscribe();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+=======
     const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
     const collectionId = process.env.NEXT_PUBLIC_APPWRITE_CONTAINER_COLLECTION_ID;
     const channel = `databases.${databaseId}.collections.${collectionId}.documents`;  
@@ -275,6 +378,7 @@ export default function DashboardPage() {
       });
     } catch (error) {
       console.log("subscribe error");
+>>>>>>> 25ae35ea8adcde25da19711513efb55ee3a0d15a
     }
     return () => { if (unsubscribe) unsubscribe()};
   }, [user, isReadyForDashboard, loadContainers]);
@@ -285,6 +389,25 @@ export default function DashboardPage() {
   }
 
   return (
+<<<<<<< HEAD
+    <MainLayout user={user!}>
+      <div className="ml-8 mr-8 mt-4 mb-8 bg-[#050a12] flex flex-col h-full max-w-screen-xl">
+        <section className="recent-containers">
+          <h2 className="text-2xl font-semibold text-white mb-3">Recent Containers</h2>
+          <ContainerScrollArea containers={containers}/>
+        </section>
+
+        <section className="devices-section mt-10 flex-grow flex flex-col">
+          <h2 className="text-2xl font-semibold text-white mb-3">Devices</h2>
+          <DataTable 
+            columns={columns} 
+            data={devices} 
+            filterColumnKey="name" 
+            option={<InviteButton/>} 
+            className="devices-table"
+          />
+        </section>
+=======
     <MainLayout user={user}>
       <div className="ml-8">
         <div>
@@ -312,6 +435,7 @@ export default function DashboardPage() {
             />
           </div>
         </div>
+>>>>>>> 25ae35ea8adcde25da19711513efb55ee3a0d15a
       </div>
     </MainLayout>
   );

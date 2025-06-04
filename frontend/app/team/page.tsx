@@ -217,6 +217,10 @@ export default function TeamPage() {
       <div className="ml-8">
         <div className="mt-18">
           <p className="text-2xl">Team</p>
+<<<<<<< HEAD
+          <div className="rounded-lg overflow-hidden">
+            <DataTable columns={columns} data={teamUsers} filterColumnKey="name" option={<InviteButton isOwner={isOwner}/>}/>
+=======
           <div>
             <DataTable 
               columns={columns} 
@@ -229,6 +233,7 @@ export default function TeamPage() {
                 </div>
               }
             />
+>>>>>>> 25ae35ea8adcde25da19711513efb55ee3a0d15a
           </div>
         </div>
       </div>

@@ -35,7 +35,12 @@ function InviteButton({isOwner} : {isOwner: boolean}) {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<InviteInputs>();
+    reset,
+  } = useForm<InviteInputs>({
+    defaultValues: {
+      email: ""
+    }
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const onSubmit: SubmitHandler<InviteInputs> = async (data) => {
@@ -52,14 +57,17 @@ function InviteButton({isOwner} : {isOwner: boolean}) {
       );
 
       if (inviteRes.ok) {
-        setIsDialogOpen(false);
         // we need to add some success event
         toast.success("Invitation Sent", {
           description: "The team invitation was sent successfully.",
           duration: 3000,
         });
       } else {
-        console.log(await inviteRes.json());
+        const errorData = await inviteRes.json();
+        toast.error(errorData["error"], {
+        description: errorData["message"],
+        duration:3000,
+      });
       }
     } catch (e) {
       console.error("Error submitting invitation: ", e);
@@ -67,6 +75,9 @@ function InviteButton({isOwner} : {isOwner: boolean}) {
         description: "Please try again later.",
         duration:3000,
       });
+    } finally {
+      setIsDialogOpen(false);
+      reset();
     }
   };
 

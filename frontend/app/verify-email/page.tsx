@@ -1,145 +1,151 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Client, Account, Models } from 'appwrite';
+import { Client, Account, Models, AppwriteException } from 'appwrite';
 import { toast } from "sonner";
 import { getAppwriteClient, getCurrentUser } from '@/lib/appwrite';
 import MainLayout from '@/components/MainLayout';
-import { Mail } from 'lucide-react';
+import { Link, Mail } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+
+type PageStatus = 
+  | 'initial_loading'         
+  | 'verifying_from_link'    
+  | 'link_verification_success' 
+  | 'link_verification_failed' 
+  | 'prompt_to_verify';
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
-      null,
-    );
-  const [isSuccess, setIsSuccess] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  const client = getAppwriteClient();
-  const account = new Account(client);
+  const [pageStatus, setPageStatus] = useState<PageStatus>('initial_loading');
+  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); 
+  const [isResending, setIsResending] = useState(false);
+
+  const account = useMemo(() => new Account(getAppwriteClient()), []);
 
   useEffect(() => {  
-
     const userId = searchParams.get('userId');
     const secret = searchParams.get('secret');
 
-    if (userId && secret) {
-      setLoading(true);
-    
-      setIsSuccess(null);
+    const attemptVerificationFromLink = async (uid: string, sec: string) => {
+      setPageStatus('verifying_from_link');
+      setErrorMessage(null);
 
-      account.updateVerification(userId, secret)
-        .then(() => {
-          setIsSuccess(true);
-          toast.success("Email verified successfully!");
-          router.push('/login'); 
-          return;
-        })
-        .catch((error) => {
-          console.error("Email verification failed:", error);
-          //setMessage(`Verification failed: ${error.message}. Please try again or request a new verification link.`);
-          setIsSuccess(false);
-        })
-        .finally(() => {
-          setLoading(false);
-        })
-    } else {
-      (async () => {
-        setLoading(true);
-        try {
-          const currentUser = await getCurrentUser();
-          setUser(currentUser);
+      try {
+        await account.updateVerification(uid, sec);
+        setPageStatus('link_verification_success');
+        toast.success("Email Verified Successfully!", { 
+          description: "Redirecting to login page..." 
+        });
+        router.push('/login');
+      } catch (e) {
+        console.error("Email verification from link failed:", e);
+        const message = (e as AppwriteException).message || "Invalid or expired verification link. Please try resending the email or contact support.";
+        setErrorMessage(message);
+        setPageStatus('link_verification_failed');
+        toast.error("Verification Failed", { 
+          description: message 
+        });
+      }
+    };
 
-          if (currentUser) {
-            if (currentUser.emailVerification) {
-              toast.info("Your email is already verified. Redirecting to dashboard...");
-              router.push("/dashboard");
-              return;
-            } else {
-            setIsSuccess(false); 
-            setLoading(false);
-            }
+    const checkCurrentUserState = async () => {
+      try {
+        const user = await getCurrentUser();
+        setUser(user);
+
+        if (user) {
+          if (user.emailVerification) {
+            toast.info("Your email is already verified.", { description: "Redirecting to your dashboard..." });
+            router.push("/dashboard");
           } else {
-            // not login not userId not secret case
-            setIsSuccess(false);
-            setLoading(false);
+            setPageStatus('prompt_to_verify');
           }
-        } catch (error) {
-          console.error("Error fetching current user:", error);
-          setIsSuccess(false);
-          setUser(null);
-          setLoading(false);
+        } else {
+          setPageStatus('prompt_to_verify');
         }
-      })();
+      } catch (e) {
+        console.warn("Could not fetch current user status (or no active session):", e);
+        setUser(null);
+        setPageStatus('prompt_to_verify');
+      }
+    };
+
+    if (userId && secret) {
+      attemptVerificationFromLink(userId, secret);
+    } else {
+      checkCurrentUserState();
     }
-  }, [searchParams, router]);
 
-  if (loading) return <></>;
+  }, [searchParams, router, account]);
 
-  if (!user) {
-    return (
-      <div className="mx-8 mt-8 flex flex-col items-center">
-        <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-sm">
-          <Mail className="size-13" />
-        </div>
+  const handleResendVerificationEmail = async () => {
+    setIsResending(true);
+    setErrorMessage(null);
+    const verificationUrl = `${window.location.origin}/verify-email`;
 
-        <div className="mt-4 text-center">
-          <p className="text-3xl">Verify your email address</p>
-          <p className="mt-4">We have sent a verification link.</p>
-          <p className="mt-1">Click the link to complete the process.</p>
-          <p>You might need to check your spam folder.</p>
-        </div>
+    try {
+      await account.createVerification(verificationUrl);
+      toast.success("Verification Email Sent", {
+        description: "Please check your email inbox (and spam folder). If you don't see it, try again in a few minutes.",
+      });
+    } catch (e) {
+      console.error("Failed to resend verification email:", e);
+      const message = (e as AppwriteException).message || "Could not send verification email. Please ensure you have an account or try registering again.";
+      setErrorMessage(message); 
+      toast.error("Failed to Resend Email", { description: message });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
-        <div className="mt-8 flex justify-center">
-          <Button
-            onClick={async () => {
-              const verificationUrl = `${window.location.origin}/verify-email`;
-              try {
-                await account.createVerification(verificationUrl);
-                toast.info("Verification email resent.", {
-                  description: "Please check your email inbox.",
-                });
-              } catch (error) {
-                console.error(error);
-              }
-            }}
-          >
-            Resend email
-          </Button>
-        </div>
+  if (pageStatus === 'initial_loading' || pageStatus === 'verifying_from_link' || pageStatus === 'link_verification_success') {
+    return <div></div>
+  };
+
+  const VerificationPromptUI = (
+    <div className="mx-8 mt-8 flex flex-col items-center">
+      <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-sm">
+        <Mail className="size-13" />
       </div>
-    );
+
+      <div className="mt-4 text-center">
+        <p className="text-3xl">{pageStatus === 'link_verification_failed' ? "Email Verification Failed" : "Verify Your Email Address"}</p>
+        
+        <p className="mt-4">
+          {user && !user.emailVerification && pageStatus === 'prompt_to_verify'
+            ? `We have sent a verification link to ${user.email}.`
+            : `We have sent a verification link.`}
+        </p>
+        <p className="mt-1">Click the link to complete the process.</p>
+        <p>You might need to check your spam folder.</p>
+      </div>
+
+      <div className="mt-8 flex justify-center">
+        <Button
+          onClick={handleResendVerificationEmail}
+          className='cursor-pointer'
+          disabled={isResending}
+        >
+          Resend Email
+        </Button>
+      </div>
+    </div>
+  );
+  
+  if (user && pageStatus === 'prompt_to_verify') {
+    return (
+      <MainLayout user={user} menuDisabled={true}>
+        {VerificationPromptUI}
+      </MainLayout>
+    )
   }
 
   return (
-    <MainLayout user={user!} menuDisabled={true}>
-      <div className="mx-8 mt-8 flex flex-col items-center">
-        <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-sm">
-          <Mail className="size-13"></Mail>
-        </div>
-            <div className="mt-4">
-              <p className="text-3xl text-center">Verify your email address</p>
-              <p className="mt-4 text-center">We have sent a verification link</p>
-              <p className="mt-4 text-center">Click on the link to complete the verification process.</p>
-              <p className="text-center">You might need to check your spam folder.</p>
-            </div>
-      </div>
-      <div className="mx-8 mt-8 flex justify-center gap-4">
-      <Button className="w-30" onClick={async () => {
-        const verificationUrl = `${window.location.origin}/verify-email`;
-        try {
-        await account.createVerification(verificationUrl);
-        toast.info("Verification email resent.", {
-        description: "Please check your email inbox.",
-        });
-        } catch (error: any) {
-          console.error();
-        }
-      }}>Resend email</Button>
-      </div>
-    </MainLayout>
+    <div>{VerificationPromptUI}</div>
   );
 }

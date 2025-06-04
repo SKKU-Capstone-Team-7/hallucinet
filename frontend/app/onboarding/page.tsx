@@ -73,7 +73,7 @@ function CreateTeamForm() {
           />
         </div>
         <div className="flex-grow"></div>
-        <Button className="mr-0" type="submit" disabled={isSubmitting}>Confirm</Button>
+        <Button className="mr-0 cursor-pointer" type="submit" disabled={isSubmitting}>Confirm</Button>
       </div>
     </form>
   );
@@ -160,7 +160,7 @@ export default function OnboardingPage() {
         const teams: string[] = meJson["teamIds"] || [];
         if (teams.length > 0) {
           setUserHasTeam(true);
-          toast.info("Already in a team!", { description: "Redirecting to your main workspace..."});
+          toast.info("Already in a team!", { description: "Redirecting to your dashboard..."});
           router.push("/dashboard");
           setInitialLoading(false);
           return;

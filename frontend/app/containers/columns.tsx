@@ -49,7 +49,7 @@ export const columns: ColumnDef<ContainerInfo>[] = [
     },
     cell: ({ row }) => {
         const date = row.original.last_seen;
-        console.log(date);
+        //console.log(date);
         return <TimeAgo timestamp={date} />
     }
   },

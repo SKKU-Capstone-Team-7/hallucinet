@@ -77,7 +77,6 @@ export function DataTable<TData, TValue>({
                 </div>
             </div>
             {option}
-            <ReloadButton/> 
         </div>
     <div className="rounded-md border mt-2 max-w-4xl">
       <Table className="w-full table-fixed">

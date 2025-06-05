@@ -67,8 +67,8 @@ function DeleteButton({ onDelete, memberCount}: { onDelete: () => Promise<void>,
 
   return (
     <div className="shadow-sm max-w-lg mt-8 p-4 border border-red-300 rounded-md bg-red-50">
-      <h3 className="text-xl font-medium mb-2">Delete Team</h3>
-      <p className="mt-2 text-sm">
+      <h3 className="text-xl font-medium mb-2 text-black">Delete Team</h3>
+      <p className="mt-2 text-sm text-black">
         Before proceeding to delete your team, please be aware that this action is irreversible. This deletion can only be performed only if the team currently has no other members.
       </p> 
       <div className="mt-6 flex justify-end">

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Account, Models } from 'appwrite';
 
@@ -20,9 +20,6 @@ import {
 
 import { getAppwriteClient, getCurrentUser } from '@/lib/appwrite';
 import { backendFetch } from '@/lib/utils';
-import { columns } from "../dashboard/columns";
-import { DataTable } from "@/components/ui/data-table";
-
 
 interface DeviceInfo {
   id: string;
@@ -33,19 +30,9 @@ interface DeviceInfo {
   userId: string;
   status: 'online' | 'offline';
 }
-function InviteButton() {
-  return (
-    <Button className="cursor-pointer">
-      <div className="flex items-center gap-4">
-        <Plus />
-        Add Device
-      </div>
-    </Button>
-  );
-}
 
 export default function DevicesPage() {
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [filtered, setFiltered] = useState<DeviceInfo[]>([]);
@@ -55,40 +42,11 @@ export default function DevicesPage() {
   const [editedName, setEditedName] = useState('');
   const router = useRouter();
 
-  const loadDevices = useCallback(async () => {
-    if (!user) return;
-    try {
-      const account = new Account(getAppwriteClient());
-      const jwt = (await account.createJWT()).jwt;
-      const devicesRes = await backendFetch('/teams/me/devices', 'GET', jwt);
-      const deviceJsons: any[] = await devicesRes.json();
-      const devices: DeviceInfo[] = deviceJsons.map((dev) => ({
-        id: dev.$id,
-        name: dev.name,
-        subnet: dev.ipBlock24,
-        userEmail: dev.user.email,
-        last_activate: new Date(dev.lastActivatedAt),
-        userId: dev.user.$id,
-        status: 'offline',
-      }));
-      setDevices(devices);
-      setFiltered(devices);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [user]);
-
   useEffect(() => {
-    const initializePage = async () => {
-      setInitialLoading(true);
+    (async () => {
       try {
         const u = await getCurrentUser();
         setUser(u);
-
-        if (!u) {
-          router.push('/login');
-          return;
-        }
 
         const account = new Account(getAppwriteClient());
         const jwt = (await account.createJWT()).jwt;
@@ -101,15 +59,26 @@ export default function DevicesPage() {
           return;
         }
 
-        await loadDevices();
+        const devicesRes = await backendFetch('/teams/me/devices', 'GET', jwt);
+        const deviceJsons: any[] = await devicesRes.json();
+        const devices: DeviceInfo[] = deviceJsons.map((dev) => ({
+          id: dev.$id,
+          name: dev.name,
+          subnet: dev.ipBlock24,
+          userEmail: dev.user.email,
+          last_activate: new Date(dev.lastActivatedAt),
+          userId: dev.user.$id,
+          status: 'offline',
+        }));
+        setDevices(devices);
+        setFiltered(devices);
       } catch (e) {
         console.error(e);
       } finally {
-        setInitialLoading(false);
+        setLoading(false);
       }
-    };
-    initializePage();
-  }, [router, loadDevices]);
+    })();
+  }, [router]);
 
   useEffect(() => {
     const lower = search.toLowerCase();
@@ -123,59 +92,55 @@ export default function DevicesPage() {
   }, [search, devices]);
 
   const handleRowClick = (device: DeviceInfo) => {
-    if (device.userId === user?.$id) {
-      setSelectedDevice(device);
-      setEditedName(device.name);
-      setDialogOpen(true);
-    }
+    setSelectedDevice(device);
+    setEditedName(device.name);
+    setDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!selectedDevice) return;
-    const jwt = (await new Account(getAppwriteClient()).createJWT()).jwt;
-    await backendFetch(`/teams/me/devices/${selectedDevice.id}`, 'PATCH', jwt, {
-      name: editedName,
-    });
+    const handleSave = async () => {
+  if (!selectedDevice) return;
 
-    setDevices((prev) =>
-      prev.map((d) =>
-        d.id === selectedDevice.id ? { ...d, name: editedName } : d
-      )
-    );
-    setDialogOpen(false);
-  };
+  const jwt = (await new Account(getAppwriteClient()).createJWT()).jwt;
+  const res = await backendFetch(`/devices/${selectedDevice.id}`, 'PATCH', jwt, {
+    name: editedName,
+  });
 
-  const handleDelete = async () => {
-    if (!selectedDevice) return;
-    const jwt = (await new Account(getAppwriteClient()).createJWT()).jwt;
-    await backendFetch(`/teams/me/devices/${selectedDevice.id}`, 'DELETE', jwt);
+  const data = await res.json();
+
+  setDevices((prev) =>
+    prev.map((d) =>
+      d.id === selectedDevice.id ? { ...d, name: editedName } : d
+    )
+  );
+  setDialogOpen(false);
+};
+
+
+const handleDelete = async () => {
+  if (!selectedDevice) return;
+  try {
+    const account = new Account(getAppwriteClient());
+    const jwt = (await account.createJWT()).jwt;
+    const res = await backendFetch(`/devices/${selectedDevice.id}`, 'DELETE', jwt);
+
+    if (!res.ok) throw new Error('Failed to delete device');
+
     setDevices((prev) => prev.filter((d) => d.id !== selectedDevice.id));
+  } catch (err) {
+    console.error('Error deleting device:', err);
+  } finally {
     setDialogOpen(false);
-  };
+  }
+};
 
-  if (initialLoading || !user) return null;
+
+  if (loading || !user) return null;
 
   return (
     <MainLayout user={user}>
       <div className="p-8">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold">Devices</h1>
-          <p className="text-2xl">Devices</p>
-          <div>
-            <DataTable 
-              columns={columns} 
-              data={devices} 
-              filterColumnKey="name" 
-              option={
-                <div className="flex gap-4">
-                  <InviteButton/>
-                  <Button variant="outline" onClick={loadDevices}>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  </Button>
-                </div>
-              }
-            />
-          </div>
         </div>
 
         <div className="flex items-center gap-4 mb-4">
@@ -190,7 +155,7 @@ export default function DevicesPage() {
             <Plus className="w-4 h-4 mr-2" />
             Add Device
           </Button>
-          <Button variant="outline" onClick={loadDevices}>
+          <Button variant="outline" onClick={() => location.reload()}>
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>

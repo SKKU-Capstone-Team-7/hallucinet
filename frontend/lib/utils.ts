@@ -19,7 +19,7 @@ export async function backendFetch(
       Authorization: `Bearer ${jwt}`,
     },
     method: method,
-    body: body,
+    body: body ? JSON.stringify(body) : undefined,
   });
 
   return res;

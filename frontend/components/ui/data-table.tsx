@@ -21,16 +21,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { LucideSearch } from "lucide-react"
-<<<<<<< HEAD
-import { ReloadButton } from "../common/ReloadButtion"
- 
-interface DataTableProps<TData> {
-  columns: ColumnDef<TData>[];
-  data: TData[];
-  filterColumnKey: string;
-  option?: React.ReactNode;
-  onRowClick?: (row: TData) => void;
-=======
 import { Skeleton } from "@/components/ui/skeleton" 
 
 interface DataTableProps<TData, TValue> {
@@ -39,22 +29,16 @@ interface DataTableProps<TData, TValue> {
   filterColumnKey: string,
   option?: React.ReactNode,
   isLoading?: boolean;
->>>>>>> 42e580beb0ab6ae2df820cccbac87703949db2d4
 }
 
  
-export function DataTable<TData>({
+export function DataTable<TData, TValue>({
   columns,
   data,
   filterColumnKey,
-<<<<<<< HEAD
-  option
-}: DataTableProps<TData>) {
-=======
   option,
   isLoading=false,
 }: DataTableProps<TData, TValue>) {
->>>>>>> 42e580beb0ab6ae2df820cccbac87703949db2d4
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )

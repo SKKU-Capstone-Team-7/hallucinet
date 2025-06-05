@@ -152,12 +152,30 @@ func (daemon *HallucinetDaemon) handleTeamContainers(payload comms.WsRecvTeamCon
 	}
 }
 
-func (daemon *HallucinetDaemon) handleDeviceConnected(payload comms.WsDevConnectPayload) {
+func (daemon *HallucinetDaemon) handleDeviceConnected(payload comms.WsRecvDevConnectPayload) {
 	log.Printf("Device connected: %v\n", payload)
+
+	for _, dto := range payload.Containers {
+		cont, err := coordination.ParseContainerInfoDto(dto)
+		if err != nil {
+			log.Printf("Cannot parse container dto: %v\n", err)
+			continue
+		}
+		daemon.dns.AddEntry(cont)
+	}
 }
 
-func (daemon *HallucinetDaemon) handleDeviceDisconnected(payload comms.WsDevDisconnectPayload) {
+func (daemon *HallucinetDaemon) handleDeviceDisconnected(payload comms.WsRecvDevDisconnectPayload) {
 	log.Printf("Device disconnected: %v\n", payload)
+
+	for _, dto := range payload.Containers {
+		cont, err := coordination.ParseContainerInfoDto(dto)
+		if err != nil {
+			log.Printf("Cannot parse container dto: %v\n", err)
+			continue
+		}
+		daemon.dns.RemoveEntry(cont)
+	}
 }
 
 func (daemon *HallucinetDaemon) handleContainerConnected(payload comms.WsRecvContEventPayload) {
@@ -217,7 +235,7 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 			log.Printf("Cannot read ws message: type %v msg %v\n", messageType, string(eventBytes))
 			continue
 		}
-		log.Printf("Got ws message: type %v msg %v\n", messageType, string(eventBytes))
+		// log.Printf("Got ws message: type %v msg %v\n", messageType, string(eventBytes))
 
 		wsMsg := comms.WsMsg{}
 		err = json.Unmarshal(eventBytes, &wsMsg)
@@ -244,7 +262,7 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 			daemon.handleTeamContainers(payload)
 
 		case "device_disconnected":
-			var payload comms.WsDevDisconnectPayload
+			var payload comms.WsRecvDevDisconnectPayload
 			err := json.Unmarshal(data, &payload)
 			if err != nil {
 				log.Printf("Cannot unmarshal device disconnected payload: %v\n", err)
@@ -253,7 +271,7 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 			daemon.handleDeviceDisconnected(payload)
 
 		case "device_connected":
-			var payload comms.WsDevConnectPayload
+			var payload comms.WsRecvDevConnectPayload
 			err := json.Unmarshal(data, &payload)
 			if err != nil {
 				log.Printf("Cannot unmarshal device connected payload: %v\n", err)
@@ -281,6 +299,8 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 		default:
 			log.Printf("Unknown ws event: %v\n", wsMsg.Event)
 		}
+
+		daemon.dns.PrintEntries()
 	}
 
 	return nil
@@ -451,7 +471,7 @@ func (daemon *HallucinetDaemon) Start() error {
 
 	var wsMsg comms.WsMsg
 	wsMsg.Event = "device_connected"
-	wsMsg.Data = comms.WsDevConnectPayload{
+	wsMsg.Data = comms.WsSendDevConnectPayload{
 		Token:      daemon.coord.JWT,
 		Containers: containers,
 	}

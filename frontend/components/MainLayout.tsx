@@ -22,7 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { backendFetch, cn } from "@/lib/utils";
-import { Account, Models } from "appwrite";
+import { Account, AppwriteException, Models } from "appwrite";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,7 +53,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Mode, SubmitHandler, useForm } from "react-hook-form";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Input } from "./ui/input";
 import { DialogClose } from "@radix-ui/react-dialog";
@@ -104,10 +104,12 @@ interface UpdateUserInfo {
 
 function AppSidebar({
   user,
-  menuDisabled
+  menuDisabled,
+  onUserUpdated,
 }: {
   user: Models.User<Models.Preferences>;
   menuDisabled: boolean;
+  onUserUpdated?: () => Promise<void>;
 }) {
   const [isAccountSettingsDialogOpen, setIsAccountSettingsDialogOpen] = useState(false);
 
@@ -115,7 +117,9 @@ function AppSidebar({
     register: registerAccountForm,
     handleSubmit: handleSubmitAccountForm, 
     setValue: setAccountFormValue,
-    formState: { errors: accountFormErrors } 
+    reset: resetAccountForm,
+    watch: watchAccountForm,
+    formState: { errors: accountFormErrors, isSubmitting: isAccountFormSubmitting } 
   } = useForm<UpdateUserInfo>({
     defaultValues: {
       username: user.name || '',
@@ -124,27 +128,66 @@ function AppSidebar({
     }
   });
 
+  useEffect(() => {
+    if (isAccountSettingsDialogOpen) {
+      resetAccountForm({
+        username: user.name || '',
+        oldPassword: '',
+        newPassword: '',
+      });
+    }
+  }, [isAccountSettingsDialogOpen, user, resetAccountForm]);
+
   const onAccountSettingsSubmit: SubmitHandler<UpdateUserInfo> = async (data) => {
+    const updatePayload: { name: string; password?: string; oldPassword?: string } = {
+      name: data.username,
+    };
+
+    if (data.newPassword) {
+      if (!data.oldPassword) {
+        toast.error("Update Failed", { description: "To set a new password, please enter your current password." });
+        return;
+      }
+      if (data.newPassword.length < 8) { 
+        toast.error("Update Failed", { description: "New password must be at least 8 characters long." });
+        return;
+      }
+      updatePayload.password = data.newPassword; 
+      updatePayload.oldPassword = data.oldPassword;
+    } else if (data.oldPassword && !data.newPassword) {
+      toast.error("Update Failed", { description: "Please enter a new password if you've provided your current password." });
+      return;
+    }
 
     try {
       const account = new Account(getAppwriteClient());
       const jwt = (await account.createJWT()).jwt;
+      console.log(updatePayload);
+      const updateRes = await backendFetch("/users/me", "PATCH", jwt, JSON.stringify(updatePayload));
+      if (updateRes.ok) {
+        toast.success("Account settings updated successfully!");
+        setIsAccountSettingsDialogOpen(false);
 
-      const payload = {
-        name: data.username,
-        password: data.newPassword,
-        oldPassword: data.oldPassword
+        resetAccountForm({
+          username: data.username,
+          oldPassword: '',
+          newPassword: '',
+        });
+
+        window.location.reload();
+      } else {
+        const errorData = await updateRes.json();
+        console.error("Failed to save account settings:", errorData);
+        toast.error("Update Failed", { description: errorData.message || "Could not update account settings." });
       }
-      console.log(payload);
-      await backendFetch("/users/me", "PATCH", jwt, JSON.stringify(payload));
-      window.location.reload();
-      toast.success("Account settings updated successfully!");
-      setIsAccountSettingsDialogOpen(false);
-      return;
     } catch (error) {
-      console.error("Failed to save account settings:", error);
+      console.error("Exception during account settings update:", error);
+      const errorMessage = (error as AppwriteException)?.message || "An unexpected error occurred during update.";
+      toast.error("Update Error", { description: errorMessage });
     }
   } 
+
+  const watchedNewPassword = watchAccountForm("newPassword");
 
   return (
     <Sidebar>
@@ -183,7 +226,16 @@ function AppSidebar({
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Dialog open={isAccountSettingsDialogOpen} onOpenChange={setIsAccountSettingsDialogOpen}>
+            <Dialog open={isAccountSettingsDialogOpen} onOpenChange={(open) => {
+              setIsAccountSettingsDialogOpen(open);
+              if (open) {
+                resetAccountForm({
+                  username: user.name || '',
+                  oldPassword: '',
+                  newPassword: '',
+                });
+              }
+            }}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton className="cursor-pointer">
@@ -219,6 +271,7 @@ function AppSidebar({
                   <Input 
                     id="username"
                     {...registerAccountForm("username", { required: "Username is required" })} 
+                    disabled={isAccountFormSubmitting}
                   />
                   </div>
                 </div>
@@ -229,6 +282,7 @@ function AppSidebar({
                     id="oldPassword"
                     type="password" 
                     {...registerAccountForm("oldPassword")} 
+                    disabled={isAccountFormSubmitting}
                   />
                   </div>
                 </div>
@@ -238,7 +292,10 @@ function AppSidebar({
                   <Input
                     id="newPassword"
                     type="password"
-                    {...registerAccountForm("newPassword")}
+                    {...registerAccountForm("newPassword", {
+                      minLength: watchedNewPassword ? { value: 8, message: "Min. 8 characters" } : undefined,
+                    })}
+                    disabled={isAccountFormSubmitting}
                   />
                     </div>
                 </div>
@@ -254,7 +311,7 @@ function AppSidebar({
                   </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
-            <Button className="w-30 bg-red-600 hover:bg-red-700"><Link href="/logout">Delete Account</Link></Button>
+            <Button className="w-30 bg-red-600 hover:bg-red-700 cursor-pointer"><Link href="/logout">Delete Account</Link></Button>
           </DialogFooter>
           </div>
               </DialogContent>
@@ -270,7 +327,7 @@ function AppSidebar({
 export default function MainLayout({
   user,
   children,
-  menuDisabled=false
+  menuDisabled=false,
 }: {
   children: React.ReactNode;
   user: Models.User<Models.Preferences>;

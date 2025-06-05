@@ -9,6 +9,9 @@ export const getColumns = (userIsOwner: boolean): ColumnDef<UserInfo>[] => [
   {
     accessorKey: "name",
     header: "Name",
+    meta: {
+      widthClass: "w-[35%]"
+    },
     cell: ({ row }) => {
       const name = row.getValue<string>("name");
       const email = row.original.email;
@@ -23,10 +26,16 @@ export const getColumns = (userIsOwner: boolean): ColumnDef<UserInfo>[] => [
   {
     accessorKey: "role",
     header: "Role",
+    meta: {
+      widthClass: "w-[25%]"
+    },
   },
   {
     accessorKey: "joinedAt",
     header: "Joined",
+    meta: {
+      widthClass: "w-[20%]"
+    },
     cell: ({ row }) => {
         const date = row.getValue<Date>("joinedAt");
         return <TimeAgo timestamp={date} />
@@ -35,6 +44,9 @@ export const getColumns = (userIsOwner: boolean): ColumnDef<UserInfo>[] => [
   {
     accessorKey: "delete",
     header: "",
+    meta: {
+      widthClass: "w-[20%]"
+    },
     cell: ({ row }) => {
       const role = row.original.role;
       return <div>{role == "owner" 

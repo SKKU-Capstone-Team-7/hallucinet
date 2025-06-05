@@ -77,10 +77,17 @@ export function DataTable<TData, TValue>({
                 </div>
             </div>
             {option}
-            <ReloadButton/> 
         </div>
     <div className="rounded-md border mt-2 max-w-4xl">
-      <Table>
+      <Table className="w-full table-fixed">
+        <colgroup>
+            {columns.map((column) => (
+              <col
+                key={(column as any).id || (column as any).accessorKey} // column.id 또는 accessorKey 사용
+                className={(column.meta as any)?.widthClass || 'w-auto'} // meta에서 widthClass 가져오기
+              />
+            ))}
+          </colgroup>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
@@ -107,7 +114,7 @@ export function DataTable<TData, TValue>({
                 data-state={row.getIsSelected() && "selected"}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="h-10 text-base">
+                  <TableCell key={cell.id} className="h-10 text-base whitespace-nowrap overflow-hidden [mask-image:linear-gradient(to_right,black_75%,transparent_100%)]">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -127,6 +134,7 @@ export function DataTable<TData, TValue>({
         <Button
           variant="outline"
           size="sm"
+          className="cursor-pointer"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
@@ -135,6 +143,7 @@ export function DataTable<TData, TValue>({
         <Button
           variant="outline"
           size="sm"
+          className="cursor-pointer"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >

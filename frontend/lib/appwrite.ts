@@ -1,5 +1,6 @@
 import { Account, Client, Models } from "appwrite";
 import { Storage } from "appwrite";
+import { stringify } from "querystring";
 
 export function getAppwriteClient(): Client {
   const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;

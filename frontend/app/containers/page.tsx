@@ -10,7 +10,7 @@ import { backendFetch } from "@/lib/utils";
 import { Account, Models } from "appwrite";
 import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { columns } from "./columns";
 
 export interface ContainerInfo {
@@ -22,138 +22,95 @@ export interface ContainerInfo {
   last_seen: Date;
 }
 
-function ContainerTable({ containers }: { containers: ContainerInfo[] }) {
-  return (
-    <div className="flex gap-5 max-w-4xl justify-between">
-      <div>
-        <p className="grow text-lg mb-5">Name</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              {" "}
-              {cont.name}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="grow text-lg mb-5">Device</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              {" "}
-              {cont.deviceName}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="text-center grow text-lg mb-5">Image</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              {" "}
-              {cont.image}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="text-center grow text-lg mb-5">Assigned Ip</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              {" "}
-              {cont.ip}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="text-center grow text-lg mb-5">Last Seen</p>
-        {containers.map((cont) => {
-          return (
-            <div className="h-10" key={cont.ip}>
-              <TimeAgo timestamp={cont.last_seen} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function SearchBar() {
-  return (
-    <div className="flex items-center shadow-sm rounded-sm">
-      <div className="p-2">
-        <LucideSearch />
-      </div>
-      <Input
-        placeholder="Search"
-        className="border-none shadow-none focus:border-none focus-visible:border-none focus-within:border-none outline-none"
-      />
-      <button></button>
-    </div>
-  );
-}
-
-export default function DashboardPage() {
-  const [loading, setLoading] = useState<boolean>(true);
+export default function ContainerPage() {
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
+  const [isContainersLoading, setIsContainersLoading] = useState<boolean>(false);
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
     null,
   );
   const [containers, setContainers] = useState<ContainerInfo[]>([]);
   const router = useRouter();
 
-  useEffect(() => {
+  const loadContainers = useCallback(async () => {
+    if (!user) {
+      console.log("User not available, cannot load containers.");
+      return;
+    }
+
+    console.log("fetch container");
+    setIsContainersLoading(true);
     try {
-      (async () => {
-        const u = await getCurrentUser();
-        setUser(u);
-        setLoading(false);
+      const account = new Account(getAppwriteClient());
+      const jwt = (await account.createJWT()).jwt;
 
-        if (!loading && !user) {
-          router.push("/login");
-        }
-
-        const account = new Account(getAppwriteClient());
-        const jwt = (await account.createJWT()).jwt;
-
-        // Check if user is in a team
-        const meRes = await backendFetch("/users/me", "GET", jwt);
-        const meJson = await meRes.json();
-        const teams: string[] = meJson["teamIds"];
-        if (teams.length == 0) {
-          router.push("/onboarding");
-        }
-
-        // Get containers
-        const containersRes = await backendFetch(
+      const containersRes = await backendFetch(
           "/teams/me/containers",
           "GET",
           jwt,
         );
-        const containerJsons: any[] = await containersRes.json();
-        const containers: ContainerInfo[] = containerJsons.map((cont) => {
-          return {
-            name: cont["name"],
-            userEmail: cont["device"]["user"]["email"],
-            image: cont["image"],
-            deviceName: cont["device"]["name"],
-            ip: cont["ip"],
-            last_seen: new Date(cont["lastActivatedAt"])
-          };
-        });
-        console.log(containers);
-        setContainers(containers);
-      })();
+      if (!containersRes.ok) {
+        throw new Error(`Failed to fetch containers: ${containersRes.statusText} (${containersRes.status})`);
+      }
+      const containerJsons: any[] = await containersRes.json();
+      const fetchedContainers: ContainerInfo[] = containerJsons.map((cont) => ({
+        name: cont["name"],
+        userEmail: cont["device"]["user"]["email"],
+        image: cont["image"],
+        deviceName: cont["device"]["name"],
+        ip: cont["ip"],
+        last_seen: new Date(cont["lastAccessed"])
+      }));
+      setContainers(fetchedContainers);
     } catch (e) {
-      console.log(e);
+      console.error("Failed to load containers:", e);
+      setContainers([]);
+    } finally {
+      setIsContainersLoading(false);
     }
-  }, []);
+  }, [user]);
 
-  if (loading) return <></>;
+  useEffect(() => {
+    const initializePage = async () => {
+      setInitialLoading(true);
+      try {
+        const user = await getCurrentUser();
+        setUser(user);
+
+        if (!user) {
+          router.push("/login");
+          setInitialLoading(false);
+          return;
+        }
+
+        const account = new Account(getAppwriteClient());
+        const jwt = (await account.createJWT()).jwt;
+        // Check if user is in a team
+        const meRes = await backendFetch("/users/me", "GET", jwt);
+        if (!meRes.ok) throw new Error("Failed to fetch user info");
+        const meJson = await meRes.json();
+        const teams: string[] = meJson["teamIds"];
+        if (teams.length == 0) {
+          router.push("/onboarding");
+          setInitialLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.error("Initialization error:", e);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    initializePage();
+  }, [router]);
+    
+  useEffect(() => {
+    if (user && !initialLoading) {
+      loadContainers();
+    } 
+  }, [user, initialLoading, loadContainers]);
+
+  if (initialLoading) return <></>;
 
   return (
     <MainLayout user={user!}>
@@ -161,7 +118,7 @@ export default function DashboardPage() {
         <div className="mt-18">
           <p className="text-2xl">Containers</p>
           <div>
-            <DataTable columns={columns} data={containers} filterColumnKey="name"/>
+            <DataTable columns={columns} data={containers} option={<ReloadButton onClick={loadContainers}/>} filterColumnKey="name"/>
           </div>
         </div>
       </div>

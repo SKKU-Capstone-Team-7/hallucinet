@@ -1,13 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 
-export function ReloadButton() {
+interface ReloadButtionProps {
+  onClick: () => void;
+  isLoading?: boolean;
+}
 
-  const handleReload = () => {
-    window.location.reload();
-  }
+export function ReloadButton({onClick, isLoading = false} : ReloadButtionProps) {
   return (
-    <Button className="cursor-pointer" onClick={handleReload}>
+    <Button 
+      className="cursor-pointer" 
+      onClick={onClick}
+      disabled={isLoading}
+    >
       <RefreshCw />
     </Button>
   );

@@ -11,6 +11,8 @@ import { ContainersService } from 'src/containers/containers.service';
 import { WsPingPayload } from './ws-ping-payload.dto';
 import { ContainerInfoDto } from 'src/containers/container-info.dto';
 import { DevicesService } from 'src/devices/devices.service';
+import { DeviceInfoDto } from 'src/devices/device-info.dto';
+import { DevicesController } from 'src/devices/devices.controller';
 
 type UserIdentifier = {
   userId: string;
@@ -132,7 +134,6 @@ export class EventsGateway {
     this.sendEventToId(id, 'team_containers', {
       containers: teamContainers,
     });
-    console.log('Sent: ' + JSON.stringify({ containers: teamContainers }));
 
     // Reset device containers to the current state
     this.appwriteService.clearDeviceContainers(id.deviceId);
@@ -150,19 +151,34 @@ export class EventsGateway {
       );
     });
 
-    this.broadcastEventToOtherDevices(id, 'device_connected', payload);
+    const contInfos = await Promise.all(
+      payload.containers.map(async (event) => {
+        return await this.contEventToContainerInfoDto(event, id);
+      }),
+    );
+
+    this.broadcastEventToOtherDevices(id, 'device_connected', {
+      device: await this.devicesService.getDevice(id.deviceId),
+      containers: contInfos,
+    });
   }
 
   async handleDisconnect(client: WebSocket) {
     const id = this.socketId.get(client);
     if (!id) {
+      console.log('Device ' + id + ' has no socket');
       return;
     }
-    this.unmapId(id!);
-    this.appwriteService.clearDeviceContainers(id.deviceId);
+
+    const device = await this.devicesService.getDevice(id.deviceId);
     this.broadcastEventToOtherDevices(id, 'device_disconnected', {
-      deviceId: id.deviceId,
+      device: device,
+      containers: await this.containersService.getContainers(id.deviceId),
     });
+
+    // IMPORTANT: Broadcast before deleting from db
+    this.appwriteService.clearDeviceContainers(id.deviceId);
+    this.unmapId(id!);
   }
 
   @SubscribeMessage('container_connected')

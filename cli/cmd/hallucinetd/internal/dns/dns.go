@@ -112,6 +112,10 @@ func (dns *Dns) handleDNSRequest(rw dnslib.ResponseWriter, req *dnslib.Msg) {
 	}
 }
 
+func (dns *Dns) PrintEntries() {
+	log.Printf("%v\n", dns.entries)
+}
+
 func (dns *Dns) Start() error {
 	mux := dnslib.NewServeMux()
 	mux.HandleFunc(".", dns.handleDNSRequest)

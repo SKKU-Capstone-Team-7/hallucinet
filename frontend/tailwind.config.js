@@ -1,16 +1,10 @@
-/** @type {import('tailwindcss').Config} */
+// tailwind.config.js
 module.exports = {
-  content: [
-    './app/**/*.{js,ts,jsx,tsx}',
-    './pages/**/*.{js,ts,jsx,tsx}',
-    './components/**/*.{js,ts,jsx,tsx}',
-  ],
   theme: {
     extend: {
       fontFamily: {
-        michroma: ['Michroma', 'sans-serif'],
+        michroma: ['var(--font-michroma)'], // ✅ next/font 사용 시 이렇게 등록!
       },
     },
   },
-  plugins: [],
 }

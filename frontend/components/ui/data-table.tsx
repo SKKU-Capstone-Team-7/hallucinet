@@ -23,19 +23,21 @@ import {
 import { LucideSearch } from "lucide-react"
 import { ReloadButton } from "../common/ReloadButtion"
  
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-  filterColumnKey: string,
-  option?: React.ReactNode
+interface DataTableProps<TData> {
+  columns: ColumnDef<TData>[];
+  data: TData[];
+  filterColumnKey: string;
+  option?: React.ReactNode;
+  onRowClick?: (row: TData) => void;
 }
+
  
-export function DataTable<TData, TValue>({
+export function DataTable<TData>({
   columns,
   data,
   filterColumnKey,
   option
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )

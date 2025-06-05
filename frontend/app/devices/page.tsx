@@ -20,6 +20,9 @@ import {
 
 import { getAppwriteClient, getCurrentUser } from '@/lib/appwrite';
 import { backendFetch } from '@/lib/utils';
+import { columns } from "../dashboard/columns";
+import { DataTable } from "@/components/ui/data-table";
+
 
 interface DeviceInfo {
   id: string;
@@ -29,6 +32,16 @@ interface DeviceInfo {
   last_activate: Date;
   userId: string;
   status: 'online' | 'offline';
+}
+function InviteButton() {
+  return (
+    <Button className="cursor-pointer">
+      <div className="flex items-center gap-4">
+        <Plus />
+        Add Device
+      </div>
+    </Button>
+  );
 }
 
 export default function DevicesPage() {
@@ -147,6 +160,22 @@ export default function DevicesPage() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold">Devices</h1>
+          <p className="text-2xl">Devices</p>
+          <div>
+            <DataTable 
+              columns={columns} 
+              data={devices} 
+              filterColumnKey="name" 
+              option={
+                <div className="flex gap-4">
+                  <InviteButton/>
+                  <Button variant="outline" onClick={loadDevices}>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  </Button>
+                </div>
+              }
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-4 mb-4">

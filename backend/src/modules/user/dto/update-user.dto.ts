@@ -14,13 +14,11 @@ export class UpdateUserDto {
         example: '12345678',
         description: 'current password'
     })
-    @IsString()
     readonly password?: string;
 
     @ApiProperty({
         example: '12345678',
         description: 'new passord that user wants to change to'
     })
-    @IsString()
     readonly oldPassword?: string;
 }

@@ -19,9 +19,13 @@ export class TeamService {
             throw new BadRequestException('you are already registered in another team.')
         }
 
+        const randomNum = Math.floor(Math.random() * 256);
+
+        const ipBlock16 = `10.${randomNum}.0.0`;
+
         try {
             const newTeam = await teams.create(ID.unique(), createTeamDto.name, ['owner']);
-            const updatedPrefs = await teams.updatePrefs(newTeam.$id, { ipBlock16: createTeamDto.ipBlock16 });
+            const updatedPrefs = await teams.updatePrefs(newTeam.$id, { ipBlock16: ipBlock16 });
             const teamInDb = await this.databaseService.registerTeamId(newTeam.$id);
             console.log(teamInDb);
             // team database register is needed

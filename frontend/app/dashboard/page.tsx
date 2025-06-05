@@ -288,7 +288,7 @@ export default function DashboardPage() {
     <MainLayout user={user}>
       <div className="ml-8">
         <div>
-          <p className="text-2xl">Recent Containers</p>
+          <p className="text-2xl font-michroma">Recent Containers</p>
           <div className="max-w-4xl">
             <div className="container">
               <ContainerScrollArea containers={containers}/>
@@ -297,7 +297,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-8">
-          <p className="text-2xl">Devices</p>
+          <p className="text-2xl font-michroma">Devices</p>
           <div>
             <DataTable 
               columns={columns} 
@@ -306,7 +306,7 @@ export default function DashboardPage() {
               option={
                 <div className="flex gap-4">
                   <AddDeviceButton/>
-                  <ReloadButton onClick={loadDevices}/>
+                  <ReloadButton onClick={loadDevices} isLoading={isDevicesLoading}/>
                 </div>
               }
             />

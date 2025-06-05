@@ -65,7 +65,7 @@ export function DataTable<TData, TValue>({
   return (
     <div>
       <div className="mt-4 flex items-center gap-4">
-        <div className="grow max-w-lg">
+        <div className="grow max-w-xs">
           <div className="flex items-center shadow-sm rounded-sm">
             <div className="p-2">
               <LucideSearch />

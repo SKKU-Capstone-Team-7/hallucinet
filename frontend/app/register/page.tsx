@@ -123,7 +123,7 @@ export default function RegisterPage() {
 
   return (
     <div className="w-sm mx-auto mt-20 bg-white shadow-sm p-8">
-      <p className="text-2xl font-light text-center mt-4">Create an Account</p>
+      <p className="text-2xl font-light text-center mt-4 text-black">Create an Account</p>
       <p className="text-sm text-center text-gray-500">
         Please enter your details
       </p>
@@ -133,16 +133,19 @@ export default function RegisterPage() {
           <div className="grid gap-5">
             <Input
               placeholder="First Name"
+              className = "text-black"
               {...register("first_name", { required: true })}
               disabled={isSubmitting}
             />
             <Input
               placeholder="Last Name"
+              className = "text-black"
               {...register("last_name", { required: true })}
               disabled={isSubmitting}
             />
             <Input
               placeholder="Email"
+              className = "text-black"
               {...register("email", { 
                 required: true,
               })}
@@ -151,6 +154,7 @@ export default function RegisterPage() {
             <Input
               type="password"
               placeholder="Password"
+              className = "text-black"
               {...register("password", { 
                 required: true,
                 minLength: { 
@@ -163,6 +167,7 @@ export default function RegisterPage() {
             <Input
               type="password"
               placeholder="Confirm Password"
+              className = "text-black"
               {...register("confirm_password", { 
                 required: true,
                 validate: (value) => value === watch("password") || "Passwords do not match." 
@@ -179,7 +184,7 @@ export default function RegisterPage() {
             Sign up
           </Button>
 
-          <div className="mt-4 flex gap-4 mx-auto">
+          <div className="mt-4 flex gap-4 mx-auto text-black">
             <div className="p-2 bg-gray-100 rounded-xl w-16">
               <FaApple className="mx-auto" size={22} />
             </div>
@@ -194,7 +199,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="mt-4 text-center text-xs">
+          <div className="mt-4 text-center text-xs text-black">
             Already have an account?{" "}
             <Link className="text-blue-500" href="/login">
               Sign in

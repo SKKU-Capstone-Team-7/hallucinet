@@ -100,6 +100,35 @@
 
 }
 
-tr:hover, tr[data-state=selected]:hover {
-  background-color: transparent !important;
+tr {
+  background-color: #1a2841;
+  color: var(--muted-foreground);
+}
+
+tr:hover,
+tr[data-state="selected"]:hover {
+  background-color: #1a2841 !important;
+  color: var(--muted-foreground);
+}
+
+table > thead > tr:first-child > th:first-child {
+  border-top-left-radius: 12px;
+}
+
+table > thead > tr:first-child > th:last-child {
+  border-top-right-radius: 12px;
+}
+
+table > tbody > tr:last-child > td:first-child {
+  border-bottom-left-radius: 12px;
+}
+table > tbody > tr:last-child > td:last-child {
+  border-bottom-right-radius: 12px;
+}
+
+@font-face {
+  font-family: 'Michroma';
+  src: url('/fonts/Michroma-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }

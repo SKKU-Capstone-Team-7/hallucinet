@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Account, Models } from 'appwrite';
-
 import MainLayout from '@/components/MainLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,6 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-
 import { getAppwriteClient, getCurrentUser } from '@/lib/appwrite';
 import { backendFetch } from '@/lib/utils';
 

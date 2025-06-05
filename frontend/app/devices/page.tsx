@@ -122,7 +122,17 @@ export default function DevicesPage() {
         <div className="mt-18">
           <p className="text-2xl">Devices</p>
           <div>
-            <DataTable columns={columns} data={devices} filterColumnKey="name" option={<div className="flex gap-4"><InviteButton/><ReloadButton onClick={loadDevices}/></div>}/>
+            <DataTable 
+              columns={columns} 
+              data={devices} 
+              filterColumnKey="name" 
+              option={
+                <div className="flex gap-4">
+                  <InviteButton/>
+                  <ReloadButton onClick={loadDevices} isLoading={isDevicesLoading}/>
+                </div>
+              }
+            />
           </div>
         </div>
       </div>

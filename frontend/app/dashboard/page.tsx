@@ -306,7 +306,7 @@ export default function DashboardPage() {
               option={
                 <div className="flex gap-4">
                   <AddDeviceButton/>
-                  <ReloadButton onClick={loadDevices}/>
+                  <ReloadButton onClick={loadDevices} isLoading={isDevicesLoading}/>
                 </div>
               }
             />

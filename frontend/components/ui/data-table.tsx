@@ -21,27 +21,29 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { LucideSearch } from "lucide-react"
-import { ReloadButton } from "../common/ReloadButtion"
- 
+import { Skeleton } from "@/components/ui/skeleton" 
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   filterColumnKey: string,
-  option?: React.ReactNode
+  option?: React.ReactNode,
+  isLoading?: boolean;
 }
  
 export function DataTable<TData, TValue>({
   columns,
   data,
   filterColumnKey,
-  option
+  option,
+  isLoading=false,
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
 
   const table = useReactTable({
-    data,
+    data: data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -56,38 +58,40 @@ export function DataTable<TData, TValue>({
       }
     }
   })
+
+  const rowCount = table.getState().pagination.pageSize;
   
  
   return (
     <div>
-        <div className="mt-4 flex items-center gap-4">
-            <div className="grow max-w-lg">
-                <div className="flex items-center shadow-sm rounded-sm">
-                    <div className="p-2">
-                        <LucideSearch />
-                    </div>
-                    <Input
-                        placeholder="Search"
-                        value={(table.getColumn(filterColumnKey)?.getFilterValue() as string) ?? ""}
-                        onChange={(event) =>
-                        table.getColumn(filterColumnKey)?.setFilterValue(event.target.value)
-                        }
-                    className="border-none shadow-none focus:border-none focus-visible:border-none focus-within:border-none outline-none"
-                    />
-                </div>
+      <div className="mt-4 flex items-center gap-4">
+        <div className="grow max-w-lg">
+          <div className="flex items-center shadow-sm rounded-sm">
+            <div className="p-2">
+              <LucideSearch />
             </div>
-            {option}
+            <Input
+              placeholder="Search"
+              value={(table.getColumn(filterColumnKey)?.getFilterValue() as string) ?? ""}
+              onChange={(event) =>
+                table.getColumn(filterColumnKey)?.setFilterValue(event.target.value)
+              }
+              className="border-none shadow-none focus:border-none focus-visible:border-none focus-within:border-none outline-none"
+            />
+          </div>
         </div>
+        {option}
+      </div>
     <div className="rounded-md border mt-2 max-w-4xl">
       <Table className="w-full table-fixed">
         <colgroup>
-            {columns.map((column) => (
-              <col
-                key={(column as any).id || (column as any).accessorKey} // column.id 또는 accessorKey 사용
-                className={(column.meta as any)?.widthClass || 'w-auto'} // meta에서 widthClass 가져오기
-              />
-            ))}
-          </colgroup>
+          {columns.map((column) => (
+            <col
+              key={(column as any).id || (column as any).accessorKey} // column.id 또는 accessorKey 사용
+              className={(column.meta as any)?.widthClass || 'w-auto'} // meta에서 widthClass 가져오기
+            />
+          ))}
+        </colgroup>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
@@ -107,7 +111,20 @@ export function DataTable<TData, TValue>({
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows?.length ? (
+          {isLoading ? (
+            Array.from({ length: rowCount}).map((_, rowIndex) => (
+              <TableRow key={`skeleton-row-${rowIndex}`}>
+                {columns.map((column, cellIndex) => (
+                  <TableCell
+                    key={`skeleton-cell-${rowIndex}-${(column as any).id || (column as any).accessorKey || `col=cell=${cellIndex}`}`}
+                    className="h-16 text-base whitespace-nowrap overflow-hidden [mask-image:linear-gradient(to_right,black_75%,transparent_100%)]"
+                  >
+                    <Skeleton className="h-6 w-9/10 bg-slate-600"/>
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}

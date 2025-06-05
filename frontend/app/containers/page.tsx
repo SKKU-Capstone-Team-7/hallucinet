@@ -118,7 +118,14 @@ export default function ContainerPage() {
         <div className="mt-18">
           <p className="text-2xl">Containers</p>
           <div>
-            <DataTable columns={columns} data={containers} option={<ReloadButton onClick={loadContainers}/>} filterColumnKey="name"/>
+            <DataTable 
+              columns={columns} 
+              data={containers} 
+              option={
+                <ReloadButton onClick={loadContainers} isLoading={isContainersLoading}/>
+              } 
+              filterColumnKey="name"
+            />
           </div>
         </div>
       </div>

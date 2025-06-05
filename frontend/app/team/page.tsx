@@ -236,7 +236,7 @@ export default function TeamPage() {
               option={
                 <div className="flex gap-4">
                   <InviteButton isOwner={isOwner}/>
-                  <ReloadButton onClick={loadTeamUsers}/>
+                  <ReloadButton onClick={loadTeamUsers} isLoading={isTeamUsersLoading}/>
                 </div>
               }
             />

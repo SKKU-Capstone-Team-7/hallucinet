@@ -217,7 +217,7 @@ export default function OnboardingPage() {
             <DataTable 
               columns={memoizedColumns} 
               data={invitations} 
-              option={<ReloadButton onClick={loadInvitations}/>}
+              option={<ReloadButton onClick={loadInvitations} isLoading={isInvitationsLoading}/>}
               filterColumnKey="senderName"
             />
           </div>

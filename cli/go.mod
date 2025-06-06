@@ -5,6 +5,7 @@ go 1.24.2
 require (
 	github.com/docker/docker v27.5.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/gorilla/websocket v1.5.3
 	github.com/spf13/cobra v1.9.1
 )
 

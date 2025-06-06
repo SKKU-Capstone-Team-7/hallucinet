@@ -51,6 +51,15 @@ export class DevicesService {
     return dtos;
   }
 
+  async getDevice(id: string): Promise<DeviceInfoDto> {
+    const doc = await this.appwriteService.getDevice(id);
+    return new DeviceInfoDto({
+      name: doc['name'],
+      subnet: doc['ipBlock24'] + '/24',
+      address: doc['address'],
+    });
+  }
+
   async createDevice(name: string): Promise<DeviceInfoDto> {
     return new DeviceInfoDto({});
   }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,12 +15,6 @@ import (
 )
 
 var ErrInvalidToken = errors.New("invalid token")
-
-var (
-	backendEndpoint      = "http://localhost/api/v1"
-	frontendEndpoint     = "http://localhost"
-	coordinationEndpoint = "http://localhost/api/coordination"
-)
 
 func DecodeDeviceToken(tokenString string) (types.DeviceToken, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
@@ -49,7 +42,7 @@ func DecodeDeviceToken(tokenString string) (types.DeviceToken, error) {
 	}, nil
 }
 
-func Authenticate(tokenPath string) (types.DeviceToken, error) {
+func Authenticate(tokenPath string, endpoint string) (types.DeviceToken, error) {
 	_, err := os.Stat(tokenPath)
 	if err == nil {
 		tokenData, err := os.ReadFile(tokenPath)
@@ -64,7 +57,7 @@ func Authenticate(tokenPath string) (types.DeviceToken, error) {
 	}
 
 	// No valid token... register device
-	token, err := registerDevice()
+	token, err := registerDevice(endpoint)
 	if err != nil {
 		return types.DeviceToken{}, err
 	}
@@ -78,16 +71,16 @@ func Authenticate(tokenPath string) (types.DeviceToken, error) {
 	return deviceToken, nil
 }
 
-func registerDevice() (string, error) {
-	deviceId, err := createAuthRequest()
+func registerDevice(endpoint string) (string, error) {
+	deviceId, err := createAuthRequest(endpoint)
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("Visit %v/confirm-device?deviceId=%v to confirm\n", frontendEndpoint, deviceId)
+	fmt.Printf("Visit %v/confirm-device?deviceId=%v to confirm\n", endpoint, deviceId)
 
 	// Loop until device is confirmed
 	for {
-		isConfirmed, err := IsDeviceAuthConfirmed(deviceId)
+		isConfirmed, err := IsDeviceAuthConfirmed(deviceId, endpoint)
 		if err != nil {
 			return "", err
 		}
@@ -99,7 +92,7 @@ func registerDevice() (string, error) {
 	}
 
 	// Create token
-	jwt, err := createJWT(deviceId)
+	jwt, err := createJWT(deviceId, endpoint)
 	if err != nil {
 		return "", err
 	}
@@ -111,8 +104,8 @@ type AuthRequestDto struct {
 	Url string `json:"url"`
 }
 
-func createAuthRequest() (string, error) {
-	URL := backendEndpoint + "/devices/auth"
+func createAuthRequest(endpoint string) (string, error) {
+	URL := endpoint + "/api/v1//devices/auth"
 	hostname, err := os.Hostname()
 	if err != nil {
 		return "", err
@@ -140,10 +133,9 @@ type TokenDto struct {
 	Token string `json:"token"`
 }
 
-func createJWT(deviceId string) (string, error) {
-	URL := coordinationEndpoint + "/token"
+func createJWT(deviceId string, endpoint string) (string, error) {
+	URL := endpoint + "/api/coordination/token"
 
-	log.Printf("Creating token for %v", deviceId)
 	resp, err := http.PostForm(URL, url.Values{
 		"deviceId": {deviceId},
 	})
@@ -162,8 +154,8 @@ func createJWT(deviceId string) (string, error) {
 	return token.Token, nil
 }
 
-func IsDeviceAuthConfirmed(deviceId string) (bool, error) {
-	URL := backendEndpoint + "/devices/" + deviceId
+func IsDeviceAuthConfirmed(deviceId string, endpoint string) (bool, error) {
+	URL := endpoint + "/api/v1/devices/" + deviceId
 	resp, err := http.Get(URL)
 	if err != nil {
 		return false, err

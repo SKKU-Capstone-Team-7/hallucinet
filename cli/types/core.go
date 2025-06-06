@@ -30,4 +30,5 @@ type Config struct {
 	HallucinetSocket string
 	DeviceToken      DeviceToken
 	DnsAddress       netip.AddrPort
+	NetworkName      string
 }

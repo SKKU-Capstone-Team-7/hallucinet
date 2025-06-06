@@ -6,7 +6,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinet/internal/hallucinet"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/auth"
@@ -29,7 +28,7 @@ var upCmd = &cobra.Command{
 			return err
 		}
 
-		token, err := auth.Authenticate(upOpts.tokenPath)
+		token, err := auth.Authenticate(upOpts.tokenPath, config.Endpoint)
 		if err != nil {
 			log.Printf("Cannot decode device token. %v\n", err)
 			return err
@@ -52,14 +51,11 @@ var upCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(upCmd)
 
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Panicf("Cannot read user home directory. %v\n", homeDir)
-	}
+	hallucinetDir := "/etc/hallucinet"
 
-	defaultConfigPath := fmt.Sprintf("%s/.hallucinet/config.json", homeDir)
+	defaultConfigPath := fmt.Sprintf("%s/config.json", hallucinetDir)
 	upCmd.Flags().StringVar(&upOpts.configPath, "config", defaultConfigPath, "")
 
-	defaultTokenPath := fmt.Sprintf("%s/.hallucinet/token", homeDir)
+	defaultTokenPath := fmt.Sprintf("%s/token", hallucinetDir)
 	upCmd.Flags().StringVar(&upOpts.tokenPath, "token", defaultTokenPath, "")
 }

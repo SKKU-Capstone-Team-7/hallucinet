@@ -2,9 +2,13 @@ package hallucinetd
 
 import (
 	"encoding/binary"
+	"encoding/json"
+	"errors"
 	"log"
 	"net"
+	"net/url"
 	"os"
+	"time"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/cmd/hallucinetd/internal/dns"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/comms"
@@ -13,7 +17,10 @@ import (
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/routing"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
+	"github.com/gorilla/websocket"
 )
+
+var ErrUnknownWSMsg = errors.New("Unknown socket message")
 
 type HallucinetDaemon struct {
 	listener     *net.UnixListener
@@ -22,6 +29,7 @@ type HallucinetDaemon struct {
 	coord        *coordination.Coord
 	domon        *docker.DockerMonitor
 	routeManager *routing.RouteManager
+	ws           *websocket.Conn
 }
 
 func New(config types.Config) (*HallucinetDaemon, error) {
@@ -77,6 +85,23 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 	}
 	daemon.routeManager = roma
 
+	// Create websocket connection
+	coordUrl, err := url.Parse(config.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+	u := url.URL{
+		Scheme: "ws",
+		Host:   coordUrl.Host,
+		Path:   "/api/coordination/events",
+	}
+	log.Println(u.String())
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	daemon.ws = c
+
 	return &daemon, nil
 }
 
@@ -86,22 +111,198 @@ func (daemon *HallucinetDaemon) Close() error {
 		return err
 	}
 
+	err = daemon.ws.Close()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (daemon *HallucinetDaemon) dockerListenLoop() error {
-	log.Printf("Listening to docker!!")
 	for event := range daemon.domon.EventChan {
-		switch event.Kind {
+		var wsMsg comms.WsMsg
+		wsMsg.Data = comms.WsSendContEventPayload{
+			Token: daemon.coord.JWT,
+			Event: event,
+		}
+
+		switch event.ConvEventKind {
 		case comms.EventContainerConnected:
-			log.Printf("CONNECTED: %v\n", event)
+			wsMsg.Event = "container_connected"
 		case comms.EventContainerDisconnected:
-			log.Printf("DISCONNECTED: %v\n", event)
+			wsMsg.Event = "container_disconnected"
 		case comms.EventUnknown:
 			log.Printf("UNKNOWN: %V\n", event)
 			return comms.ErrUnknownEvent
 		}
+
+		daemon.ws.WriteJSON(wsMsg)
 	}
+	return nil
+}
+
+func (daemon *HallucinetDaemon) handleTeamContainers(payload comms.WsRecvTeamContainersPayload) {
+	for _, dto := range payload.Containers {
+		cont, err := coordination.ParseContainerInfoDto(dto)
+		if err != nil {
+			log.Printf("Cannot parse container: %v.%v", dto.Name, dto.Device.Name)
+		}
+		daemon.dns.AddEntry(cont)
+	}
+}
+
+func (daemon *HallucinetDaemon) handleDeviceConnected(payload comms.WsRecvDevConnectPayload) {
+	log.Printf("Device connected: %v\n", payload)
+
+	for _, dto := range payload.Containers {
+		cont, err := coordination.ParseContainerInfoDto(dto)
+		if err != nil {
+			log.Printf("Cannot parse container dto: %v\n", err)
+			continue
+		}
+		daemon.dns.AddEntry(cont)
+	}
+}
+
+func (daemon *HallucinetDaemon) handleDeviceDisconnected(payload comms.WsRecvDevDisconnectPayload) {
+	log.Printf("Device disconnected: %v\n", payload)
+
+	for _, dto := range payload.Containers {
+		cont, err := coordination.ParseContainerInfoDto(dto)
+		if err != nil {
+			log.Printf("Cannot parse container dto: %v\n", err)
+			continue
+		}
+		daemon.dns.RemoveEntry(cont)
+	}
+}
+
+func (daemon *HallucinetDaemon) handleContainerConnected(payload comms.WsRecvContEventPayload) {
+	cont, err := coordination.ParseContainerInfoDto(payload.Container)
+	if err != nil {
+		log.Printf("Cannot parse container connected event: %v", payload)
+	}
+
+	log.Printf("Container connected: %v\n", cont)
+	err = daemon.dns.AddEntry(cont)
+	if err != nil {
+		log.Printf("Cannot remove DNS entry %v. %v\n", cont, err)
+	}
+}
+
+func (daemon *HallucinetDaemon) handleContainerDisconnected(payload comms.WsRecvContEventPayload) {
+	cont, err := coordination.ParseContainerInfoDto(payload.Container)
+	if err != nil {
+		log.Printf("Cannot parse container disconnected event: %v", payload)
+	}
+
+	log.Printf("Container disconnected: %v\n", cont)
+	err = daemon.dns.RemoveEntry(cont)
+	if err != nil {
+		log.Printf("Cannot remove DNS entry %v. %v\n", cont, err)
+	}
+}
+
+func (daemon *HallucinetDaemon) pingLoop() {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		<-ticker.C
+
+		wsMsg := comms.WsMsg{
+			Event: "ping",
+			Data: struct {
+				Token string `json:"token"`
+			}{
+				Token: daemon.coord.JWT,
+			},
+		}
+
+		err := daemon.ws.WriteJSON(wsMsg)
+		if err != nil {
+			log.Printf("Ping write error: %v", err)
+			return
+		}
+	}
+}
+
+func (daemon *HallucinetDaemon) wsListenLoop() error {
+	for {
+		messageType, eventBytes, err := daemon.ws.ReadMessage()
+		if err != nil {
+			log.Printf("Cannot read ws message: type %v msg %v\n", messageType, string(eventBytes))
+			continue
+		}
+		// log.Printf("Got ws message: type %v msg %v\n", messageType, string(eventBytes))
+
+		wsMsg := comms.WsMsg{}
+		err = json.Unmarshal(eventBytes, &wsMsg)
+		if err != nil {
+			log.Printf("Cannot unmarshal ws message: %v\n", err)
+			continue
+		}
+
+		data, err := json.Marshal(wsMsg.Data)
+		if err != nil {
+			log.Printf("Cannot read data: %v\n", err)
+			continue
+		}
+
+		switch wsMsg.Event {
+		case "team_containers":
+			var payload comms.WsRecvTeamContainersPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal team containers payload: %v\n", err)
+				log.Printf("%v\n", string(data))
+				continue
+			}
+			daemon.handleTeamContainers(payload)
+
+		case "device_disconnected":
+			var payload comms.WsRecvDevDisconnectPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal device disconnected payload: %v\n", err)
+				continue
+			}
+			daemon.handleDeviceDisconnected(payload)
+
+		case "device_connected":
+			var payload comms.WsRecvDevConnectPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal device connected payload: %v\n", err)
+				continue
+			}
+			daemon.handleDeviceConnected(payload)
+
+		case "container_connected":
+			var payload comms.WsRecvContEventPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal container connected payload: %v\n", err)
+				continue
+			}
+			daemon.handleContainerConnected(payload)
+
+		case "container_disconnected":
+			var payload comms.WsRecvContEventPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal container disconnected payload: %v\n", err)
+				continue
+			}
+			daemon.handleContainerDisconnected(payload)
+		default:
+			log.Printf("Unknown ws event: %v\n", wsMsg.Event)
+		}
+
+		daemon.dns.PrintEntries()
+	}
+
 	return nil
 }
 
@@ -261,10 +462,31 @@ func (daemon *HallucinetDaemon) addContainersFromServer() {
 	log.Printf("Adding entry %v %v %v\n", deviceOne.Name, containerOne.Name, containerOne.Address)
 }
 
-func (daemon *HallucinetDaemon) Start() {
+func (daemon *HallucinetDaemon) Start() error {
+	// Register device socket and send current state
+	containers, err := daemon.domon.GetDeviceContainers()
+	if err != nil {
+		return err
+	}
+
+	var wsMsg comms.WsMsg
+	wsMsg.Event = "device_connected"
+	wsMsg.Data = comms.WsSendDevConnectPayload{
+		Token:      daemon.coord.JWT,
+		Containers: containers,
+	}
+	daemon.ws.WriteJSON(wsMsg)
+
 	go func() {
-		daemon.socketListenLoop()
+		daemon.startDns()
+		defer daemon.stopDns()
 	}()
 
+	go daemon.socketListenLoop()
+	go daemon.pingLoop()
+	go daemon.wsListenLoop()
+
 	daemon.dockerListenLoop()
+
+	return nil
 }

@@ -33,15 +33,12 @@ func Execute() {
 }
 
 func init() {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Panicf("Cannot read user home directory. %v\n", homeDir)
-	}
+	hallucinetDir := "/etc/hallucinet"
 
-	defaultConfigPath := fmt.Sprintf("%s/.hallucinet/config.json", homeDir)
+	defaultConfigPath := fmt.Sprintf("%s/config.json", hallucinetDir)
 	rootCmd.Flags().StringVar(&configPath, "config", defaultConfigPath, "")
 
-	defaultTokenPath := fmt.Sprintf("%s/.hallucinet/token", homeDir)
+	defaultTokenPath := fmt.Sprintf("%s/token", hallucinetDir)
 	rootCmd.Flags().StringVar(&tokenPath, "token", defaultTokenPath, "")
 }
 
@@ -52,7 +49,7 @@ func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	token, err := auth.Authenticate(tokenPath)
+	token, err := auth.Authenticate(tokenPath, config.Endpoint)
 	if err != nil {
 		log.Printf("Cannot decode device token. %v\n", err)
 		return err
@@ -65,7 +62,11 @@ func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	daemon.Start()
+	err = daemon.Start()
+	if err != nil {
+		return err
+	}
+	defer daemon.Close()
 
 	return nil
 }

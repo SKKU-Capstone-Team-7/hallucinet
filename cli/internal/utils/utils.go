@@ -11,7 +11,7 @@ import (
 )
 
 type ConfigJson struct {
-	Endpoint         string `json:"coordination_endpoint"`
+	Endpoint         string `json:"hallucinet_endpoint"`
 	HallucinetSocket string `json:"hallucinet_socket"`
 	DnsAddress       string `json:"dns_address"`
 }
@@ -36,6 +36,8 @@ func ReadConfigFile(path string) (types.Config, error) {
 	config := types.Config{
 		Endpoint:         configJson.Endpoint,
 		HallucinetSocket: configJson.HallucinetSocket,
+		NetworkName:      "bridge",
+		// NetworkName:      "hallucinet",
 	}
 
 	// DNS listen address must be valid

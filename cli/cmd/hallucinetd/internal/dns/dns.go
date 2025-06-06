@@ -3,6 +3,7 @@ package dns
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/netip"
 	"strings"
 
@@ -38,7 +39,7 @@ func New(config types.Config) (*Dns, error) {
 func (dns *Dns) GetContainerFQDN(container types.ContainerInfo) string {
 	deviceName := strings.ToLower(container.Device.Name)
 	containerName := strings.ToLower(container.Name)
-	return fmt.Sprintf("%v.%v.test.", deviceName, containerName)
+	return fmt.Sprintf("%v.%v.test.", containerName, deviceName)
 }
 
 func (dns *Dns) entryExists(container types.ContainerInfo) bool {
@@ -75,6 +76,7 @@ func (dns *Dns) ClearEntries() {
 }
 
 func (dns *Dns) handleDNSRequest(rw dnslib.ResponseWriter, req *dnslib.Msg) {
+	log.Printf("entries: %v\n", dns.entries)
 	res := new(dnslib.Msg)
 	res.SetReply(req)
 
@@ -110,11 +112,16 @@ func (dns *Dns) handleDNSRequest(rw dnslib.ResponseWriter, req *dnslib.Msg) {
 	}
 }
 
+func (dns *Dns) PrintEntries() {
+	log.Printf("%v\n", dns.entries)
+}
+
 func (dns *Dns) Start() error {
 	mux := dnslib.NewServeMux()
 	mux.HandleFunc(".", dns.handleDNSRequest)
 	dns.server.Handler = mux
 
+	fmt.Printf("Serving dns on %v\n", dns.address)
 	return dns.server.ListenAndServe()
 }
 

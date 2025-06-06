@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
 
@@ -25,18 +26,28 @@ func New(config types.Config) (*DockerMonitor, error) {
 		return nil, err
 	}
 	domon := DockerMonitor{}
+	domon.networkName = config.NetworkName
 	domon.client = cli
 	domon.EventChan = domon.createEventsChannel()
-	domon.networkName = config.NetworkName
 
 	return &domon, nil
 }
 
 func (domon *DockerMonitor) createDockerChannel() (<-chan events.Message, <-chan error) {
+	networkResource, err := domon.client.NetworkInspect(context.Background(),
+		domon.networkName,
+		network.InspectOptions{})
+	if err != nil {
+		log.Printf("Network name: %v\n", domon.networkName)
+		log.Fatal(err)
+	}
+	networkID := networkResource.ID
+
 	filters := filters.NewArgs(
 		filters.Arg("type", "network"),
 		filters.Arg("event", "connect"),
 		filters.Arg("event", "disconnect"),
+		filters.Arg("network", networkID), // filter by network ID, not name
 	)
 
 	dockerChan, chanErr := domon.client.Events(context.Background(),
@@ -52,6 +63,7 @@ func (domon *DockerMonitor) createEventsChannel() chan comms.ContEvent {
 		for {
 			select {
 			case dockerEvent := <-dockerChan:
+				log.Printf("Docker event: %v\n", dockerEvent)
 				event := domon.translateDockerEvent(dockerEvent)
 				eventChan <- event
 			case dockerErr := <-dockerErrChan:
@@ -135,14 +147,22 @@ func (domon *DockerMonitor) containerDoContEvent(cont dockerTypes.Container) com
 
 // All events are EventContainerConnected
 func (domon *DockerMonitor) GetDeviceContainers() ([]comms.ContEvent, error) {
+	targetNetwork := "hallucinet"
 	containers := []comms.ContEvent{}
 	client := domon.client
-	conts, err := client.ContainerList(context.Background(), container.ListOptions{})
+
+	conts, err := client.ContainerList(context.Background(), container.ListOptions{All: true})
 	if err != nil {
-		return []comms.ContEvent{}, err
+		return nil, err
 	}
 
 	for _, cont := range conts {
+		if cont.NetworkSettings != nil {
+			if _, ok := cont.NetworkSettings.Networks[targetNetwork]; !ok {
+				continue
+			}
+		}
+
 		contEvent := domon.containerDoContEvent(cont)
 		containers = append(containers, contEvent)
 	}

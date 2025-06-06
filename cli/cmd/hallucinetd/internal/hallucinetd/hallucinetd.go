@@ -95,7 +95,7 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 		Host:   coordUrl.Host,
 		Path:   "/api/coordination/events",
 	}
-	log.Println(u.String())
+
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		return nil, err

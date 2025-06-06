@@ -36,8 +36,8 @@ func ReadConfigFile(path string) (types.Config, error) {
 	config := types.Config{
 		Endpoint:         configJson.Endpoint,
 		HallucinetSocket: configJson.HallucinetSocket,
-		NetworkName:      "bridge",
-		// NetworkName:      "hallucinet",
+		// NetworkName:      "bridge",
+		NetworkName: "hallucinet",
 	}
 
 	// DNS listen address must be valid

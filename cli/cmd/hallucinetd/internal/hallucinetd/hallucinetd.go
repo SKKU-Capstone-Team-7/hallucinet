@@ -30,6 +30,7 @@ type HallucinetDaemon struct {
 	domon        *docker.DockerMonitor
 	routeManager *routing.RouteManager
 	ws           *websocket.Conn
+	Device       coordination.DeviceInfoDto
 }
 
 func New(config types.Config) (*HallucinetDaemon, error) {
@@ -140,6 +141,11 @@ func (daemon *HallucinetDaemon) dockerListenLoop() error {
 		daemon.ws.WriteJSON(wsMsg)
 	}
 	return nil
+}
+
+func (daemon *HallucinetDaemon) handleDeviceSelf(payload comms.WsRecvDevSelfPayload) {
+	daemon.Device = payload.Device
+	log.Printf("I am %v\n", payload.Device)
 }
 
 func (daemon *HallucinetDaemon) handleTeamContainers(payload comms.WsRecvTeamContainersPayload) {
@@ -253,6 +259,16 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 		}
 
 		switch wsMsg.Event {
+		case "device_self":
+			var payload comms.WsRecvDevSelfPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal device self payload: %v\n", err)
+				log.Printf("%v\n", string(data))
+				continue
+			}
+			daemon.handleDeviceSelf(payload)
+
 		case "team_containers":
 			var payload comms.WsRecvTeamContainersPayload
 			err := json.Unmarshal(data, &payload)

@@ -138,7 +138,7 @@ const handleDelete = async () => {
     <MainLayout user={user}>
       <div className="p-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold">Devices</h1>
+          <h1 className="font-michroma text-2xl">Devices</h1>
         </div>
 
         <div className="flex items-center gap-4 mb-4">
@@ -160,7 +160,7 @@ const handleDelete = async () => {
 
         <div className="rounded-lg border overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-white">
               <tr>
                 <th className="text-left px-4 py-3 font-semibold">Name</th>
                 <th className="text-left px-4 py-3 font-semibold">Assigned Subnet</th>

@@ -1,5 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Michroma&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Michroma&family=Roboto&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
+
+.font-michroma {
+  font-family: 'Michroma', sans-serif;
+}
+
+.font-roboto-cell {
+  font-family: 'Roboto', sans-serif !important;
+  font-size: 0.875rem !important;
+}
+
+.font-roboto-header {
+  font-family: 'Roboto', sans-serif !important;
+  font-size: 0.9rem !important;
+}
+
+
 
 @custom-variant dark (&:is(.dark *));
 

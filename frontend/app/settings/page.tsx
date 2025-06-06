@@ -247,7 +247,7 @@ export default function SettingPage() {
     <MainLayout user={user!}>
       <div className="ml-8">
         <div className="mt-18">
-          <p className="text-2xl">Team Settings</p>
+          <p className="text-2xl font-michroma">Team Settings</p>
           <div className="mt-4 max-w-lg">
           <Alert>
             <AlertCircleIcon />

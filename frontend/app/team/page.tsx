@@ -227,7 +227,7 @@ export default function TeamPage() {
     <MainLayout user={user!}>
       <div className="ml-8">
         <div className="mt-18">
-          <p className="text-2xl">Team</p>
+          <p className="text-2xl font-michroma">Team</p>
           <div>
             <DataTable 
               columns={columns} 

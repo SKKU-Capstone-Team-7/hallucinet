@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image"; // 추가
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -91,92 +92,95 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="w-sm mx-auto mt-20 bg-white shadow-sm p-8">
-      <p className="text-2xl font-light text-center text-black mt-4">
-        Welcome Back
-      </p>
-      <p className="text-sm text-center text-gray-500">
-        Please enter your details
-      </p>
-
-      <div className="mt-8">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="grid gap-5">
-            <Input
-              id="email-login"
-              placeholder="Email"
-              className="text-black"
-              {...register("email", {
-                required: true,
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Please enter a valid email address.",
-                },
-              })}
-              disabled={isSubmitting}
-            />
-            <Input
-              id="password-login"
-              type="password"
-              placeholder="Password"
-              className="text-black"
-              {...register("password", { required: true })}
-              disabled={isSubmitting}
-            />
-
-            <div className="flex mt-1 justify-center items-center gap-4 text-black">
-              <div className="flex items-center">
-                <Checkbox
-                  id="terms"
-                  {...register("rememberMe")}
-                  disabled={isSubmitting}
-                />
-                <label htmlFor="terms" className="text-xs pl-2 text-black">
-                  Remember me
-                </label>
-              </div>
-              <Link
-                className="text-xs text-blue-500 py-2"
-                href="/forgot-password"
-              >
-                Forgot password?
-              </Link>
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full mt-4 bg-blue-900 py-4"
-            disabled={isSubmitting}
-          >
-            Login
-          </Button>
-
-          <div className="mt-4 flex gap-4 mx-auto justify-center">
-            <div className="p-2 bg-gray-100 rounded-xl w-16">
-              <FaApple className="mx-auto text-black" size={22} />
-            </div>
-            <div className="p-2 bg-gray-100 rounded-xl w-16">
-              <FaGithub className="mx-auto text-black" size={22} />
-            </div>
-            <div className="p-2 bg-gray-100 rounded-xl w-16">
-              <FaGoogle className="mx-auto text-black" size={22} />
-            </div>
-            <div className="p-2 bg-gray-100 rounded-xl w-16">
-              <FaMicrosoft className="mx-auto text-black" size={22} />
-            </div>
-          </div>
-
-          <div className="mt-4 text-center text-xs text-black">
-            <p>
-              Don't have an account?{" "}
-              <Link className="text-blue-500" href="/register">
-                Sign up
-              </Link>
-            </p>
-          </div>
-        </form>
+    <>
+      <div className="fixed top-4 left-7">
+        <Image src="/logoWhite.svg" alt="logo" width={120} height={40} />
       </div>
-    </div>
+
+      <div className="w-sm mx-auto mt-20 bg-white shadow-sm p-8 rounded-md">
+        <p className="text-2xl font-light text-center text-black mt-4">
+          Welcome Back
+        </p>
+        <p className="text-sm text-center text-gray-500">
+          Please enter your details
+        </p>
+
+        <div className="mt-8">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid gap-5">
+              <Input
+                id="email-login"
+                placeholder="Email"
+                className="text-black"
+                {...register("email", {
+                  required: true,
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: "Please enter a valid email address.",
+                  },
+                })}
+                disabled={isSubmitting}
+              />
+              <Input
+                id="password-login"
+                type="password"
+                placeholder="Password"
+                className="text-black"
+                {...register("password", { required: true })}
+                disabled={isSubmitting}
+              />
+
+              <div className="flex mt-1 justify-center items-center gap-4 text-black">
+                <div className="flex items-center">
+                  <Checkbox
+                    id="terms"
+                    {...register("rememberMe")}
+                    disabled={isSubmitting}
+                  />
+                  <label htmlFor="terms" className="text-xs pl-2 text-black">
+                    Remember me
+                  </label>
+                </div>
+                <Link className="text-xs text-blue-500 py-2" href="/forgot-password">
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full mt-4 bg-blue-900 py-4"
+              disabled={isSubmitting}
+            >
+              Login
+            </Button>
+
+            <div className="mt-4 flex gap-4 mx-auto justify-center">
+              <div className="p-2 bg-gray-100 rounded-xl w-16">
+                <FaApple className="mx-auto text-black" size={22} />
+              </div>
+              <div className="p-2 bg-gray-100 rounded-xl w-16">
+                <FaGithub className="mx-auto text-black" size={22} />
+              </div>
+              <div className="p-2 bg-gray-100 rounded-xl w-16">
+                <FaGoogle className="mx-auto text-black" size={22} />
+              </div>
+              <div className="p-2 bg-gray-100 rounded-xl w-16">
+                <FaMicrosoft className="mx-auto text-black" size={22} />
+              </div>
+            </div>
+
+            <div className="mt-4 text-center text-xs text-black">
+              <p>
+                Don't have an account?{" "}
+                <Link className="text-blue-500" href="/register">
+                  Sign up
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
   );
 }

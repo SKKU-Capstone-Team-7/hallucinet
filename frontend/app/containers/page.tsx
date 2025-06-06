@@ -116,7 +116,7 @@ export default function ContainerPage() {
     <MainLayout user={user!}>
       <div className="ml-8">
         <div className="mt-18">
-          <p className="text-2xl">Containers</p>
+          <p className="text-2xl font-michroma">Containers</p>
           <div>
             <DataTable 
               columns={columns} 

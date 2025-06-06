@@ -16,6 +16,18 @@ import { Label } from "@radix-ui/react-dropdown-menu";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 interface TeamUpdateInfo {
   name: string;
@@ -44,9 +56,25 @@ function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
         Are you sure you want to leave this team? You’ll immediately lose access to all shared devices and containers.
       </p> 
       <div className="mt-6 flex justify-end">
-        <Button onClick={handleLeave} className="w-28 bg-red-600 hover:bg-red-700 cursor-pointer">
-          Leave Team
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button className="w-28 bg-red-600 hover:bg-red-700 cursor-pointer">
+              Leave Team
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-[#1A2841] border-slate-700 border">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription className="text-white">
+                This action is irreversible and cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="cursor-pointer bg-[#1A2841]">Cancel</AlertDialogCancel>
+              <AlertDialogAction className="cursor-pointer" onClick={handleLeave}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
@@ -72,9 +100,25 @@ function DeleteButton({ onDelete, memberCount}: { onDelete: () => Promise<void>,
         Before proceeding to delete your team, please be aware that this action is irreversible. This deletion can only be performed only if the team currently has no other members.
       </p> 
       <div className="mt-6 flex justify-end">
-        <Button onClick={handleDelete} className="w-28 bg-red-600 hover:bg-red-700 cursor-pointer">
-          Delete Team
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button className="w-28 bg-red-600 hover:bg-red-700 cursor-pointer">
+              Delete Team
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-[#1A2841] border-slate-700 border">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription className="text-white">
+                This action is irreversible and cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="cursor-pointer bg-[#1A2841]">Cancel</AlertDialogCancel>
+              <AlertDialogAction className="cursor-pointer" onClick={handleDelete}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

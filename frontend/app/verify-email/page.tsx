@@ -109,20 +109,20 @@ export default function VerifyEmailPage() {
 
   const VerificationPromptUI = (
     <div className="mx-8 mt-8 flex flex-col items-center">
-      <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-sm">
-        <Mail className="size-13" />
+      <div className="bg-[#1A2841] w-25 h-25 rounded-full flex items-center justify-center shadow-sm">
+        <Mail className="size-13 text-slate-600" />
       </div>
 
       <div className="mt-4 text-center">
-        <p className="text-3xl">{pageStatus === 'link_verification_failed' ? "Email Verification Failed" : "Verify Your Email Address"}</p>
+        <p className="text-2xl font-michroma">{pageStatus === 'link_verification_failed' ? "Email Verification Failed" : "Verify Your Email Address"}</p>
         
-        <p className="mt-4">
+        <p className="mt-4 text-sm">
           {user && !user.emailVerification && pageStatus === 'prompt_to_verify'
             ? `We have sent a verification link to ${user.email}.`
             : `We have sent a verification link.`}
         </p>
-        <p className="mt-1">Click the link to complete the process.</p>
-        <p>You might need to check your spam folder.</p>
+        <p className="mt-1 text-sm">Click the link to complete the process.</p>
+        <p className="text-sm">You might need to check your spam folder.</p>
       </div>
 
       <div className="mt-8 flex justify-center">

@@ -197,18 +197,18 @@ export default function OnboardingPage() {
   return (
     <MainLayout user={user!} menuDisabled={true}>
       <div className="mx-8 mt-8">
-        <p className="text-center text-3xl">Hello, {user?.name || "there"}</p>
+        <p className="text-center text-2xl font-michroma">Hello, {user?.name || "there"}</p>
         <div className="mt-4">
-          <p className="text-2xl">Create a team</p>
-          <p className="mt-4">Create your own team and become an owner</p>
-          <div className="w-full p-4 flex gap-4 mt-4 shadow-md rounded-md">
+          <p className="text-2xl font-michroma">Create a team</p>
+          <p className="mt-4 text-sm">Create your own team and become an owner</p>
+          <div className="w-full p-4 flex gap-4 mt-4 shadow-md rounded-md bg-[#1A2841] border border-slate-700">
             <CreateTeamForm />
           </div>
         </div>
 
         <div className="mt-4">
-          <p className="text-2xl">Join in a team</p>
-          <p className="mt-4">
+          <p className="text-2xl font-michroma">Join in a team</p>
+          <p className="mt-4 text-sm">
             Check the invitations you got and join in a team. After you choose one
             team, others are automatically rejected.
           </p>

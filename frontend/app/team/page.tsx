@@ -24,6 +24,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { DataTable } from "@/components/ui/data-table"
 import { toast } from "sonner";
 import { getColumns } from "./columns";
+import { DialogClose } from "@radix-ui/react-dialog";
 
 type InviteInputs = {
   email: string;
@@ -84,18 +85,18 @@ function InviteButton({isOwner} : {isOwner: boolean}) {
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button className="cursor-pointer" disabled={!isOwner}>
-          <div className="flex items-center gap-4">
+        <Button className="cursor-pointer " disabled={!isOwner}>
+          <div className="flex items-center gap-1">
             <Plus />
             Invite
           </div>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-[#1A2841] border-slate-700 border">
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
             <DialogTitle>Invite Member</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-white">
               Invite a user to join your team
             </DialogDescription>
           </DialogHeader>
@@ -112,7 +113,10 @@ function InviteButton({isOwner} : {isOwner: boolean}) {
             />
           </div>
           <DialogFooter>
-            <Button className="cursor-pointer" type="submit">Invite</Button>
+              <DialogClose asChild>
+                <Button variant="ghost" className="cursor-pointer">Cancel</Button>
+              </DialogClose>
+              <Button className="cursor-pointer" type="submit">Invite</Button>
           </DialogFooter>
         </form>
       </DialogContent>

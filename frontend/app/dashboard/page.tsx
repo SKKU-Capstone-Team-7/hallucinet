@@ -97,8 +97,8 @@ function ContainerScrollArea({ containers }: {containers: ContainerInfo[]}) {
 
 function AddDeviceButton() {
   return (
-    <Button className="cursor-pointer">
-      <div className="flex items-center gap-4">
+    <Button className="cursor-pointer w-30">
+      <div className="flex items-center gap-1">
         <Plus />
         Add Device
       </div>

@@ -165,8 +165,8 @@ function AppSidebar({
     try {
       const account = new Account(getAppwriteClient());
       const jwt = (await account.createJWT()).jwt;
-      console.log(updatePayload);
-      const updateRes = await backendFetch("/users/me", "PATCH", jwt, JSON.stringify(updatePayload));
+      //console.log(updatePayload);
+      const updateRes = await backendFetch("/users/me", "PATCH", jwt, updatePayload);
       if (updateRes.ok) {
         toast.success("Account settings updated successfully!");
         setIsAccountSettingsDialogOpen(false);
@@ -209,7 +209,7 @@ function AppSidebar({
                     <a href={menuDisabled ? "#" : item.url}
                     className={cn(
                           "flex items-center w-full", // 기존 스타일 유지 (필요시 추가)
-                          menuDisabled && "opacity-50 cursor-not-allowed pointer-events-none"
+                          menuDisabled && "text-slate-500 cursor-not-allowed pointer-events-none"
                         )}
                         onClick={(e) => {
                           if (menuDisabled) {
@@ -266,7 +266,7 @@ function AppSidebar({
                 <form onSubmit={handleSubmitAccountForm(onAccountSettingsSubmit)}>
                 <DialogHeader>
                   <DialogTitle>Account Settings</DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription className="text-white">
                     Make changes to your account here. Click save when you're done.
                   </DialogDescription>
                 </DialogHeader>
@@ -305,18 +305,44 @@ function AppSidebar({
                     </div>
                 </div>
           <DialogFooter className="mt-4">
-            <Button type="submit" className="cursor-pointer">Save changes</Button>
+            <Button type="submit" className="cursor-pointer">Save Changes</Button>
           </DialogFooter>
           </form>
           <div className="mt-0">
           <DialogHeader>
             <DialogTitle>Delete Account</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-white">
                     Permanently delete your account. This action cannot be undone.
                   </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
-            <Button className="w-30 bg-red-600 hover:bg-red-700 cursor-pointer"><Link href="/logout">Delete Account</Link></Button>
+              <DialogClose asChild>
+                <Button variant="ghost" className="cursor-pointer">Cancel</Button>
+              </DialogClose>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="w-30 bg-red-600 hover:bg-red-700 cursor-pointer">
+                    Delete Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-[#1A2841] border-slate-700 border">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-white">
+                      This action cannot be undone. This will permanently delete your
+                      account and remove your data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="cursor-pointer bg-[#1A2841]">Cancel</AlertDialogCancel>
+                    <AlertDialogAction className="cursor-pointer">
+                      <Link href="/">
+                        Continue
+                      </Link>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
           </DialogFooter>
           </div>
               </DialogContent>
@@ -340,9 +366,9 @@ export default function MainLayout({
 }) {
   return (
     <SidebarProvider>
-      <AppSidebar user={user} menuDisabled={menuDisabled} />
+      <AppSidebar user={user} menuDisabled={menuDisabled}/>
       <main className="w-full p-5 flex">
-        <SidebarTrigger />
+        <SidebarTrigger className="cursor-pointer" />
         <div className="grow mr-8">{children}</div>
       </main>
     </SidebarProvider>

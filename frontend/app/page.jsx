@@ -3,6 +3,9 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Michroma } from "next/font/google";
+
+const michroma = Michroma({ subsets: ['latin'], weight: '400' });
 
 export default function Landing() {
   const mainWindowRef = useRef(null);
@@ -32,26 +35,26 @@ export default function Landing() {
 
       <div ref={learnWindowRef} className="flex flex-row justify-between px-[140px] py-[100px] min-h-screen flex-nowrap bg-[#050a12]">
         <div className="flex-1 flex items-start pt-2">
-          <h1 className="text-[2.5rem] font-thin leading-[1.3] font-michroma">
+          <h1 className={`${michroma.className} text-[2.5rem] font-thin leading-[1.3]`}>
             Skip the chaos.<br />Connect containers, effortlessly.
           </h1>
         </div>
 
         <div className="flex-1 flex flex-col justify-start gap-[70px] pt-[30px] ml-[120px]">
           <div className="max-w-[500px]">
-            <h2 className="text-[1.8rem] font-extralight text-[#D17CFF] font-michroma">One Network. All Devices.</h2>
+            <h2 className={`${michroma.className} text-[1.8rem] font-extralight text-[#D17CFF]`}>One Network. All Devices.</h2>
             <p className="text-[1.1rem] leading-[1.6] mt-2 text-[#ccc] font-roboto">
               Connect all team members' devices and containers in one secure network.
             </p>
           </div>
           <div className="max-w-[500px]">
-            <h2 className="text-[1.8rem] font-extralight text-[#3ABEFF] font-michroma">Clear Visibility,<br />Zero Guesswork</h2>
+            <h2 className={`${michroma.className} text-[1.8rem] font-extralight text-[#3ABEFF]`}>Clear Visibility,<br />Zero Guesswork</h2>
             <p className="text-[1.1rem] leading-[1.6] mt-2 text-[#ccc] font-roboto">
               Check where and what containers are circulating at a glance.
             </p>
           </div>
           <div className="max-w-[500px]">
-            <h2 className="text-[1.8rem] font-extralight text-[#00F88A] font-michroma">No More Setup Struggles</h2>
+            <h2 className={`${michroma.className} text-[1.8rem] font-extralight text-[#00F88A]`}>No More Setup Struggles</h2>
             <p className="text-[1.1rem] leading-[1.6] mt-2 text-[#ccc] font-roboto">
               Port forwarding, IP conflicts, network configuration…<br />
               You can forget everything. Just focus on development.
@@ -62,7 +65,7 @@ export default function Landing() {
 
       <div ref={contactUsWindowRef} className="bg-[#050a12]">
         <div className="h-screen px-[200px] py-[100px] box-border">
-          <h1 className="text-[3.5rem] font-extrabold mt-[-10px] mb-[60px] leading-[1.2] font-michroma">Let’s Talk.</h1>
+          <h1 className={`${michroma.className} text-[3.5rem] font-extrabold mt-[-10px] mb-[60px] leading-[1.2]`}>Let’s Talk.</h1>
           <div className="flex">
             <form 
               className="flex flex-col gap-8 font-worksans w-full"

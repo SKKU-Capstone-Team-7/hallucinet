@@ -131,7 +131,7 @@ export default function SettingPage() {
       setTeam(team);
 
       const rolePayload = { teamId: teamData.id, userId: user?.$id};
-      const roleRes = await backendFetch("/users/role", "POST", jwt, JSON.stringify(rolePayload)); 
+      const roleRes = await backendFetch("/users/role", "POST", jwt, rolePayload); 
       if (!roleRes.ok) throw new Error(`Failed to fetch user role: ${roleRes.statusText}`);
       const roleJson: any = await roleRes.json();
       setRole(roleJson["roles"]?.[0] || "member");

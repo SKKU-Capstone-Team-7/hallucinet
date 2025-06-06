@@ -42,6 +42,20 @@ func (dns *Dns) GetContainerFQDN(container types.ContainerInfo) string {
 	return fmt.Sprintf("%v.%v.test.", containerName, deviceName)
 }
 
+func (dns *Dns) RemoveDeviceContainers(deviceName string) {
+	deviceName = strings.ToLower(deviceName)
+
+	for k := range dns.entries {
+		parts := strings.SplitN(k, ".", 3)
+		if len(parts) < 3 {
+			continue // skip malformed keys
+		}
+		if strings.ToLower(parts[1]) == deviceName {
+			delete(dns.entries, k)
+		}
+	}
+}
+
 func (dns *Dns) entryExists(container types.ContainerInfo) bool {
 	fqdn := dns.GetContainerFQDN(container)
 	_, ok := dns.entries[fqdn]

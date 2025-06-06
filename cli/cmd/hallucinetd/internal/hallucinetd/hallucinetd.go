@@ -155,6 +155,8 @@ func (daemon *HallucinetDaemon) handleTeamContainers(payload comms.WsRecvTeamCon
 func (daemon *HallucinetDaemon) handleDeviceConnected(payload comms.WsRecvDevConnectPayload) {
 	log.Printf("Device connected: %v\n", payload)
 
+	daemon.dns.RemoveDeviceContainers(payload.Device.Name)
+
 	for _, dto := range payload.Containers {
 		cont, err := coordination.ParseContainerInfoDto(dto)
 		if err != nil {

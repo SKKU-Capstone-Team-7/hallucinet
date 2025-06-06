@@ -37,10 +37,9 @@ function CreateTeamForm() {
         "/teams",
         "POST",
         jwt,
-        JSON.stringify({
+        {
           name: data.name,
-          ipBlock16: "10.2.0.0", // ip input
-        }),
+        },
       );
 
       if (createTeamRes.ok) {

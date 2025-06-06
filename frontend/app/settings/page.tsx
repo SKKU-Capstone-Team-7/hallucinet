@@ -38,7 +38,7 @@ function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
   const handleLeave = async () => {};
 
   return (
-    <div className="shadow-sm max-w-lg mt-8 p-4 border border-red-300 rounded-md bg-red-50">
+    <div className="shadow-sm max-w-lg mt-8 p-4 border border-red-500/30 rounded-md bg-red-950/50">
       <h3 className="text-xl font-medium mb-2">Leave Team</h3>
       <p className="mt-2 text-sm">
         Are you sure you want to leave this team? You’ll immediately lose access to all shared devices and containers.
@@ -66,9 +66,9 @@ function DeleteButton({ onDelete, memberCount}: { onDelete: () => Promise<void>,
   };
 
   return (
-    <div className="shadow-sm max-w-lg mt-8 p-4 border border-red-300 rounded-md bg-red-50">
-      <h3 className="text-xl font-medium mb-2 text-black">Delete Team</h3>
-      <p className="mt-2 text-sm text-black">
+    <div className="shadow-sm max-w-lg mt-8 p-4 border border-red-500/30 rounded-md bg-red-950/60">
+      <h3 className="text-xl font-medium mb-2">Delete Team</h3>
+      <p className="mt-2 text-sm">
         Before proceeding to delete your team, please be aware that this action is irreversible. This deletion can only be performed only if the team currently has no other members.
       </p> 
       <div className="mt-6 flex justify-end">
@@ -249,16 +249,16 @@ export default function SettingPage() {
         <div className="mt-18">
           <p className="text-2xl font-michroma">Team Settings</p>
           <div className="mt-4 max-w-lg">
-          <Alert>
-            <AlertCircleIcon />
-            <AlertTitle>Important Note</AlertTitle>
-            <AlertDescription>
+          <Alert className="bg-[#1A2841]">
+            <AlertCircleIcon color="white" />
+            <AlertTitle className="text-white">Important Note</AlertTitle>
+            <AlertDescription className="text-white">
               Only the team owner can update or delete the team on this page.
             </AlertDescription>
           </Alert>
           </div>
 
-          <div className="mt-8 gap-4 flex max-w-4xl shadow-sm max-w-lg p-4 border rounded-md">
+          <div className="bg-[#1A2841] mt-8 gap-4 flex max-w-4xl shadow-sm max-w-lg p-4 border rounded-md">
             <form className="w-full">
               <div className="grid gap-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-4">

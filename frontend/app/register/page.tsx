@@ -98,7 +98,7 @@ export default function RegisterPage() {
         "/users/me",
         "POST",
         jwt,
-        JSON.stringify({})
+        {}
       );
       if (!registerRes.ok) {
         const errorData = await registerRes.json();
@@ -126,7 +126,9 @@ export default function RegisterPage() {
   return (
     <>
       <div className="fixed top-4 left-7">
-        <Image src="/logoWhite.svg" alt="logo" width={120} height={40} />
+        <Link href="/">
+          <Image src="/logoWhite.svg" alt="logo" width={120} height={40} className="cursor-pointer" />
+        </Link>
       </div>
 
       <div className="max-w-sm mx-auto mt-20 bg-white rounded-md shadow-sm p-8">

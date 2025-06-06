@@ -15,7 +15,9 @@ export default function Landing() {
   return (
     <div className="relative w-full h-screen overflow-y-auto bg-cover bg-center text-white" style={{ backgroundImage: "url('/background.png')" }}>
       <div className="fixed top-4 left-7">
-        <Image src="/logoWhite.svg" alt="logo" width={120} height={40} />
+        <Link href="/">
+          <Image src="/logoWhite.svg" alt="logo" width={120} height={40} className="cursor-pointer" />
+        </Link>
       </div>
 
       <div className="fixed top-4 right-8 flex gap-8 items-center">

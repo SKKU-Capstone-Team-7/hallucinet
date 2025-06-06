@@ -197,7 +197,9 @@ function AppSidebar({
       <SidebarContent>
         <SidebarGroup>
           <div className="px-16 py-4 mb-8">
-            <img src="logoWhite.svg" />
+            <Link href="/dashboard">
+              <img src="logoWhite.svg" />
+            </Link>
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -248,19 +250,19 @@ function AppSidebar({
                 </DropdownMenuTrigger>
               <DropdownMenuContent
                 side="top"
-                className="w-[--radix-popper-anchor-width]"
+                className="w-[--radix-popper-anchor-width] bg-[#1A2841] border border-slate-700"
               >
                 <DialogTrigger asChild>
-                  <DropdownMenuItem className="cursor-pointer">Account Settings</DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-white">Account Settings</DropdownMenuItem>
                 </DialogTrigger>
 
                 <Link href="/logout">
-                  <DropdownMenuItem className="cursor-pointer">Sign out</DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-white">Sign out</DropdownMenuItem>
                 </Link>
 
               </DropdownMenuContent>
             </DropdownMenu>
-              <DialogContent>
+              <DialogContent className="bg-[#1A2841] border-slate-700 border">
                 <form onSubmit={handleSubmitAccountForm(onAccountSettingsSubmit)}>
                 <DialogHeader>
                   <DialogTitle>Account Settings</DialogTitle>

@@ -51,9 +51,9 @@ function InviteButton({isOwner} : {isOwner: boolean}) {
         "/teams/me/invitations",
         "POST",
         jwt,
-        JSON.stringify({
+        {
           email: data.email,
-        }),
+        },
       );
 
       if (inviteRes.ok) {

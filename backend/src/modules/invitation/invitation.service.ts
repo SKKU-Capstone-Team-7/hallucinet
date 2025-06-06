@@ -49,6 +49,8 @@ export class InvitationService {
 
         const { documents } = await this.databaseService.listInvitation(user.$id, status);
 
+        //console.log(documents);
+
         return Promise.all(documents.map(async doc => {
             console.log(doc);
             const inviter = await this.userService.getUserById(doc.inviterId);

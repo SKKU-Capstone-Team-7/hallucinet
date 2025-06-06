@@ -56,7 +56,8 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
 
   const cardContent = (
     <div 
-      className="p-5 w-40 shadow-sm rounded-lg cursor-pointer select-none hover:bg-muted bg-white dark:bg-gray-800" 
+      className="p-5 w-40 rounded-lg cursor-pointer select-none
+               bg-[#1A2841] hover:bg-[#253754]" 
       onClick={handleCopy}
     >
       <p className={`h-9 font-bold ${fadeEffectClasses}`}>
@@ -259,18 +260,21 @@ export default function DashboardPage() {
   }, [isReadyForDashboard, user, initialLoading, loadDashBoardData]);
 
   useEffect(() => {
-    if (!user || !isReadyForDashboard || !process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || !process.env.NEXT_PUBLIC_APPWRITE_CONTAINER_COLLECTION_ID) {
+    if (!user || !isReadyForDashboard || !process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || !process.env.NEXT_PUBLIC_CONTAINER_COLLECTION_ID) {
       return;
     }
 
     const client = getAppwriteClient();
     let unsubscribe: (() => void) | undefined;
     const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
-    const collectionId = process.env.NEXT_PUBLIC_APPWRITE_CONTAINER_COLLECTION_ID;
+    const collectionId = process.env.NEXT_PUBLIC_CONTAINER_COLLECTION_ID;
     const channel = `databases.${databaseId}.collections.${collectionId}.documents`;  
     
+    console.log("Attempting to subscribe to channel:", channel);
+
     try {
       unsubscribe = client.subscribe(channel, response => {
+        console.log("Realtime event received!", response);
         loadContainers();
       });
     } catch (error) {

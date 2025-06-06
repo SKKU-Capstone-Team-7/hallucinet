@@ -94,7 +94,9 @@ export default function LoginPage() {
   return (
     <>
       <div className="fixed top-4 left-7">
-        <Image src="/logoWhite.svg" alt="logo" width={120} height={40} />
+        <Link href="/">
+          <Image src="/logoWhite.svg" alt="logo" width={120} height={40} className="cursor-pointer" />
+        </Link>
       </div>
 
       <div className="w-sm mx-auto mt-20 bg-white shadow-sm p-8 rounded-md">

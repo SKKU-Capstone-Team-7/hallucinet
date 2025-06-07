@@ -1,64 +1,127 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Account, Client, Models } from "appwrite";
+import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
+import { backendFetch } from "@/lib/utils";
+import { Account, AppwriteException, Client, Models } from "appwrite";
+import { Check } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-export default function ExporrtDevicePage() {
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+
+type PageStatus =
+  | 'initial_check'
+  | 'ready_to_confirm'
+  | 'confirming'
+  | 'error';
+
+export default function ExportDevicePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const deviceId = searchParams.get("deviceId");
+
+  const [status, setStatus] = useState<PageStatus>('initial_check');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
     null,
   );
 
+  const account = useMemo(() => new Account(getAppwriteClient()), []);
+
   useEffect(() => {
-    const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
-    const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
-    const client = new Client().setEndpoint(endpoint).setProject(project);
-    const account = new Account(client);
+    setStatus('initial_check');
 
-    (async () => {
-      try {
-        let user = await account.get();
-        console.log("Hello " + JSON.stringify(user));
-      } catch (err) {
-        router.replace("/login");
+    const checkSessionAndDeviceId = async () => {
+      if (!deviceId) {
+        setErrorMessage("Device ID is missing. This page cannot be opened directly.");
+        setStatus('error');
+        return;
       }
-    })();
-  }, []);
 
-  async function confirmDevice() {
-    const endpoint = process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!;
-    const project = process.env.NEXT_PUBLIC_APPWRITE_PROJECT!;
-    const client = new Client().setEndpoint(endpoint).setProject(project);
-    const account = new Account(client);
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+      try {
+        const user = await getCurrentUser();
 
-    const { jwt } = await account.createJWT();
-    const url = `${apiBaseUrl}/devices/${deviceId}/confirm`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${jwt}`,
-      },
-    });
+        if (!user) {
+          throw new Error("No active session found.");
+        }
 
-    window.close();
+        setStatus('ready_to_confirm');
+      } catch (e) {
+        console.error("No active session found:", e);
+        toast.error("Authentication Required", { 
+          description: "Please log in to confirm the device." 
+        });
+
+        const currentPath = window.location.pathname + window.location.search;
+        const redirectUrl = encodeURIComponent(currentPath);
+
+        router.push(`/login?redirect=${redirectUrl}`);
+        return;
+      }
+    };
+
+    checkSessionAndDeviceId();
+  }, [deviceId, router, account]);
+
+  const handleConfirmDevice = async () => {
+    if (!deviceId) {
+      toast.error("Device ID is missing.");
+      return;
+    }
+    setStatus('confirming');
+    setErrorMessage(null);
+
+    try {
+      const { jwt } = await account.createJWT();
+
+      const res = await backendFetch(`/devices/${deviceId}/confirm`, 'POST', jwt);
+      if (res.ok) {
+        toast.success("Device Confirmed!", {
+          description: "The device has been successfully registered.",
+        });
+
+        setTimeout(() => router.push('/dashboard/'), 1500);
+      } else {
+        const errorData = await res.json();
+        const message = errorData.message || "Failed to confirm the device.";
+        throw new Error(message);
+      }
+    } catch (e) {
+      console.error("Device confirmation failed:", e);
+      const appwriteError = e as AppwriteException;
+      const message = appwriteError.message || (e as Error).message || "An unexpected error occurred.";
+      setErrorMessage(message);
+      setStatus('error');
+      toast.error("Confirmation Failed", { description: message });
+    }
+  };
+
+  if (status === 'initial_check' || status === 'error') return <div></div>;
+
+  if (status === 'ready_to_confirm' || status === 'confirming') {
+    return (
+      <div className="mx-8 mt-8 flex flex-col items-center">
+        <div className="bg-[#1A2841] w-25 h-25 rounded-full flex items-center justify-center shadow-sm">
+          <Check className="size-13 text-slate-600" />
+        </div>
+
+        <div className="mt-4 text-center">
+          <p className="text-2xl font-michroma">Device Registration</p>
+          <p className="mt-4 text-sm">
+            By clicking confirm, you will register the device to your team.
+          </p>
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <Button
+            onClick={handleConfirmDevice}
+            className='cursor-pointer'
+            disabled={status === 'confirming'}
+          >
+            Confirm Device
+          </Button>
+        </div>
+      </div>
+    )
   }
-
-  return (
-    <div className="shadow-sm w-sm rounded-md p-5 mx-auto mt-12">
-      <p className="text-lg font-semibold ">Device Registration</p>
-      <p className="text-sm">
-        By clicking confirm, you will register the device to your team.
-      </p>
-      <br />
-      <Button className="w-full" onClick={confirmDevice}>
-        Confirm
-      </Button>
-    </div>
-  );
 }

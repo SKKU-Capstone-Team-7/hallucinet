@@ -243,6 +243,7 @@ export default function DashboardPage() {
       }
       toast.success("Device name updated successfully!");
       await loadDevices();
+      await loadContainers();
     } catch (e) {
       console.error("Error saving device name:", e);
       toast.error("Updated Failed", {
@@ -447,7 +448,7 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
-          <DialogFooter className="mt-4">
+          <DialogFooter>
             <DialogClose 
               className={cn(
               buttonVariants({ variant: "ghost" }),

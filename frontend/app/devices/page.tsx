@@ -263,7 +263,7 @@ export default function DevicesPage() {
                 </div>
               </div>
             )}
-            <DialogFooter className="mt-4">
+            <DialogFooter>
               <DialogClose 
                 className={cn(
                 buttonVariants({ variant: "ghost" }),

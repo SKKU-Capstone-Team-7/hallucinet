@@ -201,7 +201,7 @@ export default function OnboardingPage() {
         <div className="mt-4">
           <p className="text-2xl font-michroma">Create a team</p>
           <p className="mt-4 text-sm">Create your own team and become an owner</p>
-          <div className="w-full p-4 flex gap-4 mt-4 shadow-md rounded-md bg-[#1A2841] border border-slate-700">
+          <div className="max-w-4xl p-4 flex gap-4 mt-4 shadow-md rounded-md bg-[#1A2841] border border-slate-700">
             <CreateTeamForm />
           </div>
         </div>

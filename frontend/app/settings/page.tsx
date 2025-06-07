@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
 import { backendFetch } from "@/lib/utils";
 import { Account, Models } from "appwrite";
-import { AlertCircleIcon, LucideSearch, Plus, RefreshCw } from "lucide-react";
+import { AlertCircleIcon, LucideSearch, Plus, RefreshCw, Router } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DataTable } from "@/components/ui/data-table";
@@ -45,8 +45,11 @@ interface TeamInfo {
 
 function LeaveButton({ onLeave }: { onLeave: () => Promise<void> }) {
   const [isLeaving, setIsLeaving] = useState(false);
+  const router = useRouter();
 
-  const handleLeave = async () => {};
+  const handleLeave = async () => {
+    router.push("/logout");
+  };
 
   return (
     <div className="shadow-sm max-w-lg mt-8 p-4 border border-red-500/30 rounded-md bg-red-950/50">

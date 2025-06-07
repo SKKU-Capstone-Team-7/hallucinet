@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
 import { Account, AppwriteException } from "appwrite";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FaApple, FaGithub, FaGoogle, FaMicrosoft } from "react-icons/fa";
@@ -28,6 +28,7 @@ export default function LoginPage() {
   const [pageStatus, setPageStatus] = useState<PageStatus>("initial_check");
   const [loginError, setLoginError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams(); 
 
   const {
     register,
@@ -75,9 +76,20 @@ export default function LoginPage() {
       await account.createEmailPasswordSession(data.email, data.password);
       setPageStatus("login_redirecting");
       toast.success("Login Successful!", {
-        description: "Redirecting to your dashboard...",
+        description: "Redirecting...",
       });
-      router.push("/dashboard");
+
+      const redirectPath = searchParams.get('redirect');
+
+      if (redirectPath) {
+        console.log(`Redirecting to: ${redirectPath}`);
+        router.push(redirectPath);
+        return;
+      } else {
+        router.push("/dashboard");
+        return;
+      }
+
     } catch (e) {
       console.error("Login failed:", e);
       const appwriteError = e as AppwriteException;
@@ -151,7 +163,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full mt-4 bg-blue-900 py-4"
+              className="w-full mt-4 bg-blue-900 py-4 cursor-pointer"
               disabled={isSubmitting}
             >
               Login

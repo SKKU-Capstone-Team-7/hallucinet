@@ -339,7 +339,7 @@ function AppSidebar({
                   <AlertDialogFooter>
                     <AlertDialogCancel className="cursor-pointer bg-[#1A2841]">Cancel</AlertDialogCancel>
                     <AlertDialogAction className="cursor-pointer">
-                      <Link href="/">
+                      <Link href="/logout">
                         Continue
                       </Link>
                     </AlertDialogAction>

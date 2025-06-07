@@ -186,7 +186,7 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              className="w-full mt-4 bg-blue-900 py-4"
+              className="w-full mt-4 bg-blue-900 py-4 cursor-pointer"
               disabled={isSubmitting}
             >
               Sign up

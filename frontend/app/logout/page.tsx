@@ -1,8 +1,8 @@
 "use client";
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
-import { Account, Models } from "appwrite";
+import { Account } from "appwrite";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function LogoutPage() {
   const router = useRouter();

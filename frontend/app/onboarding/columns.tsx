@@ -2,16 +2,13 @@
  
 import { ColumnDef } from "@tanstack/react-table"
 import { InvitationInfo } from "./page"
-import { TimeAgo } from "@/components/TimeAgo"
 import { Account } from "appwrite"
 import { getAppwriteClient } from "@/lib/appwrite"
 import { backendFetch } from "@/lib/utils"
-import { useRouter } from "next/router"
 import { Check, X } from "lucide-react"
 import { NameTag } from "@/components/common/NameTag"
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime"
 import { useState } from "react"
-import { set } from "react-hook-form"
 import { toast } from "sonner"
  
 export const getInvitationColumns = (

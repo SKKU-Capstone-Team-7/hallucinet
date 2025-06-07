@@ -6,13 +6,14 @@ import { Account, Models } from 'appwrite';
 import MainLayout from '@/components/MainLayout';
 import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Plus, RefreshCw } from 'lucide-react';
+import { Check, Copy, Plus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
@@ -44,13 +45,84 @@ interface DeviceInfo {
 }
 
 function AddDeviceButton() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const title ="Add New Device";
+  const description = "Run the following command on your new device to register it.";
+  const script = "curl -fsSL https://tailscale.com/install.sh | sh";
+
+  const handleCopy = useCallback(async () => {
+    try {
+      navigator.clipboard.writeText(script);
+
+      setIsCopied(true);
+      toast.success("Script copied to clipboard!");
+
+      setTimeout(() => setIsCopied(false), 1500);
+    } catch (e) {
+      toast.error("Failed to copy script.");
+      console.error("Copy to clipboard failed:", e);
+    }
+  }, [script]);
+  
   return (
-    <Button className="cursor-pointer w-30">
-      <div className="flex items-center gap-1">
-        <Plus />
-        Add Device
-      </div>
-    </Button>
+    <Dialog
+      open={isDialogOpen}
+      onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open)
+          setIsCopied(false);
+      }}>
+      <DialogTrigger asChild>
+        <Button className="cursor-pointer w-30">
+          <div className="flex items-center gap-1">
+            <Plus />
+            Add Device
+          </div>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-xl bg-[#1A2841] border-slate-700 border">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="text-white">
+            {description}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2 text-sm">
+          <div className="flex items-center justify-between border-b pb-2">
+            <div className="flex items-center gap-2">
+              <code className="w-120 font-mono text-sm bg-muted px-2 py-1 rounded-md text-muted-foreground">
+                {script}
+              </code>
+              <Button
+                variant="ghost"
+                size="icon"     
+                onClick={handleCopy}
+                className="h-7 w-7 cursor-pointer" 
+                aria-label="Copy DNS name"
+              >
+                {isCopied ? (
+                  <Check className="h-4 w-4" />
+                  ) : (
+                  <Copy className="h-4 w-4 cursor-pointer"/>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose 
+            className={cn(
+            buttonVariants({ variant: "ghost" }),
+            "cursor-pointer"
+            )}
+          >
+            Cancel
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

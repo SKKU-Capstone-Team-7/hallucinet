@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Client, Account, Models, AppwriteException } from 'appwrite';
+import { Account, Models, AppwriteException } from 'appwrite';
 import { toast } from "sonner";
 import { getAppwriteClient, getCurrentUser } from '@/lib/appwrite';
 import MainLayout from '@/components/MainLayout';
-import { Link, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 type PageStatus = 

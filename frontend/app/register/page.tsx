@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FaApple, FaGithub, FaGoogle, FaMicrosoft } from "react-icons/fa";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
 import { backendFetch } from "@/lib/utils";
-import { Account, AppwriteException, ID, Models } from "appwrite";
+import { Account, AppwriteException, ID } from "appwrite";
 
 type RegisterInputs = {
   first_name: string;

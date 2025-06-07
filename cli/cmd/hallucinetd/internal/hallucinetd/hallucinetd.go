@@ -30,6 +30,7 @@ type HallucinetDaemon struct {
 	domon        *docker.DockerMonitor
 	routeManager *routing.RouteManager
 	ws           *websocket.Conn
+	Device       coordination.DeviceInfoDto
 }
 
 func New(config types.Config) (*HallucinetDaemon, error) {
@@ -95,7 +96,7 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 		Host:   coordUrl.Host,
 		Path:   "/api/coordination/events",
 	}
-	log.Println(u.String())
+
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		return nil, err
@@ -142,6 +143,21 @@ func (daemon *HallucinetDaemon) dockerListenLoop() error {
 	return nil
 }
 
+func (daemon *HallucinetDaemon) handleDeviceSelf(payload comms.WsRecvDevSelfPayload) {
+	daemon.Device = payload.Device
+	daemon.domon.CreateEventsChannel(daemon.Device)
+	log.Printf("I am %v\n", payload.Device)
+	go daemon.socketListenLoop()
+	go daemon.pingLoop()
+
+	go func() {
+		daemon.startDns()
+		defer daemon.stopDns()
+	}()
+
+	go daemon.dockerListenLoop()
+}
+
 func (daemon *HallucinetDaemon) handleTeamContainers(payload comms.WsRecvTeamContainersPayload) {
 	for _, dto := range payload.Containers {
 		cont, err := coordination.ParseContainerInfoDto(dto)
@@ -154,6 +170,8 @@ func (daemon *HallucinetDaemon) handleTeamContainers(payload comms.WsRecvTeamCon
 
 func (daemon *HallucinetDaemon) handleDeviceConnected(payload comms.WsRecvDevConnectPayload) {
 	log.Printf("Device connected: %v\n", payload)
+
+	daemon.dns.RemoveDeviceContainers(payload.Device.Name)
 
 	for _, dto := range payload.Containers {
 		cont, err := coordination.ParseContainerInfoDto(dto)
@@ -251,6 +269,16 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 		}
 
 		switch wsMsg.Event {
+		case "device_self":
+			var payload comms.WsRecvDevSelfPayload
+			err := json.Unmarshal(data, &payload)
+			if err != nil {
+				log.Printf("Cannot unmarshal device self payload: %v\n", err)
+				log.Printf("%v\n", string(data))
+				continue
+			}
+			daemon.handleDeviceSelf(payload)
+
 		case "team_containers":
 			var payload comms.WsRecvTeamContainersPayload
 			err := json.Unmarshal(data, &payload)
@@ -476,17 +504,7 @@ func (daemon *HallucinetDaemon) Start() error {
 		Containers: containers,
 	}
 	daemon.ws.WriteJSON(wsMsg)
-
-	go func() {
-		daemon.startDns()
-		defer daemon.stopDns()
-	}()
-
-	go daemon.socketListenLoop()
-	go daemon.pingLoop()
-	go daemon.wsListenLoop()
-
-	daemon.dockerListenLoop()
+	daemon.wsListenLoop()
 
 	return nil
 }

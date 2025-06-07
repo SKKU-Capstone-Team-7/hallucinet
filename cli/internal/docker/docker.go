@@ -5,11 +5,13 @@ import (
 	"log"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/comms"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/coordination"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
 
@@ -25,18 +27,27 @@ func New(config types.Config) (*DockerMonitor, error) {
 		return nil, err
 	}
 	domon := DockerMonitor{}
-	domon.client = cli
-	domon.EventChan = domon.createEventsChannel()
 	domon.networkName = config.NetworkName
+	domon.client = cli
 
 	return &domon, nil
 }
 
 func (domon *DockerMonitor) createDockerChannel() (<-chan events.Message, <-chan error) {
+	networkResource, err := domon.client.NetworkInspect(context.Background(),
+		domon.networkName,
+		network.InspectOptions{})
+	if err != nil {
+		log.Printf("Network name: %v\n", domon.networkName)
+		log.Fatal(err)
+	}
+	networkID := networkResource.ID
+
 	filters := filters.NewArgs(
 		filters.Arg("type", "network"),
 		filters.Arg("event", "connect"),
 		filters.Arg("event", "disconnect"),
+		filters.Arg("network", networkID),
 	)
 
 	dockerChan, chanErr := domon.client.Events(context.Background(),
@@ -44,7 +55,45 @@ func (domon *DockerMonitor) createDockerChannel() (<-chan events.Message, <-chan
 	return dockerChan, chanErr
 }
 
-func (domon *DockerMonitor) createEventsChannel() chan comms.ContEvent {
+func (domon *DockerMonitor) CreateEventsChannel(device coordination.DeviceInfoDto) chan comms.ContEvent {
+	ctx := context.Background()
+	networkName := "hallucinet"
+	domon.networkName = networkName
+
+	// Check if the network exists
+	existing, err := domon.client.NetworkList(ctx, network.ListOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	found := false
+	for _, nw := range existing {
+		if nw.Name == networkName {
+			found = true
+			break
+		}
+	}
+
+	// Create the network if not found
+	if !found {
+		ipamConfig := []network.IPAMConfig{
+			{
+				Subnet: device.Subnet,
+			},
+		}
+		createOpts := network.CreateOptions{
+			Driver: "bridge",
+			IPAM: &network.IPAM{
+				Driver: "default",
+				Config: ipamConfig,
+			},
+		}
+		_, err := domon.client.NetworkCreate(ctx, networkName, createOpts)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// Subscribe to Docker events
 	dockerChan, dockerErrChan := domon.createDockerChannel()
 	eventChan := make(chan comms.ContEvent)
 
@@ -52,6 +101,7 @@ func (domon *DockerMonitor) createEventsChannel() chan comms.ContEvent {
 		for {
 			select {
 			case dockerEvent := <-dockerChan:
+				log.Printf("Docker event: %v\n", dockerEvent)
 				event := domon.translateDockerEvent(dockerEvent)
 				eventChan <- event
 			case dockerErr := <-dockerErrChan:
@@ -60,6 +110,7 @@ func (domon *DockerMonitor) createEventsChannel() chan comms.ContEvent {
 		}
 	}()
 
+	domon.EventChan = eventChan
 	return eventChan
 }
 
@@ -135,14 +186,26 @@ func (domon *DockerMonitor) containerDoContEvent(cont dockerTypes.Container) com
 
 // All events are EventContainerConnected
 func (domon *DockerMonitor) GetDeviceContainers() ([]comms.ContEvent, error) {
+	targetNetwork := "hallucinet"
 	containers := []comms.ContEvent{}
 	client := domon.client
-	conts, err := client.ContainerList(context.Background(), container.ListOptions{})
+
+	// Only get running containers
+	conts, err := client.ContainerList(context.Background(), container.ListOptions{All: false})
 	if err != nil {
-		return []comms.ContEvent{}, err
+		return nil, err
 	}
 
 	for _, cont := range conts {
+		// Must be connected to the hallucinet network
+		if cont.NetworkSettings != nil {
+			if _, ok := cont.NetworkSettings.Networks[targetNetwork]; !ok {
+				continue
+			}
+		} else {
+			continue
+		}
+
 		contEvent := domon.containerDoContEvent(cont)
 		containers = append(containers, contEvent)
 	}

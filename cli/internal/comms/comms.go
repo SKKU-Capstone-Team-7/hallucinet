@@ -53,6 +53,10 @@ type WsSendDevConnectPayload struct {
 	Containers []ContEvent `json:"containers"`
 }
 
+type WsRecvDevSelfPayload struct {
+	Device coordination.DeviceInfoDto `json:"device"`
+}
+
 type WsRecvDevConnectPayload struct {
 	Containers []coordination.ContainerInfoDto `json:"containers"`
 	Device     coordination.DeviceInfoDto      `json:"device"`

@@ -134,6 +134,10 @@ export class EventsGateway {
     this.sendEventToId(id, 'team_containers', {
       containers: teamContainers,
     });
+    // Send own info to the client
+    this.sendEventToId(id, 'device_self', {
+      device: await this.devicesService.getDevice(id.deviceId),
+    });
 
     // Reset device containers to the current state
     this.appwriteService.clearDeviceContainers(id.deviceId);

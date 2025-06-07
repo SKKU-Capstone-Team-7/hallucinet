@@ -190,16 +190,20 @@ func (domon *DockerMonitor) GetDeviceContainers() ([]comms.ContEvent, error) {
 	containers := []comms.ContEvent{}
 	client := domon.client
 
-	conts, err := client.ContainerList(context.Background(), container.ListOptions{All: true})
+	// Only get running containers
+	conts, err := client.ContainerList(context.Background(), container.ListOptions{All: false})
 	if err != nil {
 		return nil, err
 	}
 
 	for _, cont := range conts {
+		// Must be connected to the hallucinet network
 		if cont.NetworkSettings != nil {
 			if _, ok := cont.NetworkSettings.Networks[targetNetwork]; !ok {
 				continue
 			}
+		} else {
+			continue
 		}
 
 		contEvent := domon.containerDoContEvent(cont)

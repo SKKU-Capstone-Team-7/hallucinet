@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/comms"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/coordination"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -28,7 +29,6 @@ func New(config types.Config) (*DockerMonitor, error) {
 	domon := DockerMonitor{}
 	domon.networkName = config.NetworkName
 	domon.client = cli
-	domon.EventChan = domon.createEventsChannel()
 
 	return &domon, nil
 }
@@ -47,7 +47,7 @@ func (domon *DockerMonitor) createDockerChannel() (<-chan events.Message, <-chan
 		filters.Arg("type", "network"),
 		filters.Arg("event", "connect"),
 		filters.Arg("event", "disconnect"),
-		filters.Arg("network", networkID), // filter by network ID, not name
+		filters.Arg("network", networkID),
 	)
 
 	dockerChan, chanErr := domon.client.Events(context.Background(),
@@ -55,7 +55,45 @@ func (domon *DockerMonitor) createDockerChannel() (<-chan events.Message, <-chan
 	return dockerChan, chanErr
 }
 
-func (domon *DockerMonitor) createEventsChannel() chan comms.ContEvent {
+func (domon *DockerMonitor) CreateEventsChannel(device coordination.DeviceInfoDto) chan comms.ContEvent {
+	ctx := context.Background()
+	networkName := "hallucinet"
+	domon.networkName = networkName
+
+	// Check if the network exists
+	existing, err := domon.client.NetworkList(ctx, network.ListOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	found := false
+	for _, nw := range existing {
+		if nw.Name == networkName {
+			found = true
+			break
+		}
+	}
+
+	// Create the network if not found
+	if !found {
+		ipamConfig := []network.IPAMConfig{
+			{
+				Subnet: device.Subnet,
+			},
+		}
+		createOpts := network.CreateOptions{
+			Driver: "bridge",
+			IPAM: &network.IPAM{
+				Driver: "default",
+				Config: ipamConfig,
+			},
+		}
+		_, err := domon.client.NetworkCreate(ctx, networkName, createOpts)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// Subscribe to Docker events
 	dockerChan, dockerErrChan := domon.createDockerChannel()
 	eventChan := make(chan comms.ContEvent)
 
@@ -72,6 +110,7 @@ func (domon *DockerMonitor) createEventsChannel() chan comms.ContEvent {
 		}
 	}()
 
+	domon.EventChan = eventChan
 	return eventChan
 }
 

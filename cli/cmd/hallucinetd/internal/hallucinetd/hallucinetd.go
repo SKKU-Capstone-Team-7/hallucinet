@@ -145,7 +145,17 @@ func (daemon *HallucinetDaemon) dockerListenLoop() error {
 
 func (daemon *HallucinetDaemon) handleDeviceSelf(payload comms.WsRecvDevSelfPayload) {
 	daemon.Device = payload.Device
+	daemon.domon.CreateEventsChannel(daemon.Device)
 	log.Printf("I am %v\n", payload.Device)
+	go daemon.socketListenLoop()
+	go daemon.pingLoop()
+
+	go func() {
+		daemon.startDns()
+		defer daemon.stopDns()
+	}()
+
+	go daemon.dockerListenLoop()
 }
 
 func (daemon *HallucinetDaemon) handleTeamContainers(payload comms.WsRecvTeamContainersPayload) {
@@ -494,17 +504,7 @@ func (daemon *HallucinetDaemon) Start() error {
 		Containers: containers,
 	}
 	daemon.ws.WriteJSON(wsMsg)
-
-	go func() {
-		daemon.startDns()
-		defer daemon.stopDns()
-	}()
-
-	go daemon.socketListenLoop()
-	go daemon.pingLoop()
-	go daemon.wsListenLoop()
-
-	daemon.dockerListenLoop()
+	daemon.wsListenLoop()
 
 	return nil
 }

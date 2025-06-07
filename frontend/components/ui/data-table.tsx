@@ -67,7 +67,7 @@ export function DataTable<TData, TValue>({
     <div>
       <div className="mt-4 flex items-center gap-4">
         <div className="grow max-w-xs">
-          <div className="flex items-center shadow-sm rounded-sm">
+          <div className="flex items-center shadow-sm rounded-sm bg-[#1A2841]">
             <div className="p-2">
               <LucideSearch />
             </div>
@@ -83,7 +83,7 @@ export function DataTable<TData, TValue>({
         </div>
         {option}
       </div>
-    <div className="rounded-md border mt-2 max-w-4xl">
+    <div className="rounded-md mt-2 max-w-4xl">
       <Table className="w-full table-fixed">
         <colgroup>
           {columns.map((column) => (
@@ -130,6 +130,7 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                className="border-none"
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id} className="h-10 text-white text-base whitespace-nowrap overflow-hidden [mask-image:linear-gradient(to_right,black_75%,transparent_100%)]">

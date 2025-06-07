@@ -2,11 +2,11 @@ export function TimeAgo({ timestamp }: { timestamp: Date }): string {
   const diffMs = Date.now() - timestamp.getTime();
   const diffSec = Math.floor(diffMs / 1000);
 
-  let value: number, unit: string;
+  let value: number | string, unit: string;
 
   if (diffSec < 60) {
-    value = diffSec;
-    unit = diffSec === 1 ? "second" : "seconds";
+    value = "Just";
+    unit = "Now";
   } else if (diffSec < 3600) {
     value = Math.floor(diffSec / 60);
     unit = value === 1 ? "minute" : "minutes";

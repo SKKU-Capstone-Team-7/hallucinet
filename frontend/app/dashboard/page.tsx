@@ -2,23 +2,44 @@
 import { ReloadButton } from "@/components/common/ReloadButtion";
 import MainLayout from "@/components/MainLayout";
 import { TimeAgo } from "@/components/TimeAgo";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
-import { backendFetch } from "@/lib/utils";
+import { backendFetch, cn } from "@/lib/utils";
 import { Account, Models } from "appwrite";
 import { LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
-import { columns } from "./columns";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import * as React from "react";
+import { getDeviceColumns } from "./columns";
+import { toast } from "sonner";
 
 interface ContainerInfo {
   name: string;
@@ -27,10 +48,12 @@ interface ContainerInfo {
 }
 
 export interface DeviceInfo {
+  id: string;
   name: string;
   subnet: string;
   userEmail: string;
   last_activate: Date;
+  userId: string;
 }
 
 function ContainerCard({ container }: { container: ContainerInfo }) {
@@ -117,6 +140,12 @@ export default function DashboardPage() {
   );
   const [containers, setContainers] = useState<ContainerInfo[]>([]);
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | null>(null);
+  const [editedName, setEditedName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const router = useRouter();
 
   const loadContainers = useCallback(async () => {
@@ -175,10 +204,12 @@ export default function DashboardPage() {
       }
       const deviceJsons: any[] = await devicesRes.json();
       const fetchedDevices: DeviceInfo[] = deviceJsons.map((dev) => ({
+        id: dev["$id"],
         name: dev["name"],
         subnet: dev["ipBlock24"],
         userEmail: dev["user"]["email"],
         last_activate: new Date(dev["lastActivatedAt"]),
+        userId: dev["user"]["$id"]
       }));
   
       setDevices(fetchedDevices);
@@ -189,6 +220,65 @@ export default function DashboardPage() {
       setIsDevicesLoading(false);
     }
   }, [user]);
+
+  const handleNameClick = (device : DeviceInfo) => {
+    setSelectedDevice(device);
+    setEditedName(device["name"]);
+    setIsDialogOpen(true);
+  }
+
+  const handleSave = async () => {
+    if (!selectedDevice || !editedName.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const account = new Account(getAppwriteClient());
+      const jwt = (await account.createJWT()).jwt;
+
+      const deviceRes = await backendFetch(`/devices/${selectedDevice.id}`, 'PATCH', jwt, {
+        name: editedName.trim(),
+      });
+      if (!deviceRes.ok) {
+        const err = await deviceRes.json();
+        throw new Error(err.message || "Failed to updtae device name.");
+      }
+      toast.success("Device name updated successfully!");
+      await loadDevices();
+    } catch (e) {
+      console.error("Error saving device name:", e);
+      toast.error("Updated Failed", {
+        description: (e as Error).message 
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsDialogOpen(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedDevice) return;
+
+    setIsSubmitting(true);
+    try {
+      const account = new Account(getAppwriteClient());
+      const jwt = (await account.createJWT()).jwt;
+      
+      const deleteRes = await backendFetch(`/devices/${selectedDevice.id}`, 'DELETE', jwt);
+      if (!deleteRes.ok) {
+        const err = await deleteRes.json();
+        throw new Error(err.message || 'Failed to delete the device.');
+      }
+      toast.success(`Device ${selectedDevice.name} has been deleted.`);
+      await loadDevices();
+    } catch (e) {
+      console.error("Error deleting device:", e);
+      toast.error("Deletion Failed", {
+        description: (e as Error).message
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsDialogOpen(false);
+    }
+  };
 
   const loadDashBoardData = useCallback(async () => {
     if (!user) return;
@@ -283,6 +373,8 @@ export default function DashboardPage() {
     return () => { if (unsubscribe) unsubscribe()};
   }, [user, isReadyForDashboard, loadContainers]);
 
+  const memoizedColumns = useMemo(() => getDeviceColumns(handleNameClick), [handleNameClick]);
+
   if (initialLoading || !user) return <></>;
   if (!user || !isReadyForDashboard) {
     return <div></div>
@@ -304,7 +396,7 @@ export default function DashboardPage() {
           <p className="text-2xl font-michroma">Devices</p>
           <div>
             <DataTable 
-              columns={columns} 
+              columns={memoizedColumns} 
               data={devices} 
               filterColumnKey="name" 
               option={
@@ -317,6 +409,96 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md bg-[#1A2841] border-slate-700 border">
+          <DialogHeader>
+            <DialogTitle>Edit Device</DialogTitle>
+            <DialogDescription className="text-white">
+              {selectedDevice?.userId === user.$id ? "You can change the device name." : "You can only view details for devices not registered by you."}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedDevice && (
+            <div className="space-y-4 py-2 text-sm">
+              <div className="flex items-center justify-between gap-4">
+                <label 
+                  htmlFor="deviceName-edit" 
+                  className="flex-shrink-0 text-white text-muted-foreground"
+                >
+                  Device Name:
+                </label>
+                <Input
+                  id="deviceName-edit"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  disabled={selectedDevice.userId !== user.$id || isSubmitting}
+                  className="text-right text-sm font-medium max-w-50"
+                />
+              </div>
+              <div className="flex items-center justify-between border-t pt-4">
+                <p className="text-muted-foreground text-white">User:</p>
+                <p className="font-medium truncate" title={selectedDevice.userEmail}>
+                  {selectedDevice.userEmail}
+                </p>
+              </div>
+              <div className="flex items-center justify-between border-t pt-4">
+                <p className="text-muted-foreground text-white">Assigned Subnet:</p>
+                <p className="font-mono font-medium">{selectedDevice.subnet}</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="mt-4">
+            <DialogClose 
+              className={cn(
+              buttonVariants({ variant: "ghost" }),
+              "cursor-pointer"
+              )}
+            >
+              Cancel
+            </DialogClose>
+            {selectedDevice?.userId === user.$id && (
+              <div className="flex gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    className={cn( 
+                      buttonVariants({ variant: "destructive" }), 
+                      "cursor-pointer" 
+                    )}
+                    disabled={isSubmitting}
+                  >
+                    Delete
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-[#1A2841] border-slate-700 border">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-white">
+                        This action cannot be undone. This will permanently delete the device 
+                        {' '}
+                        <span className="font-semibold text-red-500">{selectedDevice?.name}</span>
+                        {' '}
+                        and any associated containers.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="cursor-pointer bg-[#1A2841]">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        disabled={isSubmitting}
+                        className="cursor-pointer"
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <Button className="cursor-pointer" onClick={handleSave} disabled={isSubmitting}>
+                  Save Changes
+                </Button>
+              </div>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }

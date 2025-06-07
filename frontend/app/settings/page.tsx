@@ -10,7 +10,6 @@ import { Account, Models } from "appwrite";
 import { AlertCircleIcon, LucideSearch, Plus, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { columns } from "../dashboard/columns";
 import { DataTable } from "@/components/ui/data-table";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -307,7 +306,7 @@ export default function SettingPage() {
               <div className="grid gap-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <label htmlFor="teamName" className="w-full sm:w-32 flex-shrink-0 mb-1 sm:mb-0">
-                    Team name
+                    Team name:
                   </label>
                   <Input
                     id="teamName"
@@ -319,7 +318,7 @@ export default function SettingPage() {
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <label htmlFor="subnetOctet1" className="w-full sm:w-32 flex-shrink-0 mb-1 sm:mb-0 pt-1">
-                    Team subnet
+                    Team subnet:
                   </label>
                   <div className="flex items-center gap-1"> 
                     <Input

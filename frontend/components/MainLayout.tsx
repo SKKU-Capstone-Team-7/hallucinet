@@ -262,7 +262,7 @@ function AppSidebar({
 
               </DropdownMenuContent>
             </DropdownMenu>
-              <DialogContent className="bg-[#1A2841] border-slate-700 border">
+              <DialogContent className="sm:max-w-md bg-[#1A2841] border-slate-700 border">
                 <form onSubmit={handleSubmitAccountForm(onAccountSettingsSubmit)}>
                 <DialogHeader>
                   <DialogTitle>Account Settings</DialogTitle>
@@ -270,30 +270,32 @@ function AppSidebar({
                     Make changes to your account here. Click save when you're done.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 mt-4">
-                  <div className="grid gap-3">
-                  <label htmlFor="username">Username</label>
+                <div className="mt-4 text-sm">
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                  <label htmlFor="username">Username:</label>
                   <Input 
                     id="username"
                     {...registerAccountForm("username", { required: "Username is required" })} 
                     disabled={isAccountFormSubmitting}
+                    className="text-sm max-w-50"
                   />
                   </div>
                 </div>
-                <div className="grid gap-4 mt-4">
-                  <div className="grid gap-3">
-                  <label htmlFor="oldPassword">Old password</label>
+                <div className="gap-4 mt-4 text-sm">
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                  <label htmlFor="oldPassword">Old password:</label>
                   <Input 
                     id="oldPassword"
                     type="password" 
                     {...registerAccountForm("oldPassword")} 
                     disabled={isAccountFormSubmitting}
+                    className="text-sm max-w-50"
                   />
                   </div>
                 </div>
-                <div className="grid gap-4 mt-4">
-                  <div className="grid gap-3">
-                  <label htmlFor="newPassword">New password</label>
+                <div className="gap-4 mt-4 text-sm">
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                  <label htmlFor="newPassword">New password:</label>
                   <Input
                     id="newPassword"
                     type="password"
@@ -301,6 +303,7 @@ function AppSidebar({
                       minLength: watchedNewPassword ? { value: 8, message: "Min. 8 characters" } : undefined,
                     })}
                     disabled={isAccountFormSubmitting}
+                    className="text-sm max-w-50"
                   />
                     </div>
                 </div>

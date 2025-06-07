@@ -4,8 +4,10 @@ import { ColumnDef } from "@tanstack/react-table"
 import { ContainerInfo } from "./page"
 import { TimeAgo } from "@/components/TimeAgo"
 import { NameTag } from "@/components/common/NameTag"
- 
-export const columns: ColumnDef<ContainerInfo>[] = [
+
+export const getContainerColumns = (
+  onNameClick: (container: ContainerInfo) => void
+) : ColumnDef<ContainerInfo>[] => [
   {
     accessorKey: "name",
     header: "Name",
@@ -13,10 +15,13 @@ export const columns: ColumnDef<ContainerInfo>[] = [
       widthClass: "w-[30%]"
     },
     cell: ({ row }) => {
-      const name = row.getValue<string>("name");
-      const email = row.original.userEmail;
+      const container = row.original;
       return (
-                    <NameTag name={name} email={email} />
+        <NameTag 
+          name={container.name}
+          email={container.userEmail}
+          onClick={() => onNameClick(container)} 
+        />
       )
     }
   },

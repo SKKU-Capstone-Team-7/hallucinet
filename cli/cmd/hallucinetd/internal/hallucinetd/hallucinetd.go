@@ -1,6 +1,7 @@
 package hallucinetd
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -23,14 +24,17 @@ import (
 var ErrUnknownWSMsg = errors.New("Unknown socket message")
 
 type HallucinetDaemon struct {
-	listener     *net.UnixListener
-	config       types.Config
-	dns          *dns.Dns
-	coord        *coordination.Coord
-	domon        *docker.DockerMonitor
-	routeManager *routing.RouteManager
-	ws           *websocket.Conn
-	Device       coordination.DeviceInfoDto
+	listener       *net.UnixListener
+	config         types.Config
+	dns            *dns.Dns
+	coord          *coordination.Coord
+	domon          *docker.DockerMonitor
+	routeManager   *routing.RouteManager
+	ws             *websocket.Conn
+	Device         coordination.DeviceInfoDto
+	running        bool
+	RunningContext context.Context
+	RunningCancel  context.CancelFunc
 }
 
 func New(config types.Config) (*HallucinetDaemon, error) {
@@ -86,75 +90,75 @@ func New(config types.Config) (*HallucinetDaemon, error) {
 	}
 	daemon.routeManager = roma
 
-	// Create websocket connection
-	coordUrl, err := url.Parse(config.Endpoint)
-	if err != nil {
-		return nil, err
-	}
-	u := url.URL{
-		Scheme: "ws",
-		Host:   coordUrl.Host,
-		Path:   "/api/coordination/events",
-	}
-
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	daemon.ws = c
-
 	return &daemon, nil
 }
 
-func (daemon *HallucinetDaemon) Close() error {
-	err := daemon.listener.Close()
-	if err != nil {
-		return err
-	}
-
-	err = daemon.ws.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (daemon *HallucinetDaemon) dockerListenLoop() error {
-	for event := range daemon.domon.EventChan {
-		var wsMsg comms.WsMsg
-		wsMsg.Data = comms.WsSendContEventPayload{
-			Token: daemon.coord.JWT,
-			Event: event,
-		}
+	for {
+		select {
+		case <-daemon.RunningContext.Done():
+			return nil
 
-		switch event.ConvEventKind {
-		case comms.EventContainerConnected:
-			wsMsg.Event = "container_connected"
-		case comms.EventContainerDisconnected:
-			wsMsg.Event = "container_disconnected"
-		case comms.EventUnknown:
-			log.Printf("UNKNOWN: %V\n", event)
-			return comms.ErrUnknownEvent
-		}
+		case event, ok := <-daemon.domon.EventChan:
+			if !ok {
+				return nil // channel closed
+			}
 
-		daemon.ws.WriteJSON(wsMsg)
+			var wsMsg comms.WsMsg
+			wsMsg.Data = comms.WsSendContEventPayload{
+				Token: daemon.coord.JWT,
+				Event: event,
+			}
+
+			dev, err := coordination.ParseDeviceInfoDto(daemon.Device)
+			if err != nil {
+				log.Printf("Cannot parse device info. %v\n", err)
+			}
+			cont, err := utils.CreateContainerInfo(event.ContainerName, event.ContainerIP, dev)
+			if err != nil {
+				log.Printf("Cannot parse container info. %v\n", err)
+			}
+
+			switch event.ConvEventKind {
+			case comms.EventContainerConnected:
+				wsMsg.Event = "container_connected"
+				daemon.dns.AddEntry(cont)
+			case comms.EventContainerDisconnected:
+				wsMsg.Event = "container_disconnected"
+				daemon.dns.RemoveEntry(cont)
+			case comms.EventUnknown:
+				log.Printf("UNKNOWN: %v\n", event)
+				return comms.ErrUnknownEvent
+			}
+
+			daemon.ws.WriteJSON(wsMsg)
+		}
 	}
-	return nil
 }
 
 func (daemon *HallucinetDaemon) handleDeviceSelf(payload comms.WsRecvDevSelfPayload) {
 	daemon.Device = payload.Device
 	daemon.domon.CreateEventsChannel(daemon.Device)
 	log.Printf("I am %v\n", payload.Device)
-	go daemon.socketListenLoop()
+	containers, err := daemon.domon.GetDeviceContainers()
+	if err != nil {
+		log.Printf("Cannot get device containers. %v\n", err)
+	}
+	for _, cont := range containers {
+		dev, err := coordination.ParseDeviceInfoDto(daemon.Device)
+		if err != nil {
+			log.Printf("Cannot parse device info. %v\n", err)
+		}
+		cont, err := utils.CreateContainerInfo(cont.ContainerName, cont.ContainerIP, dev)
+		if err != nil {
+			log.Printf("Cannot parse container info. %v\n", err)
+		}
+
+		log.Printf("Adding entry: %v\n", cont)
+		daemon.dns.AddEntry(cont)
+	}
+
 	go daemon.pingLoop()
-
-	go func() {
-		daemon.startDns()
-		defer daemon.stopDns()
-	}()
-
 	go daemon.dockerListenLoop()
 }
 
@@ -227,31 +231,70 @@ func (daemon *HallucinetDaemon) pingLoop() {
 	defer ticker.Stop()
 
 	for {
-		<-ticker.C
-
-		wsMsg := comms.WsMsg{
-			Event: "ping",
-			Data: struct {
-				Token string `json:"token"`
-			}{
-				Token: daemon.coord.JWT,
-			},
-		}
-
-		err := daemon.ws.WriteJSON(wsMsg)
-		if err != nil {
-			log.Printf("Ping write error: %v", err)
+		select {
+		case <-daemon.RunningContext.Done():
 			return
+		case <-ticker.C:
+			wsMsg := comms.WsMsg{
+				Event: "ping",
+				Data: struct {
+					Token string `json:"token"`
+				}{
+					Token: daemon.coord.JWT,
+				},
+			}
+
+			err := daemon.ws.WriteJSON(wsMsg)
+			if err != nil {
+				log.Printf("Ping write error: %v", err)
+				return
+			}
 		}
 	}
 }
 
 func (daemon *HallucinetDaemon) wsListenLoop() error {
+	// Create websocket connection
+	coordUrl, err := url.Parse(daemon.config.Endpoint)
+	if err != nil {
+		return err
+	}
+	u := url.URL{
+		Scheme: "ws",
+		Host:   coordUrl.Host,
+		Path:   "/api/coordination/events",
+	}
+
+	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		return err
+	}
+	daemon.ws = c
+
+	// Register device socket and send current state
+	containers, err := daemon.domon.GetDeviceContainers()
+	if err != nil {
+		return err
+	}
+
+	var wsMsg comms.WsMsg
+	wsMsg.Event = "device_connected"
+	wsMsg.Data = comms.WsSendDevConnectPayload{
+		Token:      daemon.coord.JWT,
+		Containers: containers,
+	}
+	daemon.ws.WriteJSON(wsMsg)
+
 	for {
 		messageType, eventBytes, err := daemon.ws.ReadMessage()
 		if err != nil {
-			log.Printf("Cannot read ws message: type %v msg %v\n", messageType, string(eventBytes))
-			continue
+			if daemon.running {
+				log.Printf("Cannot read ws message: type %v msg %v\n", messageType, string(eventBytes))
+				time.Sleep(1 * time.Second)
+				continue
+			} else {
+				break
+			}
 		}
 		// log.Printf("Got ws message: type %v msg %v\n", messageType, string(eventBytes))
 
@@ -336,7 +379,7 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 
 func (daemon *HallucinetDaemon) socketListenLoop() error {
 	log.Printf("Listening on %v\n", daemon.config.HallucinetSocket)
-	running := false
+	daemon.running = false
 
 	for {
 		log.Printf("Accepting")
@@ -352,41 +395,33 @@ func (daemon *HallucinetDaemon) socketListenLoop() error {
 			return err
 		}
 
-		devices, err := daemon.coord.GetDevices()
-		if err != nil {
-			return err
-		}
-
-		containers, err := daemon.coord.GetContainers()
-		if err != nil {
-			return err
-		}
-
-		log.Printf("Message!")
+		log.Printf("Got message! %v\n", msg)
 		switch msg.Header.Kind {
 		case comms.MsgStartDaemon:
 			log.Printf("Received start message.")
-			if !running {
+			if !daemon.running {
 
 				if err != nil {
 					return err
 				}
 
-				daemon.addRoutesToDevices(devices)
-				daemon.addDnsEntriesForContainers(containers)
-
 				go daemon.startDns()
-				running = true
+				go daemon.wsListenLoop()
+
+				daemon.running = true
+				ctx, cancel := context.WithCancel(context.Background())
+				daemon.RunningContext = ctx
+				daemon.RunningCancel = cancel
 			}
 
 		case comms.MsgStopDaemon:
 			log.Printf("Received stop message.")
-			if running {
+			if daemon.running {
+				daemon.domon.Close()
+				daemon.ws.Close()
 				daemon.stopDns()
-				// TODO use runtime container, devices instead of initialize-time
-				daemon.removeDnsentriesForContainers(containers)
-				daemon.removeRoutesToDevices(devices)
-				running = false
+				daemon.running = false
+				daemon.RunningCancel()
 			}
 		}
 	}
@@ -405,6 +440,7 @@ func (daemon *HallucinetDaemon) startDns() {
 
 func (daemon *HallucinetDaemon) stopDns() {
 	err := daemon.dns.Stop()
+	daemon.dns.ClearEntries()
 	if err != nil {
 		log.Printf("Cannot stop DNS server", err)
 		return
@@ -471,40 +507,21 @@ func (daemon *HallucinetDaemon) removeDnsentriesForContainers(containers []types
 	return nil
 }
 
-func (daemon *HallucinetDaemon) addContainersFromServer() {
-	devices, err := daemon.coord.GetDevices()
-	if err != nil {
-		log.Printf("Cannot get container from server. %v\n", err)
-	}
-
-	deviceOne := devices[0]
-	containerOne, err := utils.CreateContainerInfo("containerOne", "10.2.1.2", deviceOne)
-	if err != nil {
-		log.Printf("Error creating container info. %v\n", containerOne)
-	}
-
-	err = daemon.dns.AddEntry(containerOne)
-	if err != nil {
-		log.Printf("Error adding entry. %v\n", err)
-	}
-	log.Printf("Adding entry %v %v %v\n", deviceOne.Name, containerOne.Name, containerOne.Address)
+func (daemon *HallucinetDaemon) Start() error {
+	daemon.socketListenLoop()
+	return nil
 }
 
-func (daemon *HallucinetDaemon) Start() error {
-	// Register device socket and send current state
-	containers, err := daemon.domon.GetDeviceContainers()
+func (daemon *HallucinetDaemon) Close() error {
+	err := daemon.listener.Close()
 	if err != nil {
 		return err
 	}
 
-	var wsMsg comms.WsMsg
-	wsMsg.Event = "device_connected"
-	wsMsg.Data = comms.WsSendDevConnectPayload{
-		Token:      daemon.coord.JWT,
-		Containers: containers,
+	err = daemon.ws.Close()
+	if err != nil {
+		return err
 	}
-	daemon.ws.WriteJSON(wsMsg)
-	daemon.wsListenLoop()
 
 	return nil
 }

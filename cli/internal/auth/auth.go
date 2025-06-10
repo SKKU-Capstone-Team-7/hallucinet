@@ -42,6 +42,23 @@ func DecodeDeviceToken(tokenString string) (types.DeviceToken, error) {
 	}, nil
 }
 
+func UntilAuthenticated(tokenPath string) types.DeviceToken {
+	for {
+		_, err := os.Stat(tokenPath)
+		if err == nil {
+			tokenData, err := os.ReadFile(tokenPath)
+			if err == nil {
+				token, err := DecodeDeviceToken(string(tokenData))
+				if err == nil && token.Expiration.After(time.Now()) {
+					return token
+				}
+			}
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+}
+
 func Authenticate(tokenPath string, endpoint string) (types.DeviceToken, error) {
 	_, err := os.Stat(tokenPath)
 	if err == nil {

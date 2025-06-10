@@ -2,7 +2,9 @@ package hallucinet
 
 import (
 	"encoding/binary"
+	"fmt"
 	"net"
+	"time"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/comms"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
@@ -22,22 +24,27 @@ func New(config types.Config) *Hallucinet {
 
 func (hnet Hallucinet) sendMessage(msg comms.Msg) error {
 	socketPath := hnet.config.HallucinetSocket
-	conn, err := net.DialUnix("unix", nil, &net.UnixAddr{
-		Name: socketPath,
-		Net:  "unix",
-	})
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
+	deadline := time.Now().Add(5 * time.Second)
 
-	err = binary.Write(conn, binary.NativeEndian, msg.Header)
-	if err != nil {
-		return err
-	}
+	for {
+		conn, err := net.DialUnix("unix", nil, &net.UnixAddr{
+			Name: socketPath,
+			Net:  "unix",
+		})
+		if err == nil {
+			defer conn.Close()
+			err = binary.Write(conn, binary.NativeEndian, msg.Header)
+			// TODO: send body
+			return err
+		}
 
-	// TODO send body
-	return err
+		// Check if time limit exceeded
+		if time.Now().After(deadline) {
+			return fmt.Errorf("failed to send message after 5s: %w", err)
+		}
+
+		time.Sleep(200 * time.Millisecond) // small delay before retry
+	}
 }
 
 func (hnet Hallucinet) Start() error {

@@ -49,6 +49,10 @@ func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	log.Printf("Waiting for valid authentication token...")
+	auth.UntilAuthenticated(tokenPath)
+	log.Printf("Authentication token is valid.")
+
 	token, err := auth.Authenticate(tokenPath, config.Endpoint)
 	if err != nil {
 		log.Printf("Cannot decode device token. %v\n", err)

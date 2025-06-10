@@ -185,6 +185,17 @@ func (daemon *HallucinetDaemon) handleDeviceConnected(payload comms.WsRecvDevCon
 		}
 		daemon.dns.AddEntry(cont)
 	}
+
+	device, err := coordination.ParseDeviceInfoDto(payload.Device)
+	if err != nil {
+		log.Printf("Cannot parse device info %v\n", err)
+	}
+	err = daemon.routeManager.AddRouteToDeviceSubnet(device)
+	if err != nil {
+		log.Printf("Skipped adding route to %v via %v. %v\n", device.Subnet, device, err)
+	} else {
+		log.Printf("Added route to %v via %v\n", device.Subnet, device)
+	}
 }
 
 func (daemon *HallucinetDaemon) handleDeviceDisconnected(payload comms.WsRecvDevDisconnectPayload) {
@@ -197,6 +208,17 @@ func (daemon *HallucinetDaemon) handleDeviceDisconnected(payload comms.WsRecvDev
 			continue
 		}
 		daemon.dns.RemoveEntry(cont)
+	}
+
+	device, err := coordination.ParseDeviceInfoDto(payload.Device)
+	if err != nil {
+		log.Printf("Cannot parse device info %v\n", err)
+	}
+	err = daemon.routeManager.RemoveRouteToDeviceSubnet(device)
+	if err != nil {
+		log.Printf("Skipped removing route to %v via %v. %v\n", device.Subnet, device, err)
+	} else {
+		log.Printf("Removed route to %v via %v\n", device.Subnet, device)
 	}
 }
 

@@ -1,8 +1,10 @@
 package wireguard
 
 import (
+	"fmt"
 	"log"
 	"net"
+	"net/netip"
 
 	"github.com/SKKU-Capstone-Team-7/hallucinet/vpn/types"
 	"github.com/vishvananda/netlink"
@@ -11,7 +13,7 @@ import (
 )
 
 type Wireguard struct {
-	LinkSubnet net.IPNet
+	LinkAddr   netip.Prefix
 	LinkName   string
 	ListenPort int
 	Link       *netlink.Wireguard
@@ -26,7 +28,7 @@ func New(config types.Config) Wireguard {
 	}
 
 	return Wireguard{
-		LinkSubnet: config.LinkSubnet,
+		LinkAddr:   config.LinkAddr,
 		LinkName:   config.LinkName,
 		ListenPort: config.WgListenPort,
 		Client:     client,
@@ -62,11 +64,14 @@ func (wg *Wireguard) CreateWireguardLink() {
 	if err != nil {
 		log.Panicf("Cannot add wireguard link. %v\n", err)
 	}
-	netlinkAddr, err := netlink.ParseAddr(wg.LinkSubnet.String())
+	addr, err := netlink.ParseAddr(wg.LinkAddr.String())
 	if err != nil {
-		log.Panicf("Cannot parse link address %v. %v\n", wg.LinkSubnet.String(), err)
+		log.Panicf("Cannot parse link address %v. %v\n", addr, err)
 	}
-	netlink.AddrAdd(&link, netlinkAddr)
+	err = netlink.AddrAdd(&link, addr)
+	if err != nil {
+		log.Panicf("Cannot add address %v to link %v. %v\n", addr, link.Name, err)
+	}
 
 	// Configure wireguard device
 	key, err := wgtypes.GeneratePrivateKey()
@@ -93,6 +98,28 @@ func (wg *Wireguard) SetLinkUp() {
 	if err != nil {
 		log.Panicf("Cannot set link up. %v\n", err)
 	}
+}
+
+func (wg *Wireguard) AddPeer(pubkey wgtypes.Key, ip netip.Addr) error {
+	allowedIp, err := netlink.ParseIPNet(fmt.Sprintf("%v/32", ip))
+	if err != nil {
+		return err
+	}
+
+	peer := wgtypes.PeerConfig{
+		PublicKey:         pubkey,
+		AllowedIPs:        []net.IPNet{*allowedIp},
+		ReplaceAllowedIPs: true,
+	}
+
+	err = wg.Client.ConfigureDevice(wg.LinkName, wgtypes.Config{
+		Peers: []wgtypes.PeerConfig{peer},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // // Set link up

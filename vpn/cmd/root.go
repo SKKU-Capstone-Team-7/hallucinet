@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"log"
-	"net"
 	"net/netip"
 	"os"
 	"os/signal"
@@ -16,21 +15,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listenAddr string
+var (
+	listenAddr string
+	linkAddr   = "172.28.0.1/16"
+)
 
 func startHallucinetVPN(cmd *cobra.Command, args []string) error {
-	_, linkSubnet, err := net.ParseCIDR("10.18.0.0/16")
-	if err != nil {
-		log.Panicf("Cannot parse link subnet. %v\n", linkSubnet)
-	}
-
-	listenAddr, err := netip.ParseAddrPort("0.0.0.0:1337")
+	listenAddr, err := netip.ParseAddrPort(listenAddr)
 	if err != nil {
 		log.Panicf("Cannot parse server address. %v\n", err)
 	}
+	linkAddr, err := netip.ParsePrefix(linkAddr)
+	if err != nil {
+		log.Panicf("Cannot parse link address. %v\n", err)
+	}
 
 	config := types.Config{
-		LinkSubnet:   *linkSubnet,
+		LinkAddr:     linkAddr,
 		LinkName:     "hallucinet0",
 		WgListenPort: 55123,
 		ListenAddr:   listenAddr,
@@ -62,5 +63,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().StringVar(&listenAddr, "config", "0.0.0.0:1337", "")
+	rootCmd.Flags().StringVar(&listenAddr, "address", "0.0.0.0:1337", "")
 }

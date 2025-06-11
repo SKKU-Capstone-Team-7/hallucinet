@@ -1,12 +1,11 @@
 package types
 
 import (
-	"net"
 	"net/netip"
 )
 
 type Config struct {
-	LinkSubnet   net.IPNet
+	LinkAddr     netip.Prefix
 	LinkName     string
 	WgListenPort int
 	ListenAddr   netip.AddrPort

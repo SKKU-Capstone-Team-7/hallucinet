@@ -37,22 +37,59 @@ func New(config types.Config) VPN {
 	}
 }
 
-type ReqBody struct {
+type UnregisterBody struct {
+	Pubkey string `json:"pubkey"`
+}
+type RegisterBody struct {
 	Pubkey string `json:"pubkey"`
 	Subnet string `json:"subnet"`
 }
 type Response struct {
-	Pubkey string `json:"pubkey"`
-	IP     string `json:"ip"`
+	Pubkey  string `json:"pubkey"`
+	Address string `json:"address"`
 }
 
-func (vpn *VPN) httpHandler(w http.ResponseWriter, r *http.Request) {
+func (vpn *VPN) unregisterHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var form ReqBody
+	var form UnregisterBody
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err = json.Unmarshal(body, &form)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	devPubkey, err := wgtypes.ParseKey(form.Pubkey)
+	if err != nil {
+		http.Error(w, "Invalid pubkey", http.StatusBadRequest)
+		return
+	}
+	err = vpn.RemoveClient(devPubkey)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Printf("Removed peer %v\n", devPubkey.String())
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (vpn *VPN) registerHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var form RegisterBody
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -81,10 +118,11 @@ func (vpn *VPN) httpHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	log.Printf("Added peer %v\n", devPubkey.String())
 
 	res, err := json.Marshal(Response{
-		Pubkey: vpn.wg.Device.PublicKey.String(),
-		IP:     devIP.String(),
+		Pubkey:  vpn.wg.Device.PublicKey.String(),
+		Address: devIP.String(),
 	})
 	if err != nil {
 		log.Panicf("Cannot marshal response. %v\n", err)
@@ -134,13 +172,32 @@ func (vpn *VPN) AddClient(pubkey wgtypes.Key, deviceSubnet net.IPNet) (netip.Add
 	return peerIP, nil
 }
 
+func (vpn *VPN) RemoveClient(pubkey wgtypes.Key) error {
+	err := vpn.wg.RemovePeer(pubkey)
+	if err != nil {
+		return err
+	}
+
+	ip := vpn.pubkeyToIP[pubkey.String()]
+	delete(vpn.pubkeyToIP, pubkey.String())
+
+	for i, addr := range vpn.usedIPs {
+		if addr == ip {
+			vpn.usedIPs = slices.Delete(vpn.usedIPs, i, i+1)
+			break
+		}
+	}
+	return nil
+}
+
 func (vpn *VPN) Start() {
 	vpn.wg.CreateWireguardLink()
 	vpn.wg.SetLinkUp()
 	log.Printf("Created wireguard link %v\n", vpn.config.LinkName)
 
 	log.Printf("HTTP server listening on %v\n", vpn.config.ListenAddr.String())
-	http.HandleFunc("/register", vpn.httpHandler)
+	http.HandleFunc("/register", vpn.registerHandler)
+	http.HandleFunc("/unregister", vpn.unregisterHandler)
 	http.ListenAndServe(vpn.config.ListenAddr.String(), nil)
 }
 

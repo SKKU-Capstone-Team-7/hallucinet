@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/netip"
 	"os"
@@ -14,12 +15,40 @@ type ConfigJson struct {
 	Endpoint         string `json:"hallucinet_endpoint"`
 	HallucinetSocket string `json:"hallucinet_socket"`
 	DnsAddress       string `json:"dns_address"`
+	VPNEndpoint      string `json:"vpn_endpoint"`
 }
 
 var (
-	ErrCfgInvalidDnsAddress = errors.New("invalid dns_address")
-	ErrInvalidTokenPath     = errors.New("invalid token path")
+	ErrCfgInvalidVpnEndpoint = errors.New("invalid vpn_endpoint")
+	ErrCfgInvalidDnsAddress  = errors.New("invalid dns_address")
+	ErrInvalidTokenPath      = errors.New("invalid token path")
 )
+
+func resolveAddrPort(hostport string) (netip.AddrPort, error) {
+	host, port, err := net.SplitHostPort(hostport)
+	if err != nil {
+		return netip.AddrPort{}, err
+	}
+
+	ips, err := net.LookupIP(host)
+	if err != nil || len(ips) == 0 {
+		return netip.AddrPort{}, fmt.Errorf("host resolution failed: %v", err)
+	}
+
+	ip := ips[0] // Pick first resolved IP
+	parsedIP, err := netip.ParseAddr(ip.String())
+	if err != nil {
+		return netip.AddrPort{}, fmt.Errorf("invalid IP: %v", ip)
+	}
+
+	// Parse port
+	p, err := net.LookupPort("udp", port) // or "tcp" depending on use case
+	if err != nil {
+		return netip.AddrPort{}, err
+	}
+
+	return netip.AddrPortFrom(parsedIP, uint16(p)), nil
+}
 
 func ReadConfigFile(path string) (types.Config, error) {
 	configContent, err := os.ReadFile(path)
@@ -46,6 +75,13 @@ func ReadConfigFile(path string) (types.Config, error) {
 		return types.Config{}, ErrCfgInvalidDnsAddress
 	}
 	config.DnsAddress = dnsAddress
+
+	// Check VPN endpoint
+	vpnEndpoint, err := resolveAddrPort(configJson.VPNEndpoint)
+	if err != nil {
+		return types.Config{}, ErrCfgInvalidVpnEndpoint
+	}
+	config.VPNEndpoint = vpnEndpoint
 
 	return config, nil
 }

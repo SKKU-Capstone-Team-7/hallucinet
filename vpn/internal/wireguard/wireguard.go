@@ -100,6 +100,22 @@ func (wg *Wireguard) SetLinkUp() {
 	}
 }
 
+func (wg *Wireguard) RemovePeer(pubkey wgtypes.Key) error {
+	peer := wgtypes.PeerConfig{
+		PublicKey: pubkey,
+		Remove:    true,
+	}
+
+	err := wg.Client.ConfigureDevice(wg.LinkName, wgtypes.Config{
+		Peers: []wgtypes.PeerConfig{peer},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (wg *Wireguard) AddPeer(pubkey wgtypes.Key, ip netip.Addr) error {
 	allowedIp, err := netlink.ParseIPNet(fmt.Sprintf("%v/32", ip))
 	if err != nil {

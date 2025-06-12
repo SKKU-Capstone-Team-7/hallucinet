@@ -51,10 +51,13 @@ type WsSendContEventPayload struct {
 type WsSendDevConnectPayload struct {
 	Token      string      `json:"token"`
 	Containers []ContEvent `json:"containers"`
+	PubKey     string      `json:"pubkey"`
 }
 
 type WsRecvDevSelfPayload struct {
-	Device coordination.DeviceInfoDto `json:"device"`
+	Device  coordination.DeviceInfoDto `json:"device"`
+	Address string                     `json:"address"`
+	PubKey  string                     `json:"pubkey"`
 }
 
 type WsRecvDevConnectPayload struct {

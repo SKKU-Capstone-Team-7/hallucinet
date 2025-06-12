@@ -13,6 +13,7 @@ import { ContainerInfoDto } from 'src/containers/container-info.dto';
 import { DevicesService } from 'src/devices/devices.service';
 import { DeviceInfoDto } from 'src/devices/device-info.dto';
 import { DevicesController } from 'src/devices/devices.controller';
+import { ConfigService } from '@nestjs/config';
 
 type UserIdentifier = {
   userId: string;
@@ -24,15 +25,20 @@ type UserIdentifier = {
 export class EventsGateway {
   private idSocket: Map<UserIdentifier, WebSocket>;
   private socketId: Map<WebSocket, UserIdentifier>;
+  private idPubkey: Map<UserIdentifier, string>;
+  private vpnServer: string;
 
   constructor(
     private tokenService: TokenService,
     private appwriteService: AppwriteService,
     private containersService: ContainersService,
     private devicesService: DevicesService,
+    private configService: ConfigService,
   ) {
     this.idSocket = new Map<UserIdentifier, WebSocket>();
     this.socketId = new Map<WebSocket, UserIdentifier>();
+    this.idPubkey = new Map<UserIdentifier, string>();
+    this.vpnServer = configService.getOrThrow('VPN_SERVER');
   }
 
   mapIdToSocket(id: UserIdentifier, socket: WebSocket) {
@@ -126,6 +132,7 @@ export class EventsGateway {
   ) {
     const id = await this.identifyUser(payload.token);
     this.mapIdToSocket(id, client);
+    this.idPubkey.set(id, payload.pubkey);
 
     // Send team containers to the client
     const teamContainers = await this.containersService.getTeamContainers(
@@ -134,9 +141,26 @@ export class EventsGateway {
     this.sendEventToId(id, 'team_containers', {
       containers: teamContainers,
     });
+    // Register the device to VPN
+    const device = await this.devicesService.getDevice(id.deviceId);
+    const vpnRes = await fetch(this.vpnServer + '/register', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        pubkey: payload.pubkey,
+        subnet: device.subnet,
+      }),
+    }).then((res) => {
+      return res.json();
+    });
+
     // Send own info to the client
     this.sendEventToId(id, 'device_self', {
-      device: await this.devicesService.getDevice(id.deviceId),
+      device: device,
+      pubkey: vpnRes['pubkey'],
+      address: vpnRes['address'],
     });
 
     // Reset device containers to the current state
@@ -173,6 +197,18 @@ export class EventsGateway {
       console.log('Device ' + id + ' has no socket');
       return;
     }
+
+    // Unregister the device from VPN
+    const pubkey = this.idPubkey.get(id);
+    const vpnRes = await fetch(this.vpnServer + '/unregister', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        pubkey: pubkey,
+      }),
+    });
 
     const device = await this.devicesService.getDevice(id.deviceId);
     this.broadcastEventToOtherDevices(id, 'device_disconnected', {

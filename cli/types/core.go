@@ -31,4 +31,5 @@ type Config struct {
 	DeviceToken      DeviceToken
 	DnsAddress       netip.AddrPort
 	NetworkName      string
+	VPNEndpoint      netip.AddrPort
 }

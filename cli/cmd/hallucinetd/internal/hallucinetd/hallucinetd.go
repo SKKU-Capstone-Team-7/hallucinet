@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"net"
+	"net/netip"
 	"net/url"
 	"os"
 	"time"
@@ -17,8 +18,10 @@ import (
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/docker"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/routing"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/utils"
+	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/internal/vpn"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/cli/types"
 	"github.com/gorilla/websocket"
+	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 var ErrUnknownWSMsg = errors.New("Unknown socket message")
@@ -35,6 +38,7 @@ type HallucinetDaemon struct {
 	running        bool
 	RunningContext context.Context
 	RunningCancel  context.CancelFunc
+	key            wgtypes.Key
 }
 
 func New(config types.Config) (*HallucinetDaemon, error) {
@@ -137,9 +141,20 @@ func (daemon *HallucinetDaemon) dockerListenLoop() error {
 }
 
 func (daemon *HallucinetDaemon) handleDeviceSelf(payload comms.WsRecvDevSelfPayload) {
+	// Create wireguard connection
+	addr, err := netip.ParseAddr(payload.Address)
+	if err != nil {
+		log.Print("Cannot parse vpn address %v. %v\n", payload.Address, err)
+	}
+	serverKey, err := wgtypes.ParseKey(payload.PubKey)
+	if err != nil {
+		log.Print("Cannot parse server pubkey %v. %v\n", payload.PubKey, err)
+	}
+	vpn.SetupWireguardLink(daemon.config.VPNEndpoint, daemon.key, addr, serverKey)
+
+	// Add own containers to DNS
 	daemon.Device = payload.Device
 	daemon.domon.CreateEventsChannel(daemon.Device)
-	log.Printf("I am %v\n", payload.Device)
 	containers, err := daemon.domon.GetDeviceContainers()
 	if err != nil {
 		log.Printf("Cannot get device containers. %v\n", err)
@@ -298,14 +313,22 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 	if err != nil {
 		return err
 	}
+	key, err := wgtypes.GeneratePrivateKey()
+	if err != nil {
+		return err
+	}
 
 	var wsMsg comms.WsMsg
 	wsMsg.Event = "device_connected"
 	wsMsg.Data = comms.WsSendDevConnectPayload{
 		Token:      daemon.coord.JWT,
 		Containers: containers,
+		PubKey:     key.PublicKey().String(),
 	}
-	daemon.ws.WriteJSON(wsMsg)
+	err = daemon.ws.WriteJSON(wsMsg)
+	if err != nil {
+		return err
+	}
 
 	for {
 		messageType, eventBytes, err := daemon.ws.ReadMessage()
@@ -439,6 +462,7 @@ func (daemon *HallucinetDaemon) socketListenLoop() error {
 		case comms.MsgStopDaemon:
 			log.Printf("Received stop message.")
 			if daemon.running {
+				vpn.RemoveWireguardLink()
 				daemon.domon.Close()
 				daemon.ws.Close()
 				daemon.stopDns()

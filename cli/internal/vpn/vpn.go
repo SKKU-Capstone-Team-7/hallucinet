@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"net/netip"
+	"time"
 
 	"github.com/vishvananda/netlink"
 	"golang.zx2c4.com/wireguard/wgctrl"
@@ -16,7 +17,7 @@ var (
 	ServerPort = 55123
 )
 
-func SetupWireguardLink(vpnEndpoint netip.AddrPort, privKey wgtypes.Key, vpnAddr netip.Addr, serverKey wgtypes.Key) {
+func SetupWireguardLink(vpnEndpoint netip.AddrPort, privKey wgtypes.Key, vpnAddr netip.Addr, ownSubnet netip.Prefix, serverKey wgtypes.Key) {
 	RemoveWireguardLink()
 
 	linkAttrs := netlink.NewLinkAttrs()
@@ -45,19 +46,29 @@ func SetupWireguardLink(vpnEndpoint netip.AddrPort, privKey wgtypes.Key, vpnAddr
 
 	endpointIP := net.ParseIP(vpnEndpoint.Addr().String())
 	_, cidr, _ := net.ParseCIDR(vpnAddr.String() + "/16")
+	_, dockerSubnet, _ := net.ParseCIDR(ownSubnet.Addr().String() + "/16")
+	keepaliveDur, _ := time.ParseDuration("25s")
 	serverPeer := wgtypes.PeerConfig{
 		PublicKey: serverKey,
 		Endpoint: &net.UDPAddr{
 			IP:   endpointIP,
 			Port: int(vpnEndpoint.Port()),
 		},
-		AllowedIPs: []net.IPNet{*cidr},
+		AllowedIPs:                  []net.IPNet{*cidr, *dockerSubnet},
+		PersistentKeepaliveInterval: &keepaliveDur,
 	}
 	c.ConfigureDevice(LinkName, wgtypes.Config{
 		PrivateKey:   &privKey,
 		ReplacePeers: true,
 		Peers:        []wgtypes.PeerConfig{serverPeer},
+		ListenPort:   new(int),
+		FirewallMark: new(int),
 	})
+
+	err = netlink.LinkSetUp(&link)
+	if err != nil {
+		log.Panicf("Cannot set link up. %v\n", err)
+	}
 }
 
 func RemoveWireguardLink() {

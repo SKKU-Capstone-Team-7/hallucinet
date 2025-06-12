@@ -85,6 +85,9 @@ func (domon *DockerMonitor) CreateEventsChannel(device coordination.DeviceInfoDt
 			IPAM: &network.IPAM{
 				Driver: "default",
 				Config: ipamConfig,
+				Options: map[string]string{
+					"com.docker.network.bridge.trusted_host_interfaces": "hallucinet0",
+				},
 			},
 		}
 		_, err := domon.client.NetworkCreate(ctx, networkName, createOpts)

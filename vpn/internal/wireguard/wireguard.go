@@ -116,7 +116,7 @@ func (wg *Wireguard) RemovePeer(pubkey wgtypes.Key) error {
 	return nil
 }
 
-func (wg *Wireguard) AddPeer(pubkey wgtypes.Key, ip netip.Addr) error {
+func (wg *Wireguard) AddPeer(pubkey wgtypes.Key, ip netip.Addr, subnet net.IPNet) error {
 	allowedIp, err := netlink.ParseIPNet(fmt.Sprintf("%v/32", ip))
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func (wg *Wireguard) AddPeer(pubkey wgtypes.Key, ip netip.Addr) error {
 
 	peer := wgtypes.PeerConfig{
 		PublicKey:         pubkey,
-		AllowedIPs:        []net.IPNet{*allowedIp},
+		AllowedIPs:        []net.IPNet{*allowedIp, subnet},
 		ReplaceAllowedIPs: true,
 	}
 

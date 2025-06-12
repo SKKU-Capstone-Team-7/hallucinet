@@ -144,13 +144,20 @@ func (daemon *HallucinetDaemon) handleDeviceSelf(payload comms.WsRecvDevSelfPayl
 	// Create wireguard connection
 	addr, err := netip.ParseAddr(payload.Address)
 	if err != nil {
-		log.Print("Cannot parse vpn address %v. %v\n", payload.Address, err)
+		log.Printf("Cannot parse vpn address %v. %v\n", payload.Address, err)
+		return
 	}
 	serverKey, err := wgtypes.ParseKey(payload.PubKey)
 	if err != nil {
-		log.Print("Cannot parse server pubkey %v. %v\n", payload.PubKey, err)
+		log.Printf("Cannot parse server pubkey %v. %v\n", payload.PubKey, err)
+		return
 	}
-	vpn.SetupWireguardLink(daemon.config.VPNEndpoint, daemon.key, addr, serverKey)
+	ownSubnet, err := netip.ParsePrefix(payload.Device.Subnet)
+	if err != nil {
+		log.Printf("Cannot parse device subnet %v. %v\n", payload.Device.Subnet, err)
+		return
+	}
+	vpn.SetupWireguardLink(daemon.config.VPNEndpoint, daemon.key, addr, ownSubnet, serverKey)
 
 	// Add own containers to DNS
 	daemon.Device = payload.Device
@@ -317,6 +324,7 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 	if err != nil {
 		return err
 	}
+	daemon.key = key
 
 	var wsMsg comms.WsMsg
 	wsMsg.Event = "device_connected"

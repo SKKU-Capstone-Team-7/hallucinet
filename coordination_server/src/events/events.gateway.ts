@@ -152,9 +152,13 @@ export class EventsGateway {
         pubkey: payload.pubkey,
         subnet: device.subnet,
       }),
-    }).then((res) => {
-      return res.json();
-    });
+    })
+      .then((res) => {
+        return res.json();
+      })
+      .catch((e) => {
+        console.log(e);
+      });
 
     // Send own info to the client
     this.sendEventToId(id, 'device_self', {

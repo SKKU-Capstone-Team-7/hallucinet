@@ -10,6 +10,7 @@ import (
 	"net/netip"
 	"slices"
 
+	"github.com/SKKU-Capstone-Team-7/hallucinet/vpn/internal/routing"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/vpn/internal/wireguard"
 	"github.com/SKKU-Capstone-Team-7/hallucinet/vpn/types"
 	"github.com/korylprince/ipnetgen"
@@ -18,18 +19,20 @@ import (
 )
 
 type VPN struct {
-	config     types.Config
-	usedIPs    []netip.Addr // Use this because it's comparable
-	pubkeyToIP map[string]netip.Addr
-	wg         wireguard.Wireguard
+	config         types.Config
+	usedIPs        []netip.Addr // Use this because it's comparable
+	pubkeyToIP     map[string]netip.Addr
+	pubkeyToSubnet map[string]netip.Prefix
+	wg             wireguard.Wireguard
 }
 
 func New(config types.Config) VPN {
 	wg := wireguard.New(config)
 	return VPN{
-		config:     config,
-		wg:         wg,
-		pubkeyToIP: map[string]netip.Addr{},
+		config:         config,
+		wg:             wg,
+		pubkeyToIP:     map[string]netip.Addr{},
+		pubkeyToSubnet: map[string]netip.Prefix{},
 		usedIPs: []netip.Addr{
 			config.LinkAddr.Masked().Addr(),
 			config.LinkAddr.Addr(),
@@ -115,6 +118,7 @@ func (vpn *VPN) registerHandler(w http.ResponseWriter, r *http.Request) {
 
 	devIP, err := vpn.AddClient(devPubkey, *devSubnet)
 	if err != nil {
+		log.Printf("%v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -163,12 +167,32 @@ func (vpn *VPN) GetDeviceIP(pubkey wgtypes.Key) (netip.Addr, error) {
 func (vpn *VPN) AddClient(pubkey wgtypes.Key, deviceSubnet net.IPNet) (netip.Addr, error) {
 	peerIP, err := vpn.GetDeviceIP(pubkey)
 	if err != nil {
+		log.Printf("Cannot parse peerIP")
 		return netip.Addr{}, err
 	}
-	err = vpn.wg.AddPeer(pubkey, peerIP)
+	err = vpn.wg.AddPeer(pubkey, peerIP, deviceSubnet)
+	if err != nil {
+		log.Printf("Cannot add peer ")
+		return netip.Addr{}, err
+	}
+
+	subnet, err := netip.ParsePrefix(deviceSubnet.String())
+	if err != nil {
+		log.Printf("Cannot parse subnet")
+		return netip.Addr{}, err
+	}
+	via, err := netip.ParseAddr(peerIP.String())
+	if err != nil {
+		log.Printf("Cannot parse via")
+		return netip.Addr{}, err
+	}
+
+	err = routing.AddRouteToDeviceSubnet(subnet, via)
 	if err != nil {
 		return netip.Addr{}, err
 	}
+
+	vpn.pubkeyToSubnet[pubkey.String()] = subnet
 	return peerIP, nil
 }
 
@@ -186,6 +210,11 @@ func (vpn *VPN) RemoveClient(pubkey wgtypes.Key) error {
 			vpn.usedIPs = slices.Delete(vpn.usedIPs, i, i+1)
 			break
 		}
+	}
+
+	err = routing.RemoveRouteToSubnet(vpn.pubkeyToSubnet[pubkey.String()])
+	if err != nil {
+		return err
 	}
 	return nil
 }

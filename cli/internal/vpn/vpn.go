@@ -37,6 +37,10 @@ func SetupWireguardLink(vpnEndpoint netip.AddrPort, privKey wgtypes.Key, vpnAddr
 	if err != nil {
 		log.Panicf("Cannot add address %v to link %v. %v\n", vpnAddr, link.Name, err)
 	}
+	err = netlink.LinkSetUp(&link)
+	if err != nil {
+		log.Panicf("Cannot set link %v up.", link.Name)
+	}
 
 	// Setup wg
 	c, err := wgctrl.New()
@@ -45,7 +49,7 @@ func SetupWireguardLink(vpnEndpoint netip.AddrPort, privKey wgtypes.Key, vpnAddr
 	}
 
 	endpointIP := net.ParseIP(vpnEndpoint.Addr().String())
-	_, cidr, _ := net.ParseCIDR(vpnAddr.String() + "/16")
+	serverIP, vpnSubnet, _ := net.ParseCIDR(vpnAddr.String() + "/16")
 	_, dockerSubnet, _ := net.ParseCIDR(ownSubnet.Addr().String() + "/16")
 	keepaliveDur, _ := time.ParseDuration("25s")
 	serverPeer := wgtypes.PeerConfig{
@@ -54,9 +58,11 @@ func SetupWireguardLink(vpnEndpoint netip.AddrPort, privKey wgtypes.Key, vpnAddr
 			IP:   endpointIP,
 			Port: int(vpnEndpoint.Port()),
 		},
-		AllowedIPs:                  []net.IPNet{*cidr, *dockerSubnet},
+		AllowedIPs:                  []net.IPNet{*vpnSubnet, *dockerSubnet},
 		PersistentKeepaliveInterval: &keepaliveDur,
 	}
+	log.Printf("VPN Subnet: %v\n", vpnSubnet)
+	log.Printf("Docker Subnet: %v\n", dockerSubnet)
 	c.ConfigureDevice(LinkName, wgtypes.Config{
 		PrivateKey:   &privKey,
 		ReplacePeers: true,
@@ -65,9 +71,14 @@ func SetupWireguardLink(vpnEndpoint netip.AddrPort, privKey wgtypes.Key, vpnAddr
 		FirewallMark: new(int),
 	})
 
-	err = netlink.LinkSetUp(&link)
+	route := netlink.Route{
+		Dst: dockerSubnet,
+		Gw:  serverIP,
+	}
+
+	err = netlink.RouteAdd(&route)
 	if err != nil {
-		log.Panicf("Cannot set link up. %v\n", err)
+		log.Panicf("Cannot add subnet route to vpn server. %v\n", err)
 	}
 }
 

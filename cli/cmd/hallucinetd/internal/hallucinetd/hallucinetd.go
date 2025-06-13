@@ -349,9 +349,34 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 	for {
 		messageType, eventBytes, err := daemon.ws.ReadMessage()
 		if err != nil {
+			log.Printf("Cannot read ws message: type %v msg %v\n", messageType, string(eventBytes))
 			if daemon.running {
-				log.Printf("Cannot read ws message: type %v msg %v\n", messageType, string(eventBytes))
-				time.Sleep(1 * time.Second)
+				log.Printf("Dialing websocket %v\n", u.String())
+				c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+				if err != nil {
+					log.Printf("Cannot dial %v. %v\n", u.String(), err)
+					continue
+				}
+				daemon.ws = c
+
+				// Register device socket and send current state
+				containers, err := daemon.domon.GetDeviceContainers()
+				if err != nil {
+					continue
+				}
+
+				var wsMsg comms.WsMsg
+				wsMsg.Event = "device_connected"
+				wsMsg.Data = comms.WsSendDevConnectPayload{
+					Token:      daemon.coord.JWT,
+					Containers: containers,
+					PubKey:     key.PublicKey().String(),
+				}
+				err = daemon.ws.WriteJSON(wsMsg)
+				if err != nil {
+					continue
+				}
+				time.Sleep(5 * time.Second)
 				continue
 			} else {
 				break

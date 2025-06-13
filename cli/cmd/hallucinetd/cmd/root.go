@@ -42,7 +42,17 @@ func init() {
 	rootCmd.Flags().StringVar(&tokenPath, "token", defaultTokenPath, "")
 }
 
+func EnableIPForwarding() error {
+	const path = "/proc/sys/net/ipv4/ip_forward"
+	return os.WriteFile(path, []byte("1"), 0644)
+}
+
 func startHallucinetDaemon(cmd *cobra.Command, args []string) error {
+	err := EnableIPForwarding()
+	if err != nil {
+		return err
+	}
+
 	config, err := utils.ReadConfigFile(configPath)
 	if err != nil {
 		log.Printf("Cannot read config file %v. %v\n", configPath, err)

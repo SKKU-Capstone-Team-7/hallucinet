@@ -20,14 +20,26 @@ var (
 	linkAddr   = "172.28.0.1/16"
 )
 
+func EnableIPForwarding() error {
+	const path = "/proc/sys/net/ipv4/ip_forward"
+	return os.WriteFile(path, []byte("1"), 0644)
+}
+
 func startHallucinetVPN(cmd *cobra.Command, args []string) error {
+	err := EnableIPForwarding()
+	if err != nil {
+		return err
+	}
+
 	listenAddr, err := netip.ParseAddrPort(listenAddr)
 	if err != nil {
 		log.Panicf("Cannot parse server address. %v\n", err)
+		return err
 	}
 	linkAddr, err := netip.ParsePrefix(linkAddr)
 	if err != nil {
 		log.Panicf("Cannot parse link address. %v\n", err)
+		return err
 	}
 
 	config := types.Config{

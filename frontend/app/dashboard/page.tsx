@@ -5,7 +5,7 @@ import MainLayout from "@/components/MainLayout";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
 import { backendFetch, cn } from "@/lib/utils";
 import { Account, Models } from "appwrite";
@@ -25,8 +25,8 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-  DialogTrigger
-} from '@/components/ui/dialog';
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,7 +64,7 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
   const handleCopy = React.useCallback(async () => {
     try {
       await navigator.clipboard.writeText(text);
-      setShowTip(true); 
+      setShowTip(true);
     } catch (err) {
       console.error("Failed to copy text: ", err);
     }
@@ -76,23 +76,18 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
     return () => clearTimeout(id);
   }, [showTip]);
 
-  const fadeEffectClasses = "whitespace-nowrap overflow-hidden [mask-image:linear-gradient(to_right,black_75%,transparent_100%)]";
+  const fadeEffectClasses =
+    "whitespace-nowrap overflow-hidden [mask-image:linear-gradient(to_right,black_75%,transparent_100%)]";
 
   const cardContent = (
-    <div 
+    <div
       className="p-5 w-40 rounded-lg cursor-pointer select-none
-               bg-[#1A2841] hover:bg-[#253754]" 
+               bg-[#1A2841] hover:bg-[#253754]"
       onClick={handleCopy}
     >
-      <p className={`h-9 font-bold ${fadeEffectClasses}`}>
-        {container.name} 
-      </p>
-      <p className={`${fadeEffectClasses}`}>
-        {container.image}
-      </p>
-      <p className={`${fadeEffectClasses}`}>
-        {container.deviceName}
-      </p>
+      <p className={`h-9 font-bold ${fadeEffectClasses}`}>{container.name}</p>
+      <p className={`${fadeEffectClasses}`}>{container.image}</p>
+      <p className={`${fadeEffectClasses}`}>{container.deviceName}</p>
     </div>
   );
 
@@ -106,26 +101,28 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
   );
 }
 
-function ContainerScrollArea({ containers }: {containers: ContainerInfo[]}) {
+function ContainerScrollArea({ containers }: { containers: ContainerInfo[] }) {
   return (
     <ScrollArea className="w-full whitespace-nowrap">
       <div className="flex gap-5 mt-4 mb-4">
         {containers.map((cont) => (
-          <ContainerCard container={cont} key={cont.name}/>
+          <ContainerCard container={cont} key={cont.name} />
         ))}
       </div>
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
-  )
+  );
 }
 
 function AddDeviceButton() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  const title ="Add New Device";
-  const description = "Run the following command on your new device to register it.";
-  const script = "curl -fsSL https://tailscale.com/install.sh | sh";
+  const title = "Add New Device";
+  const description =
+    "Run the following command on your new device to register it.";
+  const script =
+    "curl -fsSL https://github.com/SKKU-Capstone-Team-7/hallucinet/releases/latest/download/install.sh | sh";
 
   const handleCopy = useCallback(async () => {
     try {
@@ -140,15 +137,15 @@ function AddDeviceButton() {
       console.error("Copy to clipboard failed:", e);
     }
   }, [script]);
-  
+
   return (
     <Dialog
       open={isDialogOpen}
       onOpenChange={(open) => {
         setIsDialogOpen(open);
-        if (!open)
-          setIsCopied(false);
-      }}>
+        if (!open) setIsCopied(false);
+      }}
+    >
       <DialogTrigger asChild>
         <Button className="cursor-pointer w-30">
           <div className="flex items-center gap-1">
@@ -172,25 +169,25 @@ function AddDeviceButton() {
               </code>
               <Button
                 variant="ghost"
-                size="icon"     
+                size="icon"
                 onClick={handleCopy}
-                className="h-7 w-7 cursor-pointer" 
+                className="h-7 w-7 cursor-pointer"
                 aria-label="Copy DNS name"
               >
                 {isCopied ? (
                   <Check className="h-4 w-4" />
-                  ) : (
-                  <Copy className="h-4 w-4 cursor-pointer"/>
+                ) : (
+                  <Copy className="h-4 w-4 cursor-pointer" />
                 )}
               </Button>
             </div>
           </div>
         </div>
         <DialogFooter>
-          <DialogClose 
+          <DialogClose
             className={cn(
-            buttonVariants({ variant: "ghost" }),
-            "cursor-pointer"
+              buttonVariants({ variant: "ghost" }),
+              "cursor-pointer",
             )}
           >
             Cancel
@@ -203,10 +200,12 @@ function AddDeviceButton() {
 
 export default function DashboardPage() {
   const [initialLoading, setInitialLoading] = useState<boolean>(false);
-  const [isReadyForDashboard, setIsReadyForDashboard] = useState<boolean>(false);
+  const [isReadyForDashboard, setIsReadyForDashboard] =
+    useState<boolean>(false);
   const [isDataLoading, setIsDataLoading] = useState<boolean>(false);
   const [isDevicesLoading, setIsDevicesLoading] = useState<boolean>(false);
-  const [isContainersLoading, setIsContainersLoading] = useState<boolean>(false);
+  const [isContainersLoading, setIsContainersLoading] =
+    useState<boolean>(false);
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
     null,
   );
@@ -215,7 +214,7 @@ export default function DashboardPage() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | null>(null);
-  const [editedName, setEditedName] = useState('');
+  const [editedName, setEditedName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const router = useRouter();
@@ -225,20 +224,22 @@ export default function DashboardPage() {
       console.log("User not available, cannot load containers.");
       return;
     }
-  
+
     console.log("fetch container");
     setIsContainersLoading(true);
     try {
       const account = new Account(getAppwriteClient());
       const jwt = (await account.createJWT()).jwt;
-  
+
       const containersRes = await backendFetch(
         "/teams/me/containers",
         "GET",
         jwt,
       );
       if (!containersRes.ok) {
-        throw new Error(`Failed to fetch containers: ${containersRes.statusText} (${containersRes.status})`);
+        throw new Error(
+          `Failed to fetch containers: ${containersRes.statusText} (${containersRes.status})`,
+        );
       }
       const containerJsons: any[] = await containersRes.json();
       const fetchedContainers: ContainerInfo[] = containerJsons.map((cont) => ({
@@ -247,7 +248,7 @@ export default function DashboardPage() {
         image: cont["image"],
         deviceName: cont["device"]["name"],
         ip: cont["ip"],
-        last_seen: new Date(cont["lastAccessed"])
+        last_seen: new Date(cont["lastAccessed"]),
       }));
       setContainers(fetchedContainers);
     } catch (e) {
@@ -263,13 +264,13 @@ export default function DashboardPage() {
       console.log("User not available, cannot load devices.");
       return;
     }
-  
+
     console.log("fetch device");
     setIsDevicesLoading(true);
     try {
       const account = new Account(getAppwriteClient());
       const jwt = (await account.createJWT()).jwt;
-  
+
       const devicesRes = await backendFetch("/teams/me/devices", "GET", jwt);
       if (!devicesRes.ok) {
         throw new Error(`Failed to fetch devices: ${devicesRes.statusText}`);
@@ -281,9 +282,9 @@ export default function DashboardPage() {
         subnet: dev["ipBlock24"],
         userEmail: dev["user"]["email"],
         last_activate: new Date(dev["lastActivatedAt"]),
-        userId: dev["user"]["$id"]
+        userId: dev["user"]["$id"],
       }));
-  
+
       setDevices(fetchedDevices);
     } catch (e) {
       console.error("Failed to load devices:", e);
@@ -293,11 +294,11 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  const handleNameClick = (device : DeviceInfo) => {
+  const handleNameClick = (device: DeviceInfo) => {
     setSelectedDevice(device);
     setEditedName(device["name"]);
     setIsDialogOpen(true);
-  }
+  };
 
   const handleSave = async () => {
     if (!selectedDevice || !editedName.trim()) return;
@@ -306,9 +307,14 @@ export default function DashboardPage() {
       const account = new Account(getAppwriteClient());
       const jwt = (await account.createJWT()).jwt;
 
-      const deviceRes = await backendFetch(`/devices/${selectedDevice.id}`, 'PATCH', jwt, {
-        name: editedName.trim(),
-      });
+      const deviceRes = await backendFetch(
+        `/devices/${selectedDevice.id}`,
+        "PATCH",
+        jwt,
+        {
+          name: editedName.trim(),
+        },
+      );
       if (!deviceRes.ok) {
         const err = await deviceRes.json();
         throw new Error(err.message || "Failed to updtae device name.");
@@ -319,7 +325,7 @@ export default function DashboardPage() {
     } catch (e) {
       console.error("Error saving device name:", e);
       toast.error("Updated Failed", {
-        description: (e as Error).message 
+        description: (e as Error).message,
       });
     } finally {
       setIsSubmitting(false);
@@ -334,18 +340,22 @@ export default function DashboardPage() {
     try {
       const account = new Account(getAppwriteClient());
       const jwt = (await account.createJWT()).jwt;
-      
-      const deleteRes = await backendFetch(`/devices/${selectedDevice.id}`, 'DELETE', jwt);
+
+      const deleteRes = await backendFetch(
+        `/devices/${selectedDevice.id}`,
+        "DELETE",
+        jwt,
+      );
       if (!deleteRes.ok) {
         const err = await deleteRes.json();
-        throw new Error(err.message || 'Failed to delete the device.');
+        throw new Error(err.message || "Failed to delete the device.");
       }
       toast.success(`Device ${selectedDevice.name} has been deleted.`);
       await loadDevices();
     } catch (e) {
       console.error("Error deleting device:", e);
       toast.error("Deletion Failed", {
-        description: (e as Error).message
+        description: (e as Error).message,
       });
     } finally {
       setIsSubmitting(false);
@@ -357,10 +367,7 @@ export default function DashboardPage() {
     if (!user) return;
 
     try {
-      await Promise.all([
-        loadContainers(),
-        loadDevices()
-      ]);
+      await Promise.all([loadContainers(), loadDevices()]);
     } catch (e) {
       console.error("Failed to load dashboard data (outer catch):", e);
     } finally {
@@ -393,7 +400,8 @@ export default function DashboardPage() {
 
         // Check if user is in a team
         const meRes = await backendFetch("/users/me", "GET", jwt);
-        if (!meRes.ok) throw new Error(`Initial user check failed: ${meRes.statusText}`);
+        if (!meRes.ok)
+          throw new Error(`Initial user check failed: ${meRes.statusText}`);
         const meJson = await meRes.json();
         const teams: string[] = meJson["teamIds"] || [];
         if (teams.length == 0) {
@@ -423,7 +431,12 @@ export default function DashboardPage() {
   }, [isReadyForDashboard, user, initialLoading, loadDashBoardData]);
 
   useEffect(() => {
-    if (!user || !isReadyForDashboard || !process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || !process.env.NEXT_PUBLIC_CONTAINER_COLLECTION_ID) {
+    if (
+      !user ||
+      !isReadyForDashboard ||
+      !process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID ||
+      !process.env.NEXT_PUBLIC_CONTAINER_COLLECTION_ID
+    ) {
       return;
     }
 
@@ -431,26 +444,31 @@ export default function DashboardPage() {
     let unsubscribe: (() => void) | undefined;
     const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID;
     const collectionId = process.env.NEXT_PUBLIC_CONTAINER_COLLECTION_ID;
-    const channel = `databases.${databaseId}.collections.${collectionId}.documents`;  
-    
+    const channel = `databases.${databaseId}.collections.${collectionId}.documents`;
+
     console.log("Attempting to subscribe to channel:", channel);
 
     try {
-      unsubscribe = client.subscribe(channel, response => {
+      unsubscribe = client.subscribe(channel, (response) => {
         console.log("Realtime event received!", response);
         loadContainers();
       });
     } catch (error) {
       console.log("subscribe error");
     }
-    return () => { if (unsubscribe) unsubscribe()};
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [user, isReadyForDashboard, loadContainers]);
 
-  const memoizedColumns = useMemo(() => getDeviceColumns(handleNameClick), [handleNameClick]);
+  const memoizedColumns = useMemo(
+    () => getDeviceColumns(handleNameClick),
+    [handleNameClick],
+  );
 
   if (initialLoading || !user) return <></>;
   if (!user || !isReadyForDashboard) {
-    return <div></div>
+    return <div></div>;
   }
 
   return (
@@ -460,7 +478,7 @@ export default function DashboardPage() {
           <p className="text-2xl font-michroma">Recent Containers</p>
           <div className="max-w-4xl">
             <div className="container">
-              <ContainerScrollArea containers={containers}/>
+              <ContainerScrollArea containers={containers} />
             </div>
           </div>
         </div>
@@ -468,14 +486,17 @@ export default function DashboardPage() {
         <div className="mt-8">
           <p className="text-2xl font-michroma">Devices</p>
           <div>
-            <DataTable 
-              columns={memoizedColumns} 
-              data={devices} 
-              filterColumnKey="name" 
+            <DataTable
+              columns={memoizedColumns}
+              data={devices}
+              filterColumnKey="name"
               option={
                 <div className="flex gap-4">
-                  <AddDeviceButton/>
-                  <ReloadButton onClick={loadDevices} isLoading={isDevicesLoading}/>
+                  <AddDeviceButton />
+                  <ReloadButton
+                    onClick={loadDevices}
+                    isLoading={isDevicesLoading}
+                  />
                 </div>
               }
             />
@@ -488,14 +509,16 @@ export default function DashboardPage() {
           <DialogHeader>
             <DialogTitle>Edit Device</DialogTitle>
             <DialogDescription className="text-white">
-              {selectedDevice?.userId === user.$id ? "You can change the device name." : "You can only view details for devices not registered by you."}
+              {selectedDevice?.userId === user.$id
+                ? "You can change the device name."
+                : "You can only view details for devices not registered by you."}
             </DialogDescription>
           </DialogHeader>
           {selectedDevice && (
             <div className="space-y-4 py-2 text-sm">
               <div className="flex items-center justify-between gap-4">
-                <label 
-                  htmlFor="deviceName-edit" 
+                <label
+                  htmlFor="deviceName-edit"
                   className="flex-shrink-0 text-white text-muted-foreground"
                 >
                   Device Name:
@@ -510,21 +533,26 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center justify-between border-t pt-4">
                 <p className="text-muted-foreground text-white">User:</p>
-                <p className="font-medium truncate" title={selectedDevice.userEmail}>
+                <p
+                  className="font-medium truncate"
+                  title={selectedDevice.userEmail}
+                >
                   {selectedDevice.userEmail}
                 </p>
               </div>
               <div className="flex items-center justify-between border-t pt-4">
-                <p className="text-muted-foreground text-white">Assigned Subnet:</p>
+                <p className="text-muted-foreground text-white">
+                  Assigned Subnet:
+                </p>
                 <p className="font-mono font-medium">{selectedDevice.subnet}</p>
               </div>
             </div>
           )}
           <DialogFooter>
-            <DialogClose 
+            <DialogClose
               className={cn(
-              buttonVariants({ variant: "ghost" }),
-              "cursor-pointer"
+                buttonVariants({ variant: "ghost" }),
+                "cursor-pointer",
               )}
             >
               Cancel
@@ -533,9 +561,9 @@ export default function DashboardPage() {
               <div className="flex gap-2">
                 <AlertDialog>
                   <AlertDialogTrigger
-                    className={cn( 
-                      buttonVariants({ variant: "destructive" }), 
-                      "cursor-pointer" 
+                    className={cn(
+                      buttonVariants({ variant: "destructive" }),
+                      "cursor-pointer",
                     )}
                     disabled={isSubmitting}
                   >
@@ -543,17 +571,22 @@ export default function DashboardPage() {
                   </AlertDialogTrigger>
                   <AlertDialogContent className="bg-[#1A2841] border-slate-700 border">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogTitle>
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
                       <AlertDialogDescription className="text-white">
-                        This action cannot be undone. This will permanently delete the device 
-                        {' '}
-                        <span className="font-semibold text-red-500">{selectedDevice?.name}</span>
-                        {' '}
+                        This action cannot be undone. This will permanently
+                        delete the device{" "}
+                        <span className="font-semibold text-red-500">
+                          {selectedDevice?.name}
+                        </span>{" "}
                         and any associated containers.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="cursor-pointer bg-[#1A2841]">Cancel</AlertDialogCancel>
+                      <AlertDialogCancel className="cursor-pointer bg-[#1A2841]">
+                        Cancel
+                      </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDelete}
                         disabled={isSubmitting}
@@ -564,7 +597,11 @@ export default function DashboardPage() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                <Button className="cursor-pointer" onClick={handleSave} disabled={isSubmitting}>
+                <Button
+                  className="cursor-pointer"
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                >
                   Save Changes
                 </Button>
               </div>

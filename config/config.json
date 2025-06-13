@@ -1,0 +1,7 @@
+{
+  "hallucinet_endpoint": "https://hallucinet.marcorentap.com",
+  "hallucinet_socket": "/var/run/hallucinet.sock",
+  "hallucinet_link": "hallucinet0",
+  "dns_address": "127.0.0.1:53",
+  "vpn_endpoint": "hallucinet.marcorentap.com:55123"
+}

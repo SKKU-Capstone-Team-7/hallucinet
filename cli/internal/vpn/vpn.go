@@ -49,7 +49,7 @@ func SetupWireguardLink(vpnEndpoint netip.AddrPort, privKey wgtypes.Key, vpnAddr
 	}
 
 	endpointIP := net.ParseIP(vpnEndpoint.Addr().String())
-	serverIP, vpnSubnet, _ := net.ParseCIDR(vpnAddr.String() + "/16")
+	vpnIP, vpnSubnet, _ := net.ParseCIDR(vpnAddr.String() + "/16")
 	_, dockerSubnet, _ := net.ParseCIDR(ownSubnet.Addr().String() + "/16")
 	keepaliveDur, _ := time.ParseDuration("25s")
 	serverPeer := wgtypes.PeerConfig{
@@ -71,6 +71,9 @@ func SetupWireguardLink(vpnEndpoint netip.AddrPort, privKey wgtypes.Key, vpnAddr
 		FirewallMark: new(int),
 	})
 
+	serverIP := vpnIP.To4()
+	serverIP[3] = 1
+	log.Printf("Adding server IP: %v\n", serverIP)
 	route := netlink.Route{
 		Dst: dockerSubnet,
 		Gw:  serverIP,

@@ -90,7 +90,6 @@ func (dns *Dns) ClearEntries() {
 }
 
 func (dns *Dns) handleDNSRequest(rw dnslib.ResponseWriter, req *dnslib.Msg) {
-	log.Printf("entries: %v\n", dns.entries)
 	res := new(dnslib.Msg)
 	res.SetReply(req)
 
@@ -104,6 +103,8 @@ func (dns *Dns) handleDNSRequest(rw dnslib.ResponseWriter, req *dnslib.Msg) {
 	switch q.Qtype {
 	case dnslib.TypeA:
 		q.Name = strings.ToLower(q.Name)
+		log.Printf("Query: %v\n", q.Name)
+		log.Printf("Has entries: %v\n", dns.entries)
 		entry, exists := dns.entries[q.Name]
 		if !exists {
 			// Fallback to 1.1.1.1

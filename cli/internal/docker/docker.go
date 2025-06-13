@@ -61,20 +61,26 @@ func (domon *DockerMonitor) CreateEventsChannel(device coordination.DeviceInfoDt
 	domon.networkName = networkName
 
 	// Check if the network exists
+	exists := false
 	existing, err := domon.client.NetworkList(ctx, network.ListOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
-	found := false
 	for _, nw := range existing {
 		if nw.Name == networkName {
-			found = true
-			break
+			exists = true
+			if nw.IPAM.Config[0].Subnet != device.Subnet {
+				err := domon.client.NetworkRemove(ctx, nw.ID)
+				if err != nil {
+					log.Panicf("Cannot remove existing docker network %v\n", domon.networkName)
+				}
+				break
+			}
 		}
 	}
 
 	// Create the network if not found
-	if !found {
+	if !exists {
 		ipamConfig := []network.IPAMConfig{
 			{
 				Subnet: device.Subnet,
@@ -90,7 +96,7 @@ func (domon *DockerMonitor) CreateEventsChannel(device coordination.DeviceInfoDt
 				},
 			},
 		}
-		_, err := domon.client.NetworkCreate(ctx, networkName, createOpts)
+		_, err = domon.client.NetworkCreate(ctx, networkName, createOpts)
 		if err != nil {
 			log.Fatal(err)
 		}

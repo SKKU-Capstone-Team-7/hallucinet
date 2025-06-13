@@ -303,14 +303,22 @@ func (daemon *HallucinetDaemon) wsListenLoop() error {
 	if err != nil {
 		return err
 	}
+
+	wsScheme := "ws"
+	if coordUrl.Scheme == "https" {
+		wsScheme = "wss"
+	}
+
 	u := url.URL{
-		Scheme: "ws",
+		Scheme: wsScheme,
 		Host:   coordUrl.Host,
 		Path:   "/api/coordination/events",
 	}
 
+	log.Printf("Dialing websocket %v\n", u.String())
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
+		log.Printf("Cannot dial %v. %v\n", u.String(), err)
 		return err
 	}
 	daemon.ws = c

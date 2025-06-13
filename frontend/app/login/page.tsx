@@ -28,7 +28,6 @@ export default function LoginPage() {
   const [pageStatus, setPageStatus] = useState<PageStatus>("initial_check");
   const [loginError, setLoginError] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams(); 
 
   const {
     register,
@@ -79,7 +78,8 @@ export default function LoginPage() {
         description: "Redirecting...",
       });
 
-      const redirectPath = searchParams.get('redirect');
+      const searchParams = useSearchParams();
+      const redirectPath = searchParams.get("redirect");
 
       if (redirectPath) {
         console.log(`Redirecting to: ${redirectPath}`);
@@ -89,7 +89,6 @@ export default function LoginPage() {
         router.push("/dashboard");
         return;
       }
-
     } catch (e) {
       console.error("Login failed:", e);
       const appwriteError = e as AppwriteException;
@@ -107,7 +106,13 @@ export default function LoginPage() {
     <>
       <div className="fixed top-4 left-7">
         <Link href="/">
-          <Image src="/logoWhite.svg" alt="logo" width={120} height={40} className="cursor-pointer" />
+          <Image
+            src="/logoWhite.svg"
+            alt="logo"
+            width={120}
+            height={40}
+            className="cursor-pointer"
+          />
         </Link>
       </div>
 
@@ -155,7 +160,10 @@ export default function LoginPage() {
                     Remember me
                   </label>
                 </div>
-                <Link className="text-xs text-blue-500 py-2" href="/forgot-password">
+                <Link
+                  className="text-xs text-blue-500 py-2"
+                  href="/forgot-password"
+                >
                   Forgot password?
                 </Link>
               </div>

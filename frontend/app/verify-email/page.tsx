@@ -1,54 +1,58 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Account, Models, AppwriteException } from 'appwrite';
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Account, Models, AppwriteException } from "appwrite";
 import { toast } from "sonner";
-import { getAppwriteClient, getCurrentUser } from '@/lib/appwrite';
-import MainLayout from '@/components/MainLayout';
-import { Mail } from 'lucide-react';
+import { getAppwriteClient, getCurrentUser } from "@/lib/appwrite";
+import MainLayout from "@/components/MainLayout";
+import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type PageStatus = 
-  | 'initial_loading'         
-  | 'verifying_from_link'    
-  | 'link_verification_success' 
-  | 'link_verification_failed' 
-  | 'prompt_to_verify';
+type PageStatus =
+  | "initial_loading"
+  | "verifying_from_link"
+  | "link_verification_success"
+  | "link_verification_failed"
+  | "prompt_to_verify";
 
 export default function VerifyEmailPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [pageStatus, setPageStatus] = useState<PageStatus>('initial_loading');
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); 
+  const [pageStatus, setPageStatus] = useState<PageStatus>("initial_loading");
+  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
+    null,
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
 
   const account = useMemo(() => new Account(getAppwriteClient()), []);
 
-  useEffect(() => {  
-    const userId = searchParams.get('userId');
-    const secret = searchParams.get('secret');
+  useEffect(() => {
+    const searchParams = useSearchParams();
+    const userId = searchParams.get("userId");
+    const secret = searchParams.get("secret");
 
     const attemptVerificationFromLink = async (uid: string, sec: string) => {
-      setPageStatus('verifying_from_link');
+      setPageStatus("verifying_from_link");
       setErrorMessage(null);
 
       try {
         await account.updateVerification(uid, sec);
-        setPageStatus('link_verification_success');
-        toast.success("Email Verified Successfully!", { 
-          description: "Redirecting to login page..." 
+        setPageStatus("link_verification_success");
+        toast.success("Email Verified Successfully!", {
+          description: "Redirecting to login page...",
         });
-        router.push('/login');
+        router.push("/login");
       } catch (e) {
         console.error("Email verification from link failed:", e);
-        const message = (e as AppwriteException).message || "Invalid or expired verification link. Please try resending the email or contact support.";
+        const message =
+          (e as AppwriteException).message ||
+          "Invalid or expired verification link. Please try resending the email or contact support.";
         setErrorMessage(message);
-        setPageStatus('link_verification_failed');
-        toast.error("Verification Failed", { 
-          description: message 
+        setPageStatus("link_verification_failed");
+        toast.error("Verification Failed", {
+          description: message,
         });
       }
     };
@@ -60,18 +64,23 @@ export default function VerifyEmailPage() {
 
         if (user) {
           if (user.emailVerification) {
-            toast.info("Your email is already verified.", { description: "Redirecting to your dashboard..." });
+            toast.info("Your email is already verified.", {
+              description: "Redirecting to your dashboard...",
+            });
             router.push("/dashboard");
           } else {
-            setPageStatus('prompt_to_verify');
+            setPageStatus("prompt_to_verify");
           }
         } else {
-          setPageStatus('prompt_to_verify');
+          setPageStatus("prompt_to_verify");
         }
       } catch (e) {
-        console.warn("Could not fetch current user status (or no active session):", e);
+        console.warn(
+          "Could not fetch current user status (or no active session):",
+          e,
+        );
         setUser(null);
-        setPageStatus('prompt_to_verify');
+        setPageStatus("prompt_to_verify");
       }
     };
 
@@ -80,8 +89,7 @@ export default function VerifyEmailPage() {
     } else {
       checkCurrentUserState();
     }
-
-  }, [searchParams, router, account]);
+  }, [router, account]);
 
   const handleResendVerificationEmail = async () => {
     setIsResending(true);
@@ -91,21 +99,28 @@ export default function VerifyEmailPage() {
     try {
       await account.createVerification(verificationUrl);
       toast.success("Verification Email Sent", {
-        description: "Please check your email inbox (and spam folder). If you don't see it, try again in a few minutes.",
+        description:
+          "Please check your email inbox (and spam folder). If you don't see it, try again in a few minutes.",
       });
     } catch (e) {
       console.error("Failed to resend verification email:", e);
-      const message = (e as AppwriteException).message || "Could not send verification email. Please ensure you have an account or try registering again.";
-      setErrorMessage(message); 
+      const message =
+        (e as AppwriteException).message ||
+        "Could not send verification email. Please ensure you have an account or try registering again.";
+      setErrorMessage(message);
       toast.error("Failed to Resend Email", { description: message });
     } finally {
       setIsResending(false);
     }
   };
 
-  if (pageStatus === 'initial_loading' || pageStatus === 'verifying_from_link' || pageStatus === 'link_verification_success') {
-    return <div></div>
-  };
+  if (
+    pageStatus === "initial_loading" ||
+    pageStatus === "verifying_from_link" ||
+    pageStatus === "link_verification_success"
+  ) {
+    return <div></div>;
+  }
 
   const VerificationPromptUI = (
     <div className="mx-8 mt-8 flex flex-col items-center">
@@ -114,10 +129,14 @@ export default function VerifyEmailPage() {
       </div>
 
       <div className="mt-4 text-center">
-        <p className="text-2xl font-michroma">{pageStatus === 'link_verification_failed' ? "Email Verification Failed" : "Verify Your Email Address"}</p>
-        
+        <p className="text-2xl font-michroma">
+          {pageStatus === "link_verification_failed"
+            ? "Email Verification Failed"
+            : "Verify Your Email Address"}
+        </p>
+
         <p className="mt-4 text-sm">
-          {user && !user.emailVerification && pageStatus === 'prompt_to_verify'
+          {user && !user.emailVerification && pageStatus === "prompt_to_verify"
             ? `We have sent a verification link to ${user.email}.`
             : `We have sent a verification link.`}
         </p>
@@ -128,7 +147,7 @@ export default function VerifyEmailPage() {
       <div className="mt-8 flex justify-center">
         <Button
           onClick={handleResendVerificationEmail}
-          className='cursor-pointer'
+          className="cursor-pointer"
           disabled={isResending}
         >
           Resend Email
@@ -136,16 +155,15 @@ export default function VerifyEmailPage() {
       </div>
     </div>
   );
-  
-  if (user && pageStatus === 'prompt_to_verify') {
+
+  if (user && pageStatus === "prompt_to_verify") {
     return (
       <MainLayout user={user} menuDisabled={true}>
         {VerificationPromptUI}
       </MainLayout>
-    )
+    );
   }
 
-  return (
-    <div>{VerificationPromptUI}</div>
-  );
+  return <div>{VerificationPromptUI}</div>;
 }
+

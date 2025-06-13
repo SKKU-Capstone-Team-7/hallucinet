@@ -1,6 +1,0 @@
-{
-  "devDependencies": {
-    "@types/json-schema": "^7.0.15",
-    "tailwindcss": "^4.1.4"
-  }
-}
